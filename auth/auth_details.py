@@ -4,6 +4,7 @@ import os
 class AuthException(Exception):
     pass
 
+'''Authentication Package added as per SP-36'''
 class Auth():
     def __init__(self):
         self.__bf_userid=None
