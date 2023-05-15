@@ -1,5 +1,5 @@
-from vault.vault_reader import vaultReader
 import os
+import api.auth.vault.vault_reader
 
 class AuthException(Exception):
     pass
@@ -12,7 +12,7 @@ class Auth():
         self.__pemfile = os.getenv("BF_PEM_LOC")
 
     def get_credentials_from_vault(self):
-        myVault = vaultReader()
+        myVault = api.auth.vault.vault_reader.vaultReader()
         result = myVault.readSecret("bf")
         self.__bf_userid=result['data']['bf_userid']
         self.__bf_pwd=result['data']['bf_pwd']
@@ -41,6 +41,6 @@ class Auth():
     def pemfile(self, value):
         self.__pemfile = value
 
-myAuth = Auth()
-myAuth.get_credentials_from_vault()
-print(myAuth.bf_userid)
+#myAuth = Auth()
+#myAuth.get_credentials_from_vault()
+#print(myAuth.bf_userid)
