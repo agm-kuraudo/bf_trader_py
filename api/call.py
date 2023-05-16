@@ -13,7 +13,7 @@ class Call():
 
     def call(self, headers, RequestBody):
         #TODO: This should handle normal request params and JSON type messages
-        #TODO - should handle all HTTP post types
+        #TODO - should handle all HTTP post types (Also shold should be ENUM http methods)
         r = requests.post(headers={"X-Application": "wId8CbMYLNRjCwWm"}, url=self.url, params=RequestBody, cert=("D:/OneDrive - XHT/06_Projects/bookmaking/API_Auth/client-2048.crt", "D:/OneDrive - XHT/06_Projects/bookmaking/API_Auth/client-2048.key"))
         requests.Request
         return r.text
