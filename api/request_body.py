@@ -1,14 +1,19 @@
+import api
+
 class RequestBody():
     def __init__(self):
         self.templates = {}
         self.templates["CertAuth"] = {"username": "<USERID>", "password": "<PWD>"}
-
+    
+    #@api.decorators.SimpleDecorator
     def setTemplate(self, template_name, template_body):
         self.templates[template_name] = template_body
 
+    #@api.decorators.SimpleDecorator
     def getTemplate(self, template_name):
         return self.templates[template_name]
     
+    #@api.decorators.SimpleDecorator
     def populateTemplate(self, template_name, replace_pairs):
         new_dict={}
 
