@@ -4,6 +4,7 @@ class RequestBody():
     def __init__(self):
         self.templates = {}
         self.templates["CertAuth"] = {"username": "<USERID>", "password": "<PWD>"}
+        self.templates["listEvents"] = {"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listEventTypes", "params": {"filter":{ }}, "id": 1}
     
     #@api.decorators.SimpleDecorator
     def setTemplate(self, template_name, template_body):
