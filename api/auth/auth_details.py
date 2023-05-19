@@ -1,6 +1,6 @@
 import os
 import traceback
-from api.output import Output as log
+from output import Output as log
 import api.auth.vault.vault_reader
 
 class AuthException(Exception):

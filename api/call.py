@@ -1,6 +1,6 @@
 import json
 import requests
-from api.output import Output as log
+from output import Output as log
 from api.urls import Urls
 from api.auth.auth_details import Auth
 
@@ -19,7 +19,7 @@ class Call():
         log.log_debug("headers: {}, RequestBody: {}".format(self.headers, RequestBody))
         r = requests.post(headers=self.headers, url=self.url, json=RequestBody)
         log.log_debug(r.text)
-        return r.text
+        return r
 
     '''This is a special isntance of "call" design to authenticate users with a certificate and capture the login session'''
    #@api.decorators.SimpleDecorator

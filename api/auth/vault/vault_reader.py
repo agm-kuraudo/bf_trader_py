@@ -1,7 +1,7 @@
 import functools
 import hvac
 import os
-from api.output import Output as log
+from output import Output as log
 
 '''Vault Reader requires 
 + sprint vault to be running, unsealed and listening on port 8200.
