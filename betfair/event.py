@@ -44,3 +44,18 @@ class Event(BetfairObject):
     
     def __str__(self):
         return ("Market: {}, ID: {}, Market Count: {}".format(self.__name, self.__id, self.__marketCount))
+    
+    @property
+    def id(self):
+        return self.__id
+    @property
+    def name(self):
+        return self.__name
+    @property
+    def marketCount(self):
+        return self.__marketCount
+
+    '''
+            self.__id = id
+        self.__name = name
+        self.__marketCount = marketCount'''
