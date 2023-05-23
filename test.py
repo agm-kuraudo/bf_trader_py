@@ -28,11 +28,12 @@ def getEvents(myAuth, myCall, myRequestBody, myStrat):
             selected_events.append(event)
             log.log_info(event)
     if len(selected_events) != 0:
-        log.log_error("No events found matching: {}".format(myStrat.EVENTS))
+        log.log_error("No events found matching: {}. Possible options will be listed below".format(myStrat.EVENTS))
+        for event in list:
+            log.log_error(event)
         return 0
     else:
         return selected_events
-
 
 myRequestBody = RequestBody()
 myAuth = bf_auth.Auth()
