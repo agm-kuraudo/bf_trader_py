@@ -2,7 +2,7 @@ from betfair.BetfairObject import BetfairObject
 import pandas as pd
 from output import Output as log
 
-class Event(BetfairObject):
+class EventType(BetfairObject):
     def __init__(self, id=None, name=None, marketCount=None, EventJson=None):
         log.log_debug("Event Object instantiated")
         self.__id = id
@@ -39,7 +39,7 @@ class Event(BetfairObject):
         self.__marketCount = json['marketCount']
         self.__id = json["eventType"]['id']
         self.__name = json["eventType"]['name']
-        return Event(id=self.__id, name=self.__name, marketCount=self.__marketCount)
+        return EventType(id=self.__id, name=self.__name, marketCount=self.__marketCount)
     
     
     def __str__(self):

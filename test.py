@@ -5,7 +5,7 @@ from api.call import Call
 from api.request_body import RequestBody
 from output import Output as log
 from api.http_methods import Methods
-from betfair.event import Event
+from betfair.event import EventType
 from logic.simpleStategy import SimpleStrategy
 import pandas as pd
 
@@ -19,9 +19,9 @@ def authenticateToBetfair(myAuth, myCall, myRequestBody):
         log.log_error("\n".join(traceback.format_tb(g.__traceback__)))
         return False
 
-def getEvents(myAuth, myCall, myRequestBody, myStrat):
-    myEvent=Event()
-    df, list = myEvent.buildFrameFromJSON(myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=myRequestBody.getTemplate("listEvents")))
+def getEventTypes(myAuth, myCall, myRequestBody, myStrat):
+    myEventTypes=EventType()
+    df, list = myEventTypes.buildFrameFromJSON(myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=myRequestBody.getTemplate("listEvents")))
     selected_events = []
     for event in list:
         if event.name in myStrat.EVENTS:
@@ -45,6 +45,6 @@ if not authenticateToBetfair(myAuth, myCall, myRequestBody):
     exit(1)
 
 #Step 2: Extract the update to date for Event ID(s) for selected events
-myEvents = getEvents(myAuth=myAuth, myCall=myCall, myRequestBody=myRequestBody, myStrat=myStrat)
+myEvents = getEventTypes(myAuth=myAuth, myCall=myCall, myRequestBody=myRequestBody, myStrat=myStrat)
 if myEvents == 0:
     exit(1)
