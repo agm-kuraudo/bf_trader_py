@@ -27,7 +27,7 @@ def getEvents(myAuth, myCall, myRequestBody, myStrat):
         if event.name in myStrat.EVENTS:
             selected_events.append(event)
             log.log_info(event)
-    if len(selected_events) != 0:
+    if len(selected_events) == 0:
         log.log_error("No events found matching: {}. Possible options will be listed below".format(myStrat.EVENTS))
         for event in list:
             log.log_error(event)

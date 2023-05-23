@@ -1,3 +1,3 @@
 class SimpleStrategy:
     EVENTS = ['Soccer']
-    COMPETITIONS = ['E']
+    COMPETITIONS = ['English Premier League', 'UEFA Champions League']
