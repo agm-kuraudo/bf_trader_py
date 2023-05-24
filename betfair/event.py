@@ -1,3 +1,4 @@
+from datetime import datetime
 from betfair.BetfairObject import BetfairObject
 import pandas as pd
 from output import Output as log
@@ -26,7 +27,7 @@ class Event(BetfairObject):
         except KeyError:
             self.__countryCode = ""
         self.__timezone = json["event"]["timezone"]
-        self.__openDate = json["event"]["openDate"]
+        self.__openDate = datetime.strptime(json["event"]["openDate"], '%Y-%m-%dT%H:%M:%S.000Z')    
         return Event(id=self.__id, name=self.__name, countryCode=self.__countryCode, timezone=self.__timezone, openDate=self.__openDate, marketCount=self.__marketCount)
    
 

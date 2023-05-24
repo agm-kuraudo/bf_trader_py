@@ -30,6 +30,20 @@ class RequestBody():
             },
             "id": 1
             }
+        
+        self.templates['marketCatalogue'] = {
+            "jsonrpc": "2.0",
+            "method": "SportsAPING/v1.0/listMarketCatalogue",
+            "params": {
+                "filter": {
+                "eventIds": "<ListOfEventIDs>",
+                "marketTypeCodes": "<ListOfmarketType>"
+                },
+                "maxResults": "100",
+                "marketProjection":["MARKET_DESCRIPTION", "RUNNER_DESCRIPTION", "RUNNER_METADATA"]
+            },
+            "id": 1
+            }
 
 
     #@api.decorators.SimpleDecorator

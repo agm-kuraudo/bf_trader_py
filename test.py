@@ -10,7 +10,7 @@ from betfair.eventType import EventType
 from betfair.event import Event
 from logic.simpleStategy import SimpleStrategy
 import pandas as pd
-
+from datetime import datetime
 
 class BFDriver:
 
@@ -78,7 +78,7 @@ class BFDriver:
         df, myEventList = myEvent.buildFrameFromJSON(myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=myRequestBody.populateTemplate("listEvents", {"<ListOfEventIDs>" : self.myEventTypeIds, 
                                                     "<ListOfcompetitionIds>": self.myCompIds,
                                                     "<ListOfmarketType>": myStrat.MARKET_TYPEs})))
-        print(df.head())
+        print(df.info())
 
         return myEventList
 
@@ -98,7 +98,12 @@ myComps = BF.getCompetitionIds(myAuth=BF.myAuth, myCall=BF.myCall, myRequestBody
 if myComps == 0:
     exit(1)
 
-#Step 4 : Extract the events matching our competion and event types
+#Step 4 : Extract the events matching our competition and event types
 myEvents = BF.getEvents(myCall=BF.myCall, myRequestBody=BF.myRequestBody, myStrat=BF.myStrat)
 if myEvents == 0:
     exit(1)
+
+log.log_info("There are {} events available".format(len(myEvents)))
+
+
+print(BF.myRequestBody.populateTemplate("marketCatalogue", {"<ListOfEventIDs>":[myEvents[0].id], "<ListOfmarketType>": BF.myStrat.MARKET_TYPEs}))
