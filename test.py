@@ -11,6 +11,7 @@ from betfair.event import Event
 from logic.simpleStategy import SimpleStrategy
 import pandas as pd
 from datetime import datetime
+from betfair.market import Market, Runner, Target
 
 class BFDriver:
 
@@ -105,5 +106,13 @@ if myEvents == 0:
 
 log.log_info("There are {} events available".format(len(myEvents)))
 
+myMarket = Market()
 
-print(BF.myRequestBody.populateTemplate("marketCatalogue", {"<ListOfEventIDs>":[myEvents[0].id], "<ListOfmarketType>": BF.myStrat.MARKET_TYPEs}))
+myMarket.buildFrameFromJSON(BF.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=BF.myRequestBody.populateTemplate("marketCatalogue", {"<ListOfEventIDs>":[myEvents[0].id], "<ListOfmarketType>": BF.myStrat.MARKET_TYPEs})))
+
+print(myMarket.description['marketTime'] - datetime.now())
+
+for runner in myMarket.runners:
+    print (runner)
+
+#TODO: Add the specific event and market to a Target object

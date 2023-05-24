@@ -33,9 +33,9 @@ class EventType(BetfairObject):
         return compiled_df, event_list
     
     def buildFromJSON(self, json):
-        print(json['marketCount'])
-        print(json["eventType"]['id'])
-        print(json["eventType"]['name'])
+        log.log_debug(json['marketCount'])
+        log.log_debug(json["eventType"]['id'])
+        log.log_debug(json["eventType"]['name'])
         self.__marketCount = json['marketCount']
         self.__id = json["eventType"]['id']
         self.__name = json["eventType"]['name']
