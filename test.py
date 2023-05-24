@@ -15,31 +15,38 @@ from betfair.market import Market, Runner, Target
 
 class BFDriver:
 
-    def __init__(self):
+    def __init__(self, myStrategy, logLevel):
+        
+        self.myStrat = myStrategy
+        log.setLogLevel(logLevel)
+        
+        
         self.myRequestBody = RequestBody()
         self.myAuth = bf_auth.Auth()
         self.myCall = Call(self.myAuth)
-        self.myStrat = SimpleStrategy()
+        self.myMarket = Market()
+        self.myEventTypes=EventType()
+        self.myCompetitions = Competition()
+        self.myEvent=Event()
 
-    def authenticateToBetfair(self, myAuth, myCall, myRequestBody):
+    def authenticateToBetfair(self):
         try:
-            myAuth.get_credentials_from_vault()
-            myAuth.securityToken = myCall.callAuth(myRequestBody.populateTemplate("CertAuth", {"<USERID>": myAuth.bf_userid, "<PWD>": myAuth.bf_pwd}))
+            self.myAuth.get_credentials_from_vault()
+            self.myAuth.securityToken = self.myCall.callAuth(self.myRequestBody.populateTemplate("CertAuth", {"<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}))
             return True
         except bf_auth.AuthException as g:
             log.log_error("\n".join(traceback.format_tb(g.__traceback__)))
             return False
 
-    def getEventTypes(self,myAuth, myCall, myRequestBody, myStrat):
-        myEventTypes=EventType()
-        df, event_list = myEventTypes.buildFrameFromJSON(myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=myRequestBody.getTemplate("listEventTypes")))
+    def getEventTypes(self):
+        df, event_list = self.myEventTypes.buildFrameFromJSON(self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=self.myRequestBody.getTemplate("listEventTypes")))
         selected_events = []
         for event in event_list:
-            if event.name in myStrat.EVENTS:
+            if event.name in self.myStrat.EVENTS:
                 selected_events.append(event)
                 log.log_info(event)
         if len(selected_events) == 0:
-            log.log_error("No events found matching: {}. Possible options will be listed below".format(myStrat.EVENTS))
+            log.log_error("No events found matching: {}. Possible options will be listed below".format(self.myStrat.EVENTS))
             for event in event_list:
                 log.log_error(event)
             return 0
@@ -50,21 +57,17 @@ class BFDriver:
 
             return selected_events
 
-    def getCompetitionIds(self, myAuth, myCall, myRequestBody, myStrat):
-        myCompetitions = Competition()
-
-
-        df, myComps = myCompetitions.buildFrameFromJSON(myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=myRequestBody.populateTemplate("listCompetitions", {"<ListOfEventIDs>" : self.myEventTypeIds})))
-
-        print (df.head())
+    def getCompetitionIds(self):
+        df, myComps = self.myCompetitions.buildFrameFromJSON(self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=self.myRequestBody.populateTemplate("listCompetitions", {"<ListOfEventIDs>" : self.myEventTypeIds})))
+        log.log_debug(df.head())
 
         selected_comps = []
         for event in myComps:
-            if event.name in myStrat.COMPETITIONS:
+            if event.name in self.myStrat.COMPETITIONS:
                 selected_comps.append(event)
                 log.log_info(event)
         if len(selected_comps) == 0:
-            log.log_error("No competitions found matching: {}. Possible options will be listed below".format(myStrat.COMPETITIONS))
+            log.log_error("No competitions found matching: {}. Possible options will be listed below".format(self.myStrat.COMPETITIONS))
             for event in myComps:
                 log.log_error(event)
             return 0
@@ -74,45 +77,58 @@ class BFDriver:
                 self.myCompIds.append(compType.id)
             return selected_comps
         
-    def getEvents(self, myCall, myRequestBody, myStrat):
-        myEvent=Event()
-        df, myEventList = myEvent.buildFrameFromJSON(myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=myRequestBody.populateTemplate("listEvents", {"<ListOfEventIDs>" : self.myEventTypeIds, 
+    def getEvents(self):
+        df, myEventList = self.myEvent.buildFrameFromJSON(self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=self.myRequestBody.populateTemplate("listEvents", {"<ListOfEventIDs>" : self.myEventTypeIds, 
                                                     "<ListOfcompetitionIds>": self.myCompIds,
-                                                    "<ListOfmarketType>": myStrat.MARKET_TYPEs})))
-        print(df.info())
+                                                    "<ListOfmarketType>": self.myStrat.MARKET_TYPEs})))
+        log.log_debug(df.info())
 
-        return myEventList
+        return myEventList[:self.myStrat.MAX_EVENTS]
+    
+    def getTargetMarkets(self, myEvents):
+        MarketsList=[]
+        self.TargetsList=[]
 
-BF = BFDriver()
+        for event in myEvents:
+            df, market = self.myMarket.buildFrameFromJSON(self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=self.myRequestBody.populateTemplate("marketCatalogue", {"<ListOfEventIDs>":[event.id], "<ListOfmarketType>": self.myStrat.MARKET_TYPEs})))
+            MarketsList.append(market[0])
+            self.TargetsList.append(Target(event, market[0]))
+
+            log.log_debug(self.myMarket.description['marketTime'] - datetime.now())
+
+            for runner in self.myMarket.runners:
+                log.log_info (runner)
+
+        return self.TargetsList
+
+BF = BFDriver(SimpleStrategy(), log.INFO)
+#BF = BFDriver(SimpleStrategy(), log.DEBUG)
 
 #Step 1: Authenticate and get a Session Token!
-if not BF.authenticateToBetfair(BF.myAuth, BF.myCall, BF.myRequestBody):
+if not BF.authenticateToBetfair():
     exit(1)
 
 #Step 2: Extract the update to date for Event ID(s) for selected events
-myEventTypes = BF.getEventTypes(myAuth=BF.myAuth, myCall=BF.myCall, myRequestBody=BF.myRequestBody, myStrat=BF.myStrat)
+myEventTypes = BF.getEventTypes()
 if myEventTypes == 0:
     exit(1)
 
 #Step 3: Extract the competition IDs for my selected competitions
-myComps = BF.getCompetitionIds(myAuth=BF.myAuth, myCall=BF.myCall, myRequestBody=BF.myRequestBody, myStrat=BF.myStrat)
+myComps = BF.getCompetitionIds()
 if myComps == 0:
     exit(1)
 
 #Step 4 : Extract the events matching our competition and event types
-myEvents = BF.getEvents(myCall=BF.myCall, myRequestBody=BF.myRequestBody, myStrat=BF.myStrat)
+myEvents = BF.getEvents()
 if myEvents == 0:
     exit(1)
 
 log.log_info("There are {} events available".format(len(myEvents)))
 
-myMarket = Market()
+myTargets=BF.getTargetMarkets(myEvents)
 
-myMarket.buildFrameFromJSON(BF.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=BF.myRequestBody.populateTemplate("marketCatalogue", {"<ListOfEventIDs>":[myEvents[0].id], "<ListOfmarketType>": BF.myStrat.MARKET_TYPEs})))
+for target in myTargets:
+    log.log_info(target)
 
-print(myMarket.description['marketTime'] - datetime.now())
-
-for runner in myMarket.runners:
-    print (runner)
 
 #TODO: Add the specific event and market to a Target object

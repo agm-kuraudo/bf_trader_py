@@ -69,7 +69,7 @@ class RequestBody():
                 log.log_debug("key: {}, value: {}".format(key, value))
 
                 if type(value) == dict:
-                    log.log_warning("Nested Dictionary in this request: {}".format(value))
+                    log.log_debug("Nested Dictionary in this request: {}".format(value))
                     new_dict[key] = self.populateTemplate(None, replace_pairs, value)
                 if key not in new_dict or original in str(new_dict.get(key)):
                     log.log_debug("IF Statement TRUE {}".format(loop_dict[key]))

@@ -13,9 +13,9 @@ class Competition(BetfairObject):
             self.buildFromJSON(EventJson)
 
     def buildFromJSON(self, json):
-        print(json['marketCount'])
-        print(json["competition"]['id'])
-        print(json["competition"]['name'])
+        log.log_debug(json['marketCount'])
+        log.log_debug(json["competition"]['id'])
+        log.log_debug(json["competition"]['name'])
         self.__marketCount = json['marketCount']
         self.__region = json['competitionRegion']
         self.__id = json["competition"]['id']

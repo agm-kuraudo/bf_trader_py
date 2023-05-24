@@ -11,6 +11,10 @@ class Output:
     def __init__(self):
         pass
 
+    @classmethod
+    def setLogLevel(cls, log_level):
+        cls.log_level=log_level
+
     @staticmethod
     def log_debug(msg):
         if Output.log_level <= Output.DEBUG:

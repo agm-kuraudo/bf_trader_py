@@ -5,7 +5,14 @@ import pandas as pd
 
 
 class Target:
-    pass
+    def __init__(self, myEvents, myMarkets):
+        self.myEvents=myEvents
+        self.myMarkets=myMarkets
+
+    def __str__(self):
+        log.log_debug(self.myEvents)
+        log.log_debug(self.myMarkets)
+        return "Target is event: {}, market: {}".format(self.myEvents.name, self.myMarkets.name)
 
 class Market(BetfairObject):
     def __init__(self, id=None, name=None, description=None, totalMatched=None):
