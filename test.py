@@ -131,4 +131,3 @@ for target in myTargets:
     log.log_info(target)
 
 
-#TODO: Add the specific event and market to a Target object
