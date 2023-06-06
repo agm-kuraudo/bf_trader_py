@@ -33,6 +33,7 @@ class BFDriver:
         try:
             self.myAuth.get_credentials_from_vault()
             self.myAuth.securityToken = self.myCall.callAuth(self.myRequestBody.populateTemplate("CertAuth", {"<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}))
+            log.log_info("Token: {}".format(self.myAuth.securityToken))
             return True
         except bf_auth.AuthException as g:
             log.log_error("\n".join(traceback.format_tb(g.__traceback__)))
@@ -100,9 +101,21 @@ class BFDriver:
                 log.log_info (runner)
 
         return self.TargetsList
-
-BF = BFDriver(SimpleStrategy(), log.INFO)
-#BF = BFDriver(SimpleStrategy(), log.DEBUG)
+    
+    def updateOddsForTargets(self, targetList):
+        for target in targetList:
+            log.log_debug("Looking up odds for {}".format(target.myMarkets.id))
+            log.log_debug("Runners odds {}".format(target.myMarkets.runners))
+            json_resp=self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC, RequestBody=self.myRequestBody.populateTemplate("listMarketBook", {"<ListOfMarketIDs>":[target.myMarkets.id]}))
+            log.log_debug(json_resp)
+            runner_list = json_resp.json()["result"][0]["runners"]
+            log.log_debug(len(target.myMarkets.runners))
+            for runners in target.myMarkets.runners:
+                runners.odds = runner_list
+            
+    
+#BF = BFDriver(SimpleStrategy(), log.INFO)
+BF = BFDriver(SimpleStrategy(), log.DEBUG)
 
 #Step 1: Authenticate and get a Session Token!
 if not BF.authenticateToBetfair():
@@ -126,8 +139,9 @@ if myEvents == 0:
 log.log_info("There are {} events available".format(len(myEvents)))
 
 myTargets=BF.getTargetMarkets(myEvents)
+if len(myTargets) == 0:
+    exit(1)
+log.log_debug("{} Targets identified".format(len(myTargets)))
+log.log_debug(myTargets[0].myMarkets.runners)
 
-for target in myTargets:
-    log.log_info(target)
-
-
+updatedTargets = BF.updateOddsForTargets(myTargets)

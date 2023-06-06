@@ -44,6 +44,22 @@ class RequestBody():
             },
             "id": 1
             }
+        
+        self.templates["listMarketBook"] = {
+            "jsonrpc": "2.0",
+            "method": "SportsAPING/v1.0/listMarketBook",
+            "params": {
+                "marketIds": "<ListOfMarketIDs>",
+                "priceProjection": {
+                "priceData": [
+                    "EX_BEST_OFFERS",
+                    "EX_ALL_OFFERS",
+                    "EX_TRADED"
+                ]
+                }
+            },
+            "id": 1
+            }
 
 
     #@api.decorators.SimpleDecorator

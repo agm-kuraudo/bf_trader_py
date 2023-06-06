@@ -13,13 +13,17 @@ class Target:
         log.log_debug(self.myEvents)
         log.log_debug(self.myMarkets)
         return "Target is event: {}, market: {}".format(self.myEvents.name, self.myMarkets.name)
+    
+    def updateOddsFromJSON(self, json_resp):
+        pass
 
 class Market(BetfairObject):
-    def __init__(self, id=None, name=None, description=None, totalMatched=None):
+    def __init__(self, id=None, name=None, description=None, totalMatched=None, runners=[]):
         self.__id=id
         self.__name=name
         self.__description=description
         self.__totalMatched=totalMatched
+        self.__runners = runners
 
     def buildFromJSON(self, json):
         log.log_debug(json['marketId'])
@@ -32,7 +36,7 @@ class Market(BetfairObject):
         self.__name = json["marketName"]
         self.__description = json["description"]
         self.__description["marketTime"] = datetime.strptime(self.__description["marketTime"], '%Y-%m-%dT%H:%M:%S.000Z')
-        return Market(id=self.__id, name=self.__name, description=self.__description, totalMatched=self.__totalMatched)
+        return Market(id=self.__id, name=self.__name, description=self.__description, totalMatched=self.__totalMatched, runners=self.__runners)
     
     def buildFrameFromJSON(self, json):
         log.log_debug("buildFrameFromJSON called")
@@ -60,10 +64,10 @@ class Market(BetfairObject):
         return ("marketId: {}, marketName: {}, description: {}, totalMatched: {}".format(self.__id, self.__name, self.__description, self.__totalMatched))
     
     def addRunners(self):
-        self.__runners = []
+        log.log_debug("Adding runners")
         for runner_dict in self.runnerList:
             self.__runners.append(Runner(runner_dict['selectionId'], runner_dict['runnerName']))
-
+            log.log_debug("Adding runner {}".format(self.__runners[-1]))
 
 
     @property
@@ -89,6 +93,44 @@ class Runner:
     def __init__(self, id, name):
         self.__id=id
         self.__name=name
+        self.__odds = []
+        self.__status=None
+        self.__totalMatched=None
+        self.__toBack = []
+        self.__toLay=[]
 
     def __str__(self):
         return "Runner: {}, ID: {}".format(self.__name, self.__id)
+    
+    @property
+    def odds(self):
+        return self.__odds[-1]
+    
+    @odds.setter
+    def odds(self, value):
+        for odds in value:
+            if odds["selectionId"] == self.__id:
+                log.log_info("Selection {} matched!".format(self.__id))
+                self.__odds.append(odds["selectionId"])
+                self.__status=odds["status"]
+                self.__totalMatched=odds["totalMatched"]
+                self.__toBack = odds['ex']['availableToBack']
+                self.__toLay = odds['ex']['availableToLay']
+
+
+    @property
+    def status(self):
+        return self.__status
+    @property
+    def totalMatched(self):
+        return self.__totalMatched
+    @property
+    def toBack(self):
+        return self.__toBack
+    @property
+    def toLay(self):
+        return self.__toLay
+    
+    def get_odds_list(self):
+        return self.__odds
+    
