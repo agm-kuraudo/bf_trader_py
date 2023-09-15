@@ -4,8 +4,11 @@ import api
 from output import Output as Log
 
 
-class RequestBody():
+class RequestBody:
     def __init__(self):
+        """
+        RequestBody init - sets up all the template requests we need
+        """
         self.templates = {}
         self.templates["CertAuth"] = {"username": "<USERID>", "password": "<PWD>"}
         self.templates["listEventTypes"] = {"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listEventTypes",
@@ -16,7 +19,7 @@ class RequestBody():
             "method": "SportsAPING/v1.0/listCompetitions",
             "params": {
                 "filter": {
-                    "eventTypeIds": "<ListOfEventIDs>"
+                    "eventTypeIds": "<list_of_event_ids>"
                 }
             },
             "id": 1
@@ -27,9 +30,9 @@ class RequestBody():
             "method": "SportsAPING/v1.0/listEvents",
             "params": {
                 "filter": {
-                    "eventTypeIds": "<ListOfEventIDs>",
-                    "competitionIds": "<ListOfcompetitionIds>",
-                    "marketTypeCodes": "<ListOfmarketType>"
+                    "eventTypeIds": "<list_of_event_ids>",
+                    "competitionIds": "<list_of_competition_ids>",
+                    "marketTypeCodes": "<list_of_market_types>"
                 }
             },
             "id": 1
@@ -40,8 +43,8 @@ class RequestBody():
             "method": "SportsAPING/v1.0/listMarketCatalogue",
             "params": {
                 "filter": {
-                    "eventIds": "<ListOfEventIDs>",
-                    "marketTypeCodes": "<ListOfmarketType>"
+                    "eventIds": "<list_of_event_ids>",
+                    "marketTypeCodes": "<list_of_market_types>"
                 },
                 "maxResults": "100",
                 "marketProjection": ["MARKET_DESCRIPTION", "RUNNER_DESCRIPTION", "RUNNER_METADATA"]
@@ -65,16 +68,31 @@ class RequestBody():
             "id": 1
         }
 
-    # @api.decorators.SimpleDecorator
-    def set_template(self, template_name, template_body):
+    def set_template(self, template_name: str, template_body: dict) -> None:
+        """
+        Updates or creates a template... TODO: this should just be a standard "setter"
+        :param template_name: Sting to identify the template
+        :param template_body: The body of the template itself - should be a dictionary
+        """
         self.templates[template_name] = template_body
 
-    # @api.decorators.SimpleDecorator
-    def get_template(self, template_name):
+    def get_template(self, template_name: str) -> dict:
+        """
+        This is a getter for a specific template
+        :param template_name:
+        :return: The template value - a dictionary
+        """
         return self.templates[template_name]
 
-    # @api.decorators.SimpleDecorator
-    def populate_template(self, template_name, replace_pairs, inner_dict=None):
+    def populate_template(self, template_name: str, replace_pairs: dict, inner_dict: dict = None) -> dict:
+        """
+        take the template value specified in the template name param (or use inline inner_dict argument) and replace
+        the key value pairs specified by replace_pair. Return the updated dictionary
+        :param template_name:
+        :param replace_pairs:
+        :param inner_dict:
+        :return:
+        """
         new_dict = {}
 
         if inner_dict is None:

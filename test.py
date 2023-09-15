@@ -31,44 +31,44 @@ class BFDriver:
         self.myCompetitions = Competition()
         self.myEvent = Event()
 
-    def authenticate_to_betfair(self):
+    def authenticate_to_betfair(self) -> bool:
         try:
             self.myAuth.get_credentials_from_vault()
-            self.myAuth.securityToken = self.myCall.call_auth(self.myRequestBody.populate_template("CertAuth", {
+            self.myAuth.security_token = self.myCall.call_auth(self.myRequestBody.populate_template("CertAuth", {
                 "<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}))
-            Log.log_info("Token: {}".format(self.myAuth.securityToken))
+            Log.log_info("Token: {}".format(self.myAuth.security_token))
             return True
         except bf_auth.AuthException as g:
             Log.log_error("\n".join(traceback.format_tb(g.__traceback__)))
             return False
 
-    def get_event_types(self):
-        df, event_list = self.myEventTypes.build_frame_from_json(
+    def get_event_types(self) -> list[EventType]:
+        df, event_type_list = self.myEventTypes.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
                              request_body=self.myRequestBody.get_template("listEventTypes")))
-        selected_events = []
-        for event in event_list:
-            if event.name in self.my_strategy.EVENTS:
-                selected_events.append(event)
-                Log.log_info(event)
-        if len(selected_events) == 0:
+        selected_event_types = []
+        for event_type in event_type_list:
+            if event_type.name in self.my_strategy.EVENTS:
+                selected_event_types.append(event_type)
+                Log.log_info(event_type)
+        if len(selected_event_types) == 0:
             Log.log_error(
-                "No events found matching: {}. Possible options will be listed below".format(self.my_strategy.EVENTS))
-            for event in event_list:
-                Log.log_error(event)
+                "No event types found matching: {}. Possible options will be listed below".format(self.my_strategy.EVENTS))
+            for event_type in event_type_list:
+                Log.log_error(event_type)
             return 0
         else:
             self.myEventTypeIds = []
-            for eventType in selected_events:
+            for eventType in selected_event_types:
                 self.myEventTypeIds.append(eventType.id)
 
-            return selected_events
+            return selected_event_types
 
-    def get_competition_ids(self):
+    def get_competition_ids(self) -> list[Competition]:
         df, my_comps = self.myCompetitions.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
                              request_body=self.myRequestBody.populate_template("listCompetitions", {
-                                 "<ListOfEventIDs>": self.myEventTypeIds})))
+                                 "<list_of_event_ids>": self.myEventTypeIds})))
         Log.log_debug(df.head())
 
         selected_comps = []
@@ -88,20 +88,20 @@ class BFDriver:
                 self.myCompIds.append(compType.id)
             return selected_comps
 
-    def get_events(self):
+    def get_events(self) -> list[Event]:
         df, my_event_list = self.myEvent.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
                              request_body=self.myRequestBody.populate_template(
                                  "listEvents",
-                                 {"<ListOfEventIDs>": self.myEventTypeIds,
-                                  "<ListOfcompetitionIds>": self.myCompIds,
-                                  "<ListOfmarketType>": self.my_strategy.MARKET_TYPEs})))
+                                 {"<list_of_event_ids>": self.myEventTypeIds,
+                                  "<list_of_competition_ids>": self.myCompIds,
+                                  "<list_of_market_types>": self.my_strategy.MARKET_TYPEs})))
 
         Log.log_debug(df.info())
 
         return my_event_list[:self.my_strategy.MAX_EVENTS]
 
-    def get_target_markets(self, my_events):
+    def get_target_markets(self, my_events) -> list[Target]:
         markets_list = []
         self.TargetsList = []
 
@@ -110,8 +110,8 @@ class BFDriver:
                 self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
                                  request_body=self.myRequestBody.populate_template(
                                      "marketCatalogue",
-                                     {"<ListOfEventIDs>": [event.id],
-                                      "<ListOfmarketType>": self.my_strategy.MARKET_TYPEs})))
+                                     {"<list_of_event_ids>": [event.id],
+                                      "<list_of_market_types>": self.my_strategy.MARKET_TYPEs})))
 
             markets_list.append(market[0])
             self.TargetsList.append(Target(event, market[0]))
@@ -123,7 +123,7 @@ class BFDriver:
 
         return self.TargetsList
 
-    def update_odds_for_targets(self, target_list):
+    def update_odds_for_targets(self, target_list) -> None:
         for target in target_list:
             Log.log_debug("Looking up odds for {}".format(target.myMarkets.id))
             Log.log_debug("Runners odds {}".format(target.myMarkets.runners))
