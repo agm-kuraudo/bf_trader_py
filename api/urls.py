@@ -1,4 +1,4 @@
-class Urls():
+class Urls:
     BASE_URL="https://api.betfair.com"
     SSO_BASE_URL = "https://identitysso-cert.betfair.com"
     CERT_LOGIN = SSO_BASE_URL + "/api/certlogin"

@@ -2,18 +2,18 @@ import datetime
 
 
 class Output:
-    DEBUG=1
-    INFO=2
-    WARNING=3
-    ERROR=4
-    log_level=1
-    
+    DEBUG = 1
+    INFO = 2
+    WARNING = 3
+    ERROR = 4
+    log_level = 1
+
     def __init__(self):
         pass
 
     @classmethod
-    def setLogLevel(cls, log_level):
-        cls.log_level=log_level
+    def set_log_level(cls, log_level):
+        cls.log_level = log_level
 
     @staticmethod
     def log_debug(msg):

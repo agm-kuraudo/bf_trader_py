@@ -1,58 +1,61 @@
 from betfair.BetfairObject import BetfairObject
 import pandas as pd
-from output import Output as log
+from output import Output as Log
+
 
 class EventType(BetfairObject):
-    def __init__(self, id=None, name=None, marketCount=None, EventJson=None):
-        log.log_debug("EventType Object instantiated")
-        self.__id = id
+    def __init__(self, event_type_id=None, name=None, market_count=None, event_json=None):
+        Log.log_debug("EventType Object instantiated")
+        self.__id = event_type_id
         self.__name = name
-        self.__marketCount = marketCount
-        if EventJson != None:
-            self.buildFromJSON(EventJson)
+        self.__marketCount = market_count
+        if event_json is not None:
+            self.build_from_json(event_json)
 
-    def buildFrameFromJSON(self, json):
-        log.log_debug("buildFrameFromJSON called")
-        log.log_debug("json: {}".format(json))
+    def build_frame_from_json(self, json):
+        Log.log_debug("buildFrameFromJSON called")
+        Log.log_debug("json: {}".format(json))
         df = pd.read_json(json.text)
-        log.log_debug("df: {}".format(df.head()))
+        Log.log_debug("df: {}".format(df.head()))
 
         compiled_df = pd.DataFrame({'EventID': pd.Series(dtype='str'),
                                     'EventName': pd.Series(dtype='str'),
                                     'marketCount': pd.Series(dtype='int')})
 
-        eventdf = df["result"]
-        log.log_debug("eventdf: {}".format(eventdf.head()))
+        event_df = df["result"]
+        Log.log_debug("event_df: {}".format(event_df.head()))
 
         event_list = []
 
-        for key,event in eventdf.items():
-            log.log_debug(event)
-            event_list.append(self.buildFromJSON(event))
-            compiled_df.loc[len(compiled_df)] = {'EventID': self.__id, 'EventName': self.__name, 'marketCount': self.__marketCount}
+        for key, event in event_df.items():
+            Log.log_debug(event)
+            event_list.append(self.build_from_json(event))
+            compiled_df.loc[len(compiled_df)] = {'EventID': self.__id, 'EventName': self.__name,
+                                                 'marketCount': self.__marketCount}
         return compiled_df, event_list
-    
-    def buildFromJSON(self, json):
-        log.log_debug(json['marketCount'])
-        log.log_debug(json["eventType"]['id'])
-        log.log_debug(json["eventType"]['name'])
+
+    def build_from_json(self, json):
+        Log.log_debug(json['marketCount'])
+        Log.log_debug(json["eventType"]['id'])
+        Log.log_debug(json["eventType"]['name'])
         self.__marketCount = json['marketCount']
         self.__id = json["eventType"]['id']
         self.__name = json["eventType"]['name']
-        return EventType(id=self.__id, name=self.__name, marketCount=self.__marketCount)
-    
-    
+        return EventType(event_type_id=self.__id, name=self.__name, market_count=self.__marketCount)
+
     def __str__(self):
-        return ("Market: {}, ID: {}, Market Count: {}".format(self.__name, self.__id, self.__marketCount))
-    
+        return "Market: {}, ID: {}, Market Count: {}".format(self.__name, self.__id, self.__marketCount)
+
     @property
     def id(self):
         return self.__id
+
     @property
     def name(self):
         return self.__name
+
     @property
-    def marketCount(self):
+    def market_count(self):
         return self.__marketCount
 
     '''

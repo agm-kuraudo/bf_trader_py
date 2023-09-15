@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 
+
 class BetfairObject(ABC):
     @abstractmethod
-    def buildFromJSON(self, json):
+    def build_from_json(self, json):
         pass
-    
+
     @abstractmethod
-    def buildFrameFromJSON(self, json):
+    def build_frame_from_json(self, json):
         pass
