@@ -34,9 +34,9 @@ class Auth:
         is running and contains the required credentials
         """
         try:
-            my_vault = api.auth.vault.vault_reader.vaultReader()
+            my_vault = api.auth.vault.vault_reader.VaultReader()
             Log.log_debug("{} created".format(my_vault))
-            result = my_vault.readSecret("bf")
+            result = my_vault.read_secret("bf")
             Log.log_debug("Result: {}".format(result))
             self.__bf_userid = result['data']['bf_userid']
             self.__bf_pwd = result['data']['bf_pwd']

@@ -1,7 +1,9 @@
 import json
+
 import requests
 from requests import Response
 
+import decorators.log_attrib
 from api.http_methods import Methods
 from output import Output as Log
 from api.urls import Urls
@@ -13,6 +15,7 @@ class CallException(Exception):
 
 
 class Call:
+    @decorators.log_attrib.dump_args
     def __init__(self, auth):
         """
         Call init function, sets up basic variables, requires an auth object with credentials
@@ -33,12 +36,13 @@ class Call:
         :return: Returns the "Response" object (part of the requests module)
         """
         self.url = url
-        Log.log_info("Making request to {}".format(url))
+        Log.log_debug("Making request to {}".format(url))
         Log.log_debug("headers: {}, RequestBody: {}".format(self.headers, request_body))
         r = requests.post(headers=self.headers, url=self.url, json=request_body)
         Log.log_debug(r.text)
         return r
 
+    @decorators.log_attrib.dump_args
     def call_auth(self, request_body: dict) -> str:
         """
         This is a special instance of "call" design to authenticate users with a certificate and capture the login

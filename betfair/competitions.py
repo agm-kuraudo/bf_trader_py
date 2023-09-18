@@ -1,9 +1,12 @@
+from io import StringIO
+import decorators.log_attrib
 from betfair.BetfairObject import BetfairObject
 from output import Output as Log
 import pandas as pd
 
 
 class Competition(BetfairObject):
+    @decorators.log_attrib.dump_args
     def __init__(self, comp_id=None, name=None, market_count=None, region=None, event_json=None):
         Log.log_debug("Competition Object instantiated")
         self.__id = comp_id
@@ -13,6 +16,7 @@ class Competition(BetfairObject):
         if event_json is not None:
             self.build_from_json(event_json)
 
+    @decorators.log_attrib.dump_args
     def build_from_json(self, json):
         Log.log_debug(json['marketCount'])
         Log.log_debug(json["competition"]['id'])
@@ -23,10 +27,11 @@ class Competition(BetfairObject):
         self.__name = json["competition"]['name']
         return Competition(comp_id=self.__id, name=self.__name, market_count=self.__marketCount, region=self.__region)
 
+    @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         Log.log_debug("buildFrameFromJSON called")
         Log.log_debug("json: {}".format(json))
-        df = pd.read_json(json.text)
+        df = pd.read_json(StringIO(json.text))
         Log.log_debug("df: {}".format(df.head()))
 
         compiled_df = pd.DataFrame({'competitionID': pd.Series(dtype='str'),

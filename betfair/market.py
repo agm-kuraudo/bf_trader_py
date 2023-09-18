@@ -2,9 +2,12 @@ from datetime import datetime
 from betfair.BetfairObject import BetfairObject
 from output import Output as Log
 import pandas as pd
+from io import StringIO
+import decorators.log_attrib
 
 
 class Target:
+    @decorators.log_attrib.dump_args
     def __init__(self, my_events, my_markets):
         self.myEvents = my_events
         self.myMarkets = my_markets
@@ -19,6 +22,7 @@ class Target:
 
 
 class Market(BetfairObject):
+    @decorators.log_attrib.dump_args
     def __init__(self, market_id=None, name=None, description=None, total_matched=None, runners=None):
         self.__runnerList = None
         if runners is None:
@@ -29,11 +33,14 @@ class Market(BetfairObject):
         self.__totalMatched = total_matched
         self.__runners = runners
 
+    @decorators.log_attrib.dump_args
     def build_from_json(self, json):
         Log.log_debug(json['marketId'])
         Log.log_debug(json["marketName"])
         Log.log_debug(json["runners"])
-        self.runners = json["runners"]
+        self.__runnerList = json["runners"]
+        self.__runners = []
+        # Log.log_debug("Runners... {}".format(self.__runners))
         self.add_runners()
         self.__totalMatched = json['totalMatched']
         self.__id = json["marketId"]
@@ -43,10 +50,11 @@ class Market(BetfairObject):
         return Market(market_id=self.__id, name=self.__name, description=self.__description,
                       total_matched=self.__totalMatched, runners=self.__runners)
 
+    @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         Log.log_debug("buildFrameFromJSON called")
         Log.log_debug("json: {}".format(json))
-        df = pd.read_json(json.text)
+        df = pd.read_json(StringIO(json.text))
         Log.log_debug("df: {}".format(df.head()))
 
         compiled_df = pd.DataFrame({'MarketID': pd.Series(dtype='str'),
@@ -71,9 +79,10 @@ class Market(BetfairObject):
                                                                                          self.__description,
                                                                                          self.__totalMatched))
 
+    @decorators.log_attrib.dump_args
     def add_runners(self):
-        Log.log_debug("Adding runners")
-        for runner_dict in self.runner_list:
+        Log.log_debug("Adding runners {}".format(self.__runnerList))
+        for runner_dict in self.__runnerList:
             self.__runners.append(Runner(runner_dict['selectionId'], runner_dict['runnerName']))
             Log.log_debug("Adding runner {}".format(self.__runners[-1]))
 
@@ -107,6 +116,7 @@ class Market(BetfairObject):
 
 
 class Runner:
+    @decorators.log_attrib.dump_args
     def __init__(self, runner_id, name):
         self.__id = runner_id
         self.__name = name
@@ -123,6 +133,7 @@ class Runner:
     def odds(self):
         return self.__odds[-1]
 
+    @decorators.log_attrib.dump_args
     @odds.setter
     def odds(self, value):
         for odds in value:

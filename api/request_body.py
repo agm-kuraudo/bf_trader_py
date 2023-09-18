@@ -2,9 +2,11 @@ from typing import Dict, Any, List
 
 import api
 from output import Output as Log
+import decorators.log_attrib
 
 
 class RequestBody:
+    @decorators.log_attrib.dump_args
     def __init__(self):
         """
         RequestBody init - sets up all the template requests we need
@@ -68,6 +70,7 @@ class RequestBody:
             "id": 1
         }
 
+    @decorators.log_attrib.dump_args
     def set_template(self, template_name: str, template_body: dict) -> None:
         """
         Updates or creates a template... TODO: this should just be a standard "setter"
@@ -76,6 +79,7 @@ class RequestBody:
         """
         self.templates[template_name] = template_body
 
+    @decorators.log_attrib.dump_args
     def get_template(self, template_name: str) -> dict:
         """
         This is a getter for a specific template
@@ -84,6 +88,7 @@ class RequestBody:
         """
         return self.templates[template_name]
 
+    @decorators.log_attrib.dump_args
     def populate_template(self, template_name: str, replace_pairs: dict, inner_dict: dict = None) -> dict:
         """
         take the template value specified in the template name param (or use inline inner_dict argument) and replace

@@ -1,9 +1,13 @@
+from io import StringIO
+
 from betfair.BetfairObject import BetfairObject
 import pandas as pd
 from output import Output as Log
+import decorators.log_attrib
 
 
 class EventType(BetfairObject):
+    @decorators.log_attrib.dump_args
     def __init__(self, event_type_id=None, name=None, market_count=None, event_json=None):
         Log.log_debug("EventType Object instantiated")
         self.__id = event_type_id
@@ -12,10 +16,11 @@ class EventType(BetfairObject):
         if event_json is not None:
             self.build_from_json(event_json)
 
+    @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         Log.log_debug("buildFrameFromJSON called")
         Log.log_debug("json: {}".format(json))
-        df = pd.read_json(json.text)
+        df = pd.read_json(StringIO(json.text))
         Log.log_debug("df: {}".format(df.head()))
 
         compiled_df = pd.DataFrame({'EventID': pd.Series(dtype='str'),
@@ -34,6 +39,7 @@ class EventType(BetfairObject):
                                                  'marketCount': self.__marketCount}
         return compiled_df, event_list
 
+    @decorators.log_attrib.dump_args
     def build_from_json(self, json):
         Log.log_debug(json['marketCount'])
         Log.log_debug(json["eventType"]['id'])

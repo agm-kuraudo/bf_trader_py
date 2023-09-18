@@ -8,7 +8,7 @@ from output import Output as Log
 from api.http_methods import Methods
 from betfair.eventType import EventType
 from betfair.event import Event
-from logic.simpleStategy import SimpleStrategy
+from logic.simpleStategy import SimpleStrategy, FromFileStrategy
 from datetime import datetime
 from betfair.market import Market, Target
 
@@ -53,7 +53,8 @@ class BFDriver:
                 Log.log_info(event_type)
         if len(selected_event_types) == 0:
             Log.log_error(
-                "No event types found matching: {}. Possible options will be listed below".format(self.my_strategy.EVENTS))
+                "No event types found matching: {}. Possible options will be listed below".format(
+                    self.my_strategy.EVENTS))
             for event_type in event_type_list:
                 Log.log_error(event_type)
             return 0
@@ -137,34 +138,45 @@ class BFDriver:
                 runners.odds = runner_list
 
 
-# BF = BFDriver(SimpleStrategy(), log.INFO)
-BF = BFDriver(SimpleStrategy(), Log.DEBUG)
+BF = BFDriver(SimpleStrategy(), Log.INFO)
+# BF = BFDriver(SimpleStrategy(), Log.DEBUG)
+# BF = BFDriver(FromFileStrategy(), Log.DEBUG)
 
 # Step 1: Authenticate and get a Session Token!
 if not BF.authenticate_to_betfair():
     exit(1)
+
+Log.log_info("##############    Step 1 Complete")
 
 # Step 2: Extract the update to date for Event ID(s) for selected events
 myEventTypes = BF.get_event_types()
 if myEventTypes == 0:
     exit(1)
 
+Log.log_info("##############    Step 2 Complete")
+
 # Step 3: Extract the competition IDs for my selected competitions
 myComps = BF.get_competition_ids()
 if myComps == 0:
     exit(1)
+
+Log.log_info("##############    Step 3 Complete")
 
 # Step 4 : Extract the events matching our competition and event types
 myEvents = BF.get_events()
 if myEvents == 0:
     exit(1)
 
+Log.log_info("##############    Step 4 Complete")
+
 Log.log_info("There are {} events available".format(len(myEvents)))
 
 myTargets = BF.get_target_markets(myEvents)
 if len(myTargets) == 0:
     exit(1)
-Log.log_debug("{} Targets identified".format(len(myTargets)))
+Log.log_info("{} Targets identified".format(len(myTargets)))
 Log.log_debug(myTargets[0].myMarkets.runners)
+
+Log.log_info("##############  Step 5 Complete")
 
 BF.update_odds_for_targets(myTargets)
