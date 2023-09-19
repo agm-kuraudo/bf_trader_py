@@ -9,7 +9,7 @@ from api.http_methods import Methods
 from betfair.eventType import EventType
 from betfair.event import Event
 from logic.simpleStategy import DefaultStrategy, FromFileStrategy
-from datetime import datetime
+from datetime import datetime, timedelta
 from betfair.market import Market, Target
 
 
@@ -73,15 +73,15 @@ class BFDriver:
         Log.log_debug(df.head())
 
         selected_comps = []
-        for event in my_comps:
-            if event.name in self.my_strategy.COMPETITIONS:
-                selected_comps.append(event)
-                Log.log_info(event)
+        for ev in my_comps:
+            if ev.name in self.my_strategy.COMPETITIONS:
+                selected_comps.append(ev)
+                Log.log_info(ev)
         if len(selected_comps) == 0:
             Log.log_error("No competitions found matching: {}. Possible options will be listed below".format(
                 self.my_strategy.COMPETITIONS))
-            for event in my_comps:
-                Log.log_error(event)
+            for ev in my_comps:
+                Log.log_error(ev)
             return 0
         else:
             self.myCompIds = []
@@ -100,16 +100,20 @@ class BFDriver:
 
         Log.log_debug(df.info())
 
-        self.filter_events(my_event_list)
+        return self.filter_events(my_event_list)[:self.my_strategy.MAX_EVENTS]
 
-        return my_event_list[:self.my_strategy.MAX_EVENTS]
-
-    @staticmethod
-    def filter_events(all_events: list[Event]) -> list[Event]:
+    def filter_events(self, all_events: list[Event]) -> list[Event]:
         filtered_events = []
-        for event in all_events:
-            Log.log_info(event.open_date)
-        return filtered_events
+        for ev in all_events:
+            # Log.log_info(event.open_date)
+            if (ev.open_date - datetime.now()) < timedelta(days=self.my_strategy.MIN_DAYS_TILL_START):
+                Log.log_debug(f"Event to soon: {ev.open_date}")
+            elif(ev.open_date - datetime.now()) > timedelta(days=self.my_strategy.MAX_DAYS_TILL_START):
+                Log.log_debug(f"Event to far away: {ev.open_date}")
+            else:
+                Log.log_info(f"Event {ev.name} in range: {ev.open_date}")
+                filtered_events.append(ev)
+        return sorted(filtered_events, key=lambda item: item.open_date, reverse=not self.my_strategy.NEWEST_FIRST)
 
     def get_target_markets(self, my_events) -> list[Target]:
         markets_list = []
@@ -129,7 +133,7 @@ class BFDriver:
             Log.log_debug(self.myMarket.description['marketTime'] - datetime.now())
 
             for runner in self.myMarket.runners:
-                Log.log_info(runner)
+                Log.log_debug(runner)
 
         return self.TargetsList
 
@@ -147,9 +151,9 @@ class BFDriver:
                 runners.odds = runner_list
 
 
-BF = BFDriver(DefaultStrategy(), Log.INFO)
+# BF = BFDriver(DefaultStrategy(), Log.INFO)
 # BF = BFDriver(DefaultStrategy(), Log.DEBUG)
-# BF = BFDriver(FromFileStrategy(), Log.DEBUG)
+BF = BFDriver(FromFileStrategy(), Log.INFO)
 
 # Step 1: Authenticate and get a Session Token!
 if not BF.authenticate_to_betfair():
@@ -180,6 +184,9 @@ if myEvents == 0:
 Log.log_info("##############    Step 4 Complete")
 
 Log.log_info("There are {} events available".format(len(myEvents)))
+
+for event in myEvents:
+    Log.log_info(f"Event: {event.name}")
 
 myTargets = BF.get_target_markets(myEvents)
 if len(myTargets) == 0:

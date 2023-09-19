@@ -10,6 +10,7 @@ class DefaultStrategy:
     MAX_EVENTS = 5
     MIN_DAYS_TILL_START = 1
     MAX_DAYS_TILL_START = 5
+    NEWEST_FIRST = True
 
 
 class FromFileStrategy(DefaultStrategy):
@@ -31,6 +32,7 @@ class FromFileStrategy(DefaultStrategy):
             DefaultStrategy.MAX_EVENTS = yaml_content['MAX_EVENTS']
             DefaultStrategy.MIN_DAYS_TILL_START = yaml_content['MIN_DAYS_TILL_START']
             DefaultStrategy.MAX_DAYS_TILL_START = yaml_content['MAX_DAYS_TILL_START']
+            DefaultStrategy.NEWEST_FIRST = yaml_content['NEWEST_FIRST']
 
 
 # test = FromFileStrategy()
