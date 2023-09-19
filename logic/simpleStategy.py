@@ -2,14 +2,17 @@ import yaml
 import os
 
 
-class SimpleStrategy:
+class DefaultStrategy:
+    # Filter constants
     EVENTS = ['Soccer']
     COMPETITIONS = ['English Premier League', 'UEFA Champions League']
     MARKET_TYPEs = ['MATCH_ODDS']
     MAX_EVENTS = 5
+    MIN_DAYS_TILL_START = 1
+    MAX_DAYS_TILL_START = 5
 
 
-class FromFileStrategy(SimpleStrategy):
+class FromFileStrategy(DefaultStrategy):
     # EVENTS = super().EVENTS
     # COMPETITIONS = super().COMPETITIONS
     # MARKET_TYPEs = super().MARKET_TYPEs
@@ -23,9 +26,11 @@ class FromFileStrategy(SimpleStrategy):
         with open(full_path) as f:
             yaml_content = yaml.safe_load(f.read())
             print(yaml_content)
-            SimpleStrategy.EVENTS = yaml_content['EVENTS']
-            SimpleStrategy.COMPETITIONS = yaml_content['COMPETITIONS']
-            SimpleStrategy.MAX_EVENTS = yaml_content['MAX_EVENTS']
+            DefaultStrategy.EVENTS = yaml_content['EVENTS']
+            DefaultStrategy.COMPETITIONS = yaml_content['COMPETITIONS']
+            DefaultStrategy.MAX_EVENTS = yaml_content['MAX_EVENTS']
+            DefaultStrategy.MIN_DAYS_TILL_START = yaml_content['MIN_DAYS_TILL_START']
+            DefaultStrategy.MAX_DAYS_TILL_START = yaml_content['MAX_DAYS_TILL_START']
 
 
 # test = FromFileStrategy()

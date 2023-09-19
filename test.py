@@ -8,7 +8,7 @@ from output import Output as Log
 from api.http_methods import Methods
 from betfair.eventType import EventType
 from betfair.event import Event
-from logic.simpleStategy import SimpleStrategy, FromFileStrategy
+from logic.simpleStategy import DefaultStrategy, FromFileStrategy
 from datetime import datetime
 from betfair.market import Market, Target
 
@@ -39,7 +39,7 @@ class BFDriver:
             Log.log_info("Token: {}".format(self.myAuth.security_token))
             return True
         except bf_auth.AuthException as g:
-            Log.log_error("\n".join(traceback.format_tb(g.__traceback__)))
+            Log.log_error(g.__cause__)
             return False
 
     def get_event_types(self) -> list[EventType]:
@@ -100,7 +100,16 @@ class BFDriver:
 
         Log.log_debug(df.info())
 
+        self.filter_events(my_event_list)
+
         return my_event_list[:self.my_strategy.MAX_EVENTS]
+
+    @staticmethod
+    def filter_events(all_events: list[Event]) -> list[Event]:
+        filtered_events = []
+        for event in all_events:
+            Log.log_info(event.open_date)
+        return filtered_events
 
     def get_target_markets(self, my_events) -> list[Target]:
         markets_list = []
@@ -138,13 +147,14 @@ class BFDriver:
                 runners.odds = runner_list
 
 
-BF = BFDriver(SimpleStrategy(), Log.INFO)
-# BF = BFDriver(SimpleStrategy(), Log.DEBUG)
+BF = BFDriver(DefaultStrategy(), Log.INFO)
+# BF = BFDriver(DefaultStrategy(), Log.DEBUG)
 # BF = BFDriver(FromFileStrategy(), Log.DEBUG)
 
 # Step 1: Authenticate and get a Session Token!
 if not BF.authenticate_to_betfair():
-    exit(1)
+    raise bf_auth.AuthException("Failed to authenticate to vault.  Validate that it is running (and unsealed) on port "
+                                "8200.  See error message above for exception details")
 
 Log.log_info("##############    Step 1 Complete")
 

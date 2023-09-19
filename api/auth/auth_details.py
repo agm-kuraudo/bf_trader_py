@@ -42,7 +42,7 @@ class Auth:
             self.__bf_pwd = result['data']['bf_pwd']
             Log.log_debug("bf user {}, bf pwd {}".format(self.__bf_userid, self.__bf_pwd))
         except Exception as f:
-            Log.log_error(traceback.format_tb(f.__traceback__))
+            Log.log_error(traceback.format_tb(f.__cause__))
             raise AuthException("Could not load credentials from VAULT") from f
 
     # Defining all the getters and setters here - they don't do anything fancy at the moment, but better to have them
