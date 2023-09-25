@@ -16,7 +16,7 @@ class Auth:
     crt_file = os.getenv("BF_CRT_FILE")
     key_file = os.getenv("BF_KEY_FILE")
     app_key = os.getenv("BF_AppKey")
-    Log.log_info("Auth class loaded - crt and key stuff {} {} {}".format(crt_file, key_file, app_key))
+    # Log.log_info("Auth class loaded - crt and key stuff {} {} {}".format(crt_file, key_file, app_key))
 
     def __init__(self):
         """
