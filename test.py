@@ -1,16 +1,17 @@
-import traceback
-import api.auth.auth_details as bf_auth
-from api.urls import Urls
-from api.call import Call
-from api.request_body import RequestBody
-from betfair.competitions import Competition
-from output import Output as Log
-from api.http_methods import Methods
-from betfair.eventType import EventType
-from betfair.event import Event
-from logic.simpleStategy import DefaultStrategy, FromFileStrategy
 from datetime import datetime, timedelta
+
+import api.auth.auth_details as bf_auth
+from api.auth.vault.vault_reader import VaultReader as Vault
+from api.call import Call
+from api.http_methods import Methods
+from api.request_body import RequestBody
+from api.urls import Urls
+from betfair.competitions import Competition
+from betfair.event import Event
+from betfair.eventType import EventType
 from betfair.market import Market, Target
+from logic.simpleStategy import FromFileStrategy
+from output import Output as Log
 
 
 class BFDriver:
@@ -23,6 +24,7 @@ class BFDriver:
         self.my_strategy = my_strategy
         Log.set_log_level(log_level)
 
+        self.myVault = Vault()
         self.myRequestBody = RequestBody()
         self.myAuth = bf_auth.Auth()
         self.myCall = Call(self.myAuth)
@@ -31,20 +33,32 @@ class BFDriver:
         self.myCompetitions = Competition()
         self.myEvent = Event()
 
-    def authenticate_to_betfair(self) -> bool:
-        try:
-            self.myAuth.get_credentials_from_vault()
-            self.myAuth.security_token = self.myCall.call_auth(self.myRequestBody.populate_template("CertAuth", {
-                "<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}))
-            Log.log_info("Token: {}".format(self.myAuth.security_token))
-            return True
-        except bf_auth.AuthException as g:
-            Log.log_error(g.__cause__)
-            return False
+    def get_token(self):
+        self.myAuth.get_credentials_from_vault()
+        self.myCall.auth = self.myAuth
+        token_valid = self.myAuth.validate_betfair_token(
+            self.myCall.call(http_method=Methods.POST,
+                             url=Urls.JSON_RPC_ACCOUNT,
+                             request_body=self.myRequestBody.
+                             get_template("getAccountFunds")
+                             )
+        )
+
+        if token_valid is not True:
+            self.myAuth.security_token = self.myCall.call_auth(
+                self.myRequestBody.populate_template(
+                    "CertAuth",
+                    {"<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}
+                )
+            )
+            self.myCall.auth = self.myAuth
+            self.myVault.update_secret(path="bf_token", key_value_dict={"bf_sso_token": self.myAuth.security_token})
+        Log.log_debug("Token: {}".format(self.myAuth.security_token))
+        return True
 
     def get_event_types(self) -> list[EventType]:
         df, event_type_list = self.myEventTypes.build_frame_from_json(
-            self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
+            self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.get_template("listEventTypes")))
         selected_event_types = []
         for event_type in event_type_list:
@@ -67,7 +81,7 @@ class BFDriver:
 
     def get_competition_ids(self) -> list[Competition]:
         df, my_comps = self.myCompetitions.build_frame_from_json(
-            self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
+            self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.populate_template("listCompetitions", {
                                  "<list_of_event_ids>": self.myEventTypeIds})))
         Log.log_debug(df.head())
@@ -91,7 +105,7 @@ class BFDriver:
 
     def get_events(self) -> list[Event]:
         df, my_event_list = self.myEvent.build_frame_from_json(
-            self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
+            self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.populate_template(
                                  "listEvents",
                                  {"<list_of_event_ids>": self.myEventTypeIds,
@@ -108,7 +122,7 @@ class BFDriver:
             # Log.log_info(event.open_date)
             if (ev.open_date - datetime.now()) < timedelta(days=self.my_strategy.MIN_DAYS_TILL_START):
                 Log.log_debug(f"Event to soon: {ev.open_date}")
-            elif(ev.open_date - datetime.now()) > timedelta(days=self.my_strategy.MAX_DAYS_TILL_START):
+            elif (ev.open_date - datetime.now()) > timedelta(days=self.my_strategy.MAX_DAYS_TILL_START):
                 Log.log_debug(f"Event to far away: {ev.open_date}")
             else:
                 Log.log_info(f"Event {ev.name} in range: {ev.open_date}")
@@ -121,7 +135,7 @@ class BFDriver:
 
         for event in my_events:
             df, market = self.myMarket.build_frame_from_json(
-                self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
+                self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                                  request_body=self.myRequestBody.populate_template(
                                      "marketCatalogue",
                                      {"<list_of_event_ids>": [event.id],
@@ -141,7 +155,7 @@ class BFDriver:
         for target in target_list:
             Log.log_debug("Looking up odds for {}".format(target.myMarkets.id))
             Log.log_debug("Runners odds {}".format(target.myMarkets.runners))
-            json_resp = self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC,
+            json_resp = self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                                          request_body=self.myRequestBody.populate_template("listMarketBook", {
                                              "<ListOfMarketIDs>": [target.myMarkets.id]}))
             Log.log_debug(json_resp)
@@ -153,12 +167,12 @@ class BFDriver:
 
 # BF = BFDriver(DefaultStrategy(), Log.INFO)
 # BF = BFDriver(DefaultStrategy(), Log.DEBUG)
-BF = BFDriver(FromFileStrategy(), Log.INFO)
+BF = BFDriver(FromFileStrategy(), Log.DEBUG)
 
 # Step 1: Authenticate and get a Session Token!
-if not BF.authenticate_to_betfair():
-    raise bf_auth.AuthException("Failed to authenticate to vault.  Validate that it is running (and unsealed) on port "
-                                "8200.  See error message above for exception details")
+if not BF.get_token():
+    raise bf_auth.AuthException("Failed to authenticate to vault.  Validate that it is running (and unsealed) on "
+                                "port 8200.  See error message above for exception details")
 
 Log.log_info("##############    Step 1 Complete")
 

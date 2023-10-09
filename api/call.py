@@ -16,14 +16,17 @@ class CallException(Exception):
 
 class Call:
     @decorators.log_attrib.dump_args
-    def __init__(self, auth):
+    def __init__(self, auth=None):
         """
         Call init function, sets up basic variables, requires an auth object with credentials
         :param auth:
         """
         self.__url = None
-        self.__auth = auth
-        self.headers = {"X-Application": auth.app_key}
+
+        if auth is not None:
+            self.__auth = auth
+            self.headers = {"X-Application": auth.app_key}
+
         Log.log_debug("Call object instantiated")
 
     def call(self, http_method: Methods, url: Urls, request_body: dict) -> Response:
@@ -76,3 +79,13 @@ class Call:
     @url.setter
     def url(self, value):
         self.__url = value
+
+    @property
+    def auth(self):
+        return self.__auth
+
+    # If a new auth object is added, it needs to be reflected in the header
+    @auth.setter
+    def auth(self, value):
+        self.__auth = value
+        self.headers.update({"X-Authentication": value.security_token})

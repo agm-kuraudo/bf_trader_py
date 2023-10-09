@@ -16,6 +16,8 @@ class Auth:
     crt_file = os.getenv("BF_CRT_FILE")
     key_file = os.getenv("BF_KEY_FILE")
     app_key = os.getenv("BF_AppKey")
+
+    # session_token = os.getenv("BF_SessionToken")
     # Log.log_info("Auth class loaded - crt and key stuff {} {} {}".format(crt_file, key_file, app_key))
 
     def __init__(self):
@@ -40,10 +42,31 @@ class Auth:
             Log.log_debug("Result: {}".format(result))
             self.__bf_userid = result['data']['bf_userid']
             self.__bf_pwd = result['data']['bf_pwd']
-            Log.log_debug("bf user {}, bf pwd {}".format(self.__bf_userid, self.__bf_pwd))
+
+            result = my_vault.read_secret("bf_token")
+
+            self.__securityToken = result['data']['bf_sso_token']
+            Log.log_debug("bf user {}, bf pwd {}, sso token {}"
+                          .format(self.__bf_userid, self.__bf_pwd, self.__securityToken))
         except Exception as f:
             Log.log_error(traceback.format_tb(f.__cause__))
             raise AuthException("Could not load credentials from VAULT") from f
+
+    @staticmethod
+    def validate_betfair_token(response) -> bool:
+        Log.log_info(response.json())
+        json_response = response.json()
+        if json_response.get("result") is not None:
+            Log.log_info(json_response["result"])
+            return True
+        elif (json_response.get("error").get("data").get("AccountAPINGException").get("errorCode") ==
+              "INVALID_SESSION_INFORMATION"):
+            Log.log_warning("Session is invalid: {}"
+                            .format(json_response["error"]["data"]["AccountAPINGException"]["errorCode"]))
+            return False
+        else:
+            Log.log_error("Unknown error when attempting to check session: {}".format(response.text))
+            return False
 
     # Defining all the getters and setters here - they don't do anything fancy at the moment, but better to have them
     # set

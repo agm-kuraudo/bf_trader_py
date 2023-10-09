@@ -70,6 +70,15 @@ class RequestBody:
             "id": 1
         }
 
+        self.templates["getAccountFunds"] = {
+            "jsonrpc": "2.0",
+            "method": "AccountAPING/v1.0/getAccountFunds",
+            "params": {
+                "wallet": "UK"
+            },
+            "id": 1
+            }
+
     @decorators.log_attrib.dump_args
     def set_template(self, template_name: str, template_body: dict) -> None:
         """
@@ -117,7 +126,7 @@ class RequestBody:
                     Log.log_debug("IF Statement TRUE {}".format(loop_dict[key]))
                     if type(replacement) == str:
                         new_dict[key] = value.replace(original, replacement)
-                        Log.log_info("Making Replacements {} : {}".format(original, replacement))
+                        Log.log_debug("Making Replacements {} : {}".format(original, replacement))
                     elif loop_dict[key] == original:
                         new_dict[key] = replacement
                     else:
