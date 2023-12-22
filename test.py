@@ -10,6 +10,7 @@ from betfair.competitions import Competition
 from betfair.event import Event
 from betfair.eventType import EventType
 from betfair.market import Market, Target
+from betfair.position import Position
 from logic.simpleStategy import FromFileStrategy
 from output import Output as Log
 
@@ -32,6 +33,7 @@ class BFDriver:
         self.myEventTypes = EventType()
         self.myCompetitions = Competition()
         self.myEvent = Event()
+        self.myPosition = Position()
 
     def get_token(self):
         self.myAuth.get_credentials_from_vault()
@@ -120,7 +122,9 @@ class BFDriver:
         filtered_events = []
         for ev in all_events:
             # Log.log_info(event.open_date)
-            if (ev.open_date - datetime.now()) < timedelta(days=self.my_strategy.MIN_DAYS_TILL_START):
+            if ev.id in self.myPosition.position_events:
+                Log.log_debug(f"Event already has a position taken {ev.id}")
+            elif (ev.open_date - datetime.now()) < timedelta(days=self.my_strategy.MIN_DAYS_TILL_START):
                 Log.log_debug(f"Event to soon: {ev.open_date}")
             elif (ev.open_date - datetime.now()) > timedelta(days=self.my_strategy.MAX_DAYS_TILL_START):
                 Log.log_debug(f"Event to far away: {ev.open_date}")
@@ -168,6 +172,9 @@ class BFDriver:
 # BF = BFDriver(DefaultStrategy(), Log.INFO)
 # BF = BFDriver(DefaultStrategy(), Log.DEBUG)
 BF = BFDriver(FromFileStrategy(), Log.DEBUG)
+
+# Below added just to test the position work for SP-72
+BF.myPosition.position_events = '32866443'
 
 # Step 1: Authenticate and get a Session Token!
 if not BF.get_token():
