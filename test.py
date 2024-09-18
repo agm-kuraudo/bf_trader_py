@@ -1,3 +1,10 @@
+"""
+test.py is used to "Power" the betfair trading application.  It may be replaced in future.  BFDriver class is also
+defined in this file and it does the heavy lifting of creating and storing the various objects. Not sure why I did
+it this way but its not worth changing at the moment. The methods in BFDriver are not really discrete methods as they
+have to run in order to work as expected.
+"""
+
 from datetime import datetime, timedelta
 
 import api.auth.auth_details as bf_auth
@@ -11,14 +18,17 @@ from betfair.event import Event
 from betfair.eventType import EventType
 from betfair.market import Market, Target
 from betfair.position import Position
-from logic.simpleStategy import FromFileStrategy
+from logic.simpleStategy import DefaultStrategy, FromFileStrategy
 from output import Output as Log
 
 
 class BFDriver:
 
-    def __init__(self, my_strategy, log_level):
+    #Class requires a defined strategy and log level
+    def __init__(self, my_strategy:DefaultStrategy, log_level:int):
 
+        # When initialised the BFDriver class creates a lot of variables that can be used throughout all the methods
+        # these act basically as Global variables for the program
         self.TargetsList = None
         self.myCompIds = None
         self.myEventTypeIds = None
@@ -36,8 +46,20 @@ class BFDriver:
         self.myPosition = Position()
 
     def get_token(self):
+        # myAuth was created when the BFDriver was instantiated. It is an Auth object based on class
+        # defined in api/auth/auth_details.py
+        # The get_credentials_from_vault method does not return anything, it directly enriches the Auth object with
+        # information gathered from the vault
         self.myAuth.get_credentials_from_vault()
+
+        # myCall is an instance of the Call class - api/call.py. Here we are updating a variable in that class that
+        # holds the auth details with the new values picked up in last call
         self.myCall.auth = self.myAuth
+
+        # Here we are calling the "getAccountFunds" api on betfair via the Call object and then passing the result
+        # to the validate_betfair_token function. This will return a True/False result based on whether we got
+        # a successful response.  We will be picking up the last token used from Vault which may well have timed out
+        # depending on how long it's been since the script was run.
         token_valid = self.myAuth.validate_betfair_token(
             self.myCall.call(http_method=Methods.POST,
                              url=Urls.JSON_RPC_ACCOUNT,
@@ -46,14 +68,20 @@ class BFDriver:
                              )
         )
 
+        # If the token isn't value then... Let's Authenticate again and get a fresh token
         if token_valid is not True:
+            # call_auth function is a special request method that uses the certificate along with the request
+            # The myRequestBody variable is a RequestBody (api/request_body.py) object, We are swapping the placeholder
+            # values with the username and password (held in the Auth object).
             self.myAuth.security_token = self.myCall.call_auth(
                 self.myRequestBody.populate_template(
                     "CertAuth",
                     {"<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}
                 )
             )
+            #Update the myCall object with the update Auth object (which will have the right token)
             self.myCall.auth = self.myAuth
+            # Update the vault with the new SSO token so it can be referenced on the next run
             self.myVault.update_secret(path="bf_token", key_value_dict={"bf_sso_token": self.myAuth.security_token})
         Log.log_debug("Token: {}".format(self.myAuth.security_token))
         return True

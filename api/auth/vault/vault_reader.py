@@ -22,7 +22,7 @@ class VaultReader:
         Log.log_debug("vaultReader Object initialised")
         Log.log_debug("VAULT_TOKEN environment variables is: " + os.getenv('VAULT_TOKEN'))
         try:
-            self.client = hvac.Client(url='http://127.0.0.1:8200', token=os.getenv('VAULT_TOKEN'))
+            self.client = hvac.Client(url='http://172.17.0.2:8200', token=os.getenv('VAULT_TOKEN'))
             Log.log_debug("Created new vault object {}".format(self.client))
         except Exception as e:
             Log.log_error(e.__cause__)
