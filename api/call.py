@@ -32,8 +32,7 @@ class Call:
     def call(self, http_method: Methods, url: Urls, request_body: dict) -> Response:
         """
         This method makes a HTTP request to a URL. It currently only needs to do POST requests
-        TODO: utilise the http_method to be able to send all relevant HTTP verbs
-        :param http_method: GET/POST/PUT/DELETE etc - currently redundant as all requests are POST
+        :param http_method: GET/POST/PUT/DELETE etc
         :param url: The URL of the end point
         :param request_body: The body of the HTTP message
         :return: Returns the "Response" object (part of the requests module)
@@ -41,13 +40,13 @@ class Call:
         self.url = url
         Log.log_debug("Making request to {}".format(url))
         Log.log_debug("headers: {}, RequestBody: {}".format(self.headers, request_body))
-        r = requests.post(headers=self.headers, url=self.url, json=request_body)
+        r = requests.request(method=str(http_method),headers=self.headers, url=self.url, json=request_body)
         Log.log_debug(r.text)
         return r
 
     @decorators.log_attrib.dump_args
     def call_auth(self, request_body: dict) -> str:
-        """
+        """1
         This is a special instance of "call" design to authenticate users with a certificate and capture the login
         session
         :param request_body this will be the auth template with replacements

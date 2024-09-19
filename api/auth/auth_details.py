@@ -8,7 +8,13 @@ class AuthException(Exception):
     pass
 
 
-'''Authentication Package added as per SP-36'''
+'''
+Authentication Package added as per SP-36
+This class doesn't really do Everything associated with Authentication as the is the "call_auth" method in the call
+class that deals with the actual API autehtnication.  This class stores the location of the certificates and the
+AppKey (read from environment variables). It also handles (with the associated sub modules) getting information
+from the vault (get_credentials_from_vault) as well as verifying that an SSO Token is valid (validate_betfair_token)
+'''
 
 
 class Auth:
@@ -52,6 +58,8 @@ class Auth:
             Log.log_error(traceback.format_tb(f.__cause__))
             raise AuthException("Could not load credentials from VAULT") from f
 
+    # This method will make a call to the Account API and check it works OK, and we have a valid session - returns
+    # true or false
     @staticmethod
     def validate_betfair_token(response) -> bool:
         Log.log_info(response.json())
