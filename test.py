@@ -128,8 +128,13 @@ class BFDriver:
         # Return the selected events as a list of Event objects
         return selected_event_types
 
+    # get_competition_ids method calls the listCompetitions api and returns all competitions associated with our
+    # selected event ids. For example Soccer has the Premier League, Championship etc.  It then filters based
+    # on competitions specified in our strategy and gets only the desired ids.
     def get_competition_ids(self) -> list[Competition]:
 
+        # This calls the build_frame_from_json method on the competition object - betfair/competitions.py. It
+        # returns a dataframe and a list of Competition objects
         df, my_comps = (self.myCompetitions.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.populate_template("listCompetitions",
@@ -144,22 +149,30 @@ class BFDriver:
 
         Log.log_debug(df.head())
 
+        # selected comps is initialised as a blank list
         selected_comps = []
+
+        # For each competition in our list...
         for ev in my_comps:
+            # If the competition name matches ones in our strategy...
             if ev.name in self.my_strategy.COMPETITIONS:
+                # append it to our selected list
                 selected_comps.append(ev)
                 Log.log_info(ev)
+        # If we didn't find any matching competitions output a useful error message
         if len(selected_comps) == 0:
             Log.log_error("No competitions found matching: {}. Possible options will be listed below".format(
                 self.my_strategy.COMPETITIONS))
             for ev in my_comps:
                 Log.log_error(ev)
             return 0
+        # else we save the competition ids only to a list
         else:
             self.myCompIds = []
             for compType in selected_comps:
                 self.myCompIds.append(compType.id)
-            return selected_comps
+        # return the selected competitions as a list of competition objects
+        return selected_comps
 
     def get_events(self) -> list[Event]:
         df, my_event_list = self.myEvent.build_frame_from_json(
