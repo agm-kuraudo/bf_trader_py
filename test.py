@@ -24,9 +24,8 @@ from output import Output as Log
 
 class BFDriver:
 
-    #Class requires a defined strategy and log level
+    # Class requires a defined strategy and log level
     def __init__(self, my_strategy:DefaultStrategy, log_level:int):
-
         # When initialised the BFDriver class creates a lot of variables that can be used throughout all the methods
         # these act basically as Global variables for the program
         self.TargetsList = None
@@ -45,11 +44,13 @@ class BFDriver:
         self.myEvent = Event()
         self.myPosition = Position()
 
+    # get_token method is used to retrieve the SSO Token required to access the Betfair API.  THe last token
+    # stored in the vault will be used initially for a test call, if It's still valid we will continue with it.
+    # If its no longer valid (24 hour lifespan?) we will call the relevant authentication calls and get a new one
     def get_token(self):
-        # myAuth was created when the BFDriver was instantiated. It is an Auth object based on class
-        # defined in api/auth/auth_details.py
-        # The get_credentials_from_vault method does not return anything, it directly enriches the Auth object with
-        # information gathered from the vault
+        # myAuth was created when the BFDriver was instantiated. It is an Auth object based on class defined in
+        # api/auth/auth_details.py. The get_credentials_from_vault method does not return anything, it directly enriches
+        # the Auth object with information gathered from the vault
         self.myAuth.get_credentials_from_vault()
 
         # myCall is an instance of the Call class - api/call.py. Here we are updating a variable in that class that
@@ -79,22 +80,37 @@ class BFDriver:
                     {"<USERID>": self.myAuth.bf_userid, "<PWD>": self.myAuth.bf_pwd}
                 )
             )
-            #Update the myCall object with the update Auth object (which will have the right token)
+            # Update the myCall object with the update Auth object (which will have the right token)
             self.myCall.auth = self.myAuth
             # Update the vault with the new SSO token so it can be referenced on the next run
             self.myVault.update_secret(path="bf_token", key_value_dict={"bf_sso_token": self.myAuth.security_token})
         Log.log_debug("Token: {}".format(self.myAuth.security_token))
         return True
 
+    # get_event_types method will return a list of all events that Betfair supports and will filter it out
+    # against the event types specified in our strategies and return the correct IDs only for those in a list
+    # Event types include things like "Soccer" and "Horse Racing"
     def get_event_types(self) -> list[EventType]:
+
+        # This code calls the build_frame_from_json method in betfair/eventType.py and returns a dataframe and list of
+        # Event type objects based on the JSON returned from the "listEventTypes" api call.
+        # The dataframe element isn't really used much but have left it in case it's useful in the future.
         df, event_type_list = self.myEventTypes.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.get_template("listEventTypes")))
+
+        # Create a new list which is going to hold the events that match our filter
         selected_event_types = []
+
+        # for each event type returned..
         for event_type in event_type_list:
+            # If the event type is one of those mentioned in our Strategy...
             if event_type.name in self.my_strategy.EVENTS:
+                # Add to our selected events list
                 selected_event_types.append(event_type)
                 Log.log_info(event_type)
+
+        # if we didn't get any matched events, raise a useful error message
         if len(selected_event_types) == 0:
             Log.log_error(
                 "No event types found matching: {}. Possible options will be listed below".format(
@@ -102,18 +118,30 @@ class BFDriver:
             for event_type in event_type_list:
                 Log.log_error(event_type)
             return 0
+        # If we did get matches, save just the event type ids to a separate list variable we will use in subsequent
+        # methods
         else:
             self.myEventTypeIds = []
             for eventType in selected_event_types:
                 self.myEventTypeIds.append(eventType.id)
 
-            return selected_event_types
+        # Return the selected events as a list of Event objects
+        return selected_event_types
 
     def get_competition_ids(self) -> list[Competition]:
-        df, my_comps = self.myCompetitions.build_frame_from_json(
+
+        df, my_comps = (self.myCompetitions.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                             request_body=self.myRequestBody.populate_template("listCompetitions", {
-                                 "<list_of_event_ids>": self.myEventTypeIds})))
+                             request_body=self.myRequestBody.populate_template("listCompetitions",
+                                                                               {
+                                                                                   "<list_of_event_ids>":
+                                                                                       self.myEventTypeIds
+                                                                               }
+                                                                               )
+                             )
+        )
+        )
+
         Log.log_debug(df.head())
 
         selected_comps = []
@@ -138,9 +166,14 @@ class BFDriver:
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.populate_template(
                                  "listEvents",
-                                 {"<list_of_event_ids>": self.myEventTypeIds,
-                                  "<list_of_competition_ids>": self.myCompIds,
-                                  "<list_of_market_types>": self.my_strategy.MARKET_TYPEs})))
+                                 {
+                                     "<list_of_event_ids>": self.myEventTypeIds,
+                                     "<list_of_competition_ids>": self.myCompIds,
+                                    "<list_of_market_types>": self.my_strategy.MARKET_TYPEs
+                                 }
+                             )
+                             )
+        )
 
         Log.log_debug(df.info())
 
@@ -188,8 +221,13 @@ class BFDriver:
             Log.log_debug("Looking up odds for {}".format(target.myMarkets.id))
             Log.log_debug("Runners odds {}".format(target.myMarkets.runners))
             json_resp = self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                         request_body=self.myRequestBody.populate_template("listMarketBook", {
-                                             "<ListOfMarketIDs>": [target.myMarkets.id]}))
+                                         request_body=self.myRequestBody.populate_template(
+                                             "listMarketBook",
+                                             {
+                                             "<ListOfMarketIDs>": [target.myMarkets.id]
+                                             }
+                                         )
+                                         )
             Log.log_debug(json_resp)
             runner_list = json_resp.json()["result"][0]["runners"]
             Log.log_debug(len(target.myMarkets.runners))
