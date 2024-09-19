@@ -174,7 +174,12 @@ class BFDriver:
         # return the selected competitions as a list of competition objects
         return selected_comps
 
+    # get_events method calls "listEvents" api call supplying the event ids and competition ids that have been
+    # gleamed from the get_event_types and get_competition_id methods as well as the Market Type specified in the
+    # strategy.
     def get_events(self) -> list[Event]:
+        # build_frame_from_json called on betfair/event.py object which returns all possible events based on the
+        # supplied filters
         df, my_event_list = self.myEvent.build_frame_from_json(
             self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                              request_body=self.myRequestBody.populate_template(
@@ -189,11 +194,17 @@ class BFDriver:
         )
 
         Log.log_debug(df.info())
-
+        # This return statement calls the "fiter_events" method also contained in this class remove events outside the
+        # required timeline and those which already have an active position open. It also uses slicing to cut down the
+        # events to the Maximum number supplied in the strategy
         return self.filter_events(my_event_list)[:self.my_strategy.MAX_EVENTS]
 
+    # filter_events method is supplied a full list of events that match the basic filter and returns a list of
+    # events that are within the supplied timeline (MIN and MAX days until start) and do not already have a position
+    # on them
     def filter_events(self, all_events: list[Event]) -> list[Event]:
         filtered_events = []
+        # loop through all the events and include all that don't match the IF and ELIF statements
         for ev in all_events:
             # Log.log_info(event.open_date)
             if ev.id in self.myPosition.position_events:
@@ -205,30 +216,43 @@ class BFDriver:
             else:
                 Log.log_info(f"Event {ev.name} in range: {ev.open_date}")
                 filtered_events.append(ev)
+        # return a sorted list either newest or oldest first - depending on what is set in the strategy
         return sorted(filtered_events, key=lambda item: item.open_date, reverse=not self.my_strategy.NEWEST_FIRST)
 
+    # get_target_markets calls the marketCatalogue api. The market is something that can be bet on - typically
+    # MATCH_ODDs for example and will include the "Runners" e.g. Home Team Win, Draw etc. Based on the events
+    # supplied we extract the market details and return them as a list of Target objects (betfair/market.py)
     def get_target_markets(self, my_events) -> list[Target]:
+        # Here we create placeholder variables for lists of Markets and Targets.  Note that Target is basically a
+        # wrapper class that contains an Event object and an Associated Market object. We already have the event,
+        # this function extracts the Market details and enriches the Target object with it
         markets_list = []
         self.TargetsList = []
 
+        # for each event supplied...
         for event in my_events:
+            # Create a market object based on calling the "marketCatalogue" api with just the individual event id
             df, market = self.myMarket.build_frame_from_json(
                 self.myCall.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                                  request_body=self.myRequestBody.populate_template(
                                      "marketCatalogue",
                                      {"<list_of_event_ids>": [event.id],
                                       "<list_of_market_types>": self.my_strategy.MARKET_TYPEs})))
-
+            # add the market extracted to the list of market ids
             markets_list.append(market[0])
+            # append a new Target object to the list with the relevant event and Market.
             self.TargetsList.append(Target(event, market[0]))
 
             Log.log_debug(self.myMarket.description['marketTime'] - datetime.now())
-
+            # The market object contains "runners" e.g. Spurs, Draw, Arsenal, just outputting them to log here
             for runner in self.myMarket.runners:
                 Log.log_debug(runner)
 
+        # Return the complete list of Targets
         return self.TargetsList
 
+    # update_odds_for_targets calls "listMarketBook" to update the odds for all the targets supplied in the
+    # target_list. It updates the values directly in the object so it doesn't directly return anything.
     def update_odds_for_targets(self, target_list) -> None:
         for target in target_list:
             Log.log_debug("Looking up odds for {}".format(target.myMarkets.id))
@@ -242,18 +266,23 @@ class BFDriver:
                                          )
                                          )
             Log.log_debug(json_resp)
+            # the updated odds will be returned in the runners section
             runner_list = json_resp.json()["result"][0]["runners"]
             Log.log_debug(len(target.myMarkets.runners))
+            # Update each running in our object with the right odds.  Writing these comments
+            # way after the code and I am not 100% sure here! need to refresh
             for runners in target.myMarkets.runners:
                 runners.odds = runner_list
 
+
+#Create a new BFDriver class, supplying the strategy and the log level.
 
 # BF = BFDriver(DefaultStrategy(), Log.INFO)
 # BF = BFDriver(DefaultStrategy(), Log.DEBUG)
 BF = BFDriver(FromFileStrategy(), Log.DEBUG)
 
 # Below added just to test the position work for SP-72
-BF.myPosition.position_events = '32866443'
+# BF.myPosition.position_events = '32866443'
 
 # Step 1: Authenticate and get a Session Token!
 if not BF.get_token():
@@ -288,6 +317,8 @@ Log.log_info("There are {} events available".format(len(myEvents)))
 for event in myEvents:
     Log.log_info(f"Event: {event.name}")
 
+# Step 5: Get the correct markets associated with these events.
+
 myTargets = BF.get_target_markets(myEvents)
 if len(myTargets) == 0:
     exit(1)
@@ -295,5 +326,7 @@ Log.log_info("{} Targets identified".format(len(myTargets)))
 Log.log_debug(myTargets[0].myMarkets.runners)
 
 Log.log_info("##############  Step 5 Complete")
+
+# Get the updated odds for these targets
 
 BF.update_odds_for_targets(myTargets)
