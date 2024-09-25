@@ -1,6 +1,6 @@
 from io import StringIO
 import decorators.log_attrib
-from betfair.BetfairObject import BetfairObject
+from betfair.BetfairObject import BetfairObject, BetfairObjectException
 from output import Output as Log
 import pandas as pd
 
@@ -25,31 +25,37 @@ class Competition(BetfairObject):
         self.__region = json['competitionRegion']
         self.__id = json["competition"]['id']
         self.__name = json["competition"]['name']
+        if not all(attr is not None for attr in [self.__marketCount, self.__region, self.__id, self.__name]):
+            raise BetfairObjectException("Competition Object can't initialise as all values not returned in json")
+
         return Competition(comp_id=self.__id, name=self.__name, market_count=self.__marketCount, region=self.__region)
 
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
-        Log.log_debug("buildFrameFromJSON called")
-        Log.log_debug("json: {}".format(json))
-        df = pd.read_json(StringIO(json.text))
-        Log.log_debug("df: {}".format(df.head()))
+        try:
+            Log.log_debug("buildFrameFromJSON called")
+            Log.log_debug("json: {}".format(json))
+            df = pd.read_json(StringIO(json.text))
+            Log.log_debug("df: {}".format(df.head()))
 
-        compiled_df = pd.DataFrame({'competitionID': pd.Series(dtype='str'),
-                                    'competitionName': pd.Series(dtype='str'),
-                                    'marketCount': pd.Series(dtype='int'),
-                                    'marketRegion': pd.Series(dtype='str')})
+            compiled_df = pd.DataFrame({'competitionID': pd.Series(dtype='str'),
+                                        'competitionName': pd.Series(dtype='str'),
+                                        'marketCount': pd.Series(dtype='int'),
+                                        'marketRegion': pd.Series(dtype='str')})
 
-        event_df = df["result"]
-        Log.log_debug("event_df: {}".format(event_df.head()))
+            event_df = df["result"]
+            Log.log_debug("event_df: {}".format(event_df.head()))
 
-        event_list = []
+            event_list = []
 
-        for key, competition in event_df.items():
-            Log.log_debug(competition)
-            event_list.append(self.build_from_json(competition))
-            compiled_df.loc[len(compiled_df)] = {'competitionID': self.__id, 'competitionName': self.__name,
-                                                 'marketCount': self.__marketCount, 'marketRegion': self.__region}
-        return compiled_df, event_list
+            for key, competition in event_df.items():
+                Log.log_debug(competition)
+                event_list.append(self.build_from_json(competition))
+                compiled_df.loc[len(compiled_df)] = {'competitionID': self.__id, 'competitionName': self.__name,
+                                                     'marketCount': self.__marketCount, 'marketRegion': self.__region}
+            return compiled_df, event_list
+        except Exception as e:
+            raise BetfairObjectException("Unexpected error Competition Cannot build frame from json") from e
 
     def __str__(self):
         return (

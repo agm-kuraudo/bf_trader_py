@@ -4,6 +4,8 @@ import api
 from output import Output as Log
 import decorators.log_attrib
 
+class RequestBodyException(Exception):
+    pass
 
 class RequestBody:
     @decorators.log_attrib.dump_args
@@ -107,29 +109,32 @@ class RequestBody:
         :param inner_dict:
         :return:
         """
-        new_dict = {}
+        try:
+            new_dict = {}
 
-        if inner_dict is None:
-            loop_dict = self.templates[template_name]
-        else:
-            loop_dict = inner_dict
+            if inner_dict is None:
+                loop_dict = self.templates[template_name]
+            else:
+                loop_dict = inner_dict
 
-        for original, replacement in replace_pairs.items():
-            Log.log_debug("Original: {}, Replacement: {}".format(original, replacement))
-            for key, value in loop_dict.items():
-                Log.log_debug("key: {}, value: {}".format(key, value))
+            for original, replacement in replace_pairs.items():
+                Log.log_debug("Original: {}, Replacement: {}".format(original, replacement))
+                for key, value in loop_dict.items():
+                    Log.log_debug("key: {}, value: {}".format(key, value))
 
-                if type(value) == dict:
-                    Log.log_debug("Nested Dictionary in this request: {}".format(value))
-                    new_dict[key] = self.populate_template(None, replace_pairs, value)
-                if key not in new_dict or original in str(new_dict.get(key)):
-                    Log.log_debug("IF Statement TRUE {}".format(loop_dict[key]))
-                    if type(replacement) == str:
-                        new_dict[key] = value.replace(original, replacement)
-                        Log.log_debug("Making Replacements {} : {}".format(original, replacement))
-                    elif loop_dict[key] == original:
-                        new_dict[key] = replacement
-                    else:
-                        new_dict[key] = value
+                    if type(value) == dict:
+                        Log.log_debug("Nested Dictionary in this request: {}".format(value))
+                        new_dict[key] = self.populate_template(None, replace_pairs, value)
+                    if key not in new_dict or original in str(new_dict.get(key)):
+                        Log.log_debug("IF Statement TRUE {}".format(loop_dict[key]))
+                        if type(replacement) == str:
+                            new_dict[key] = value.replace(original, replacement)
+                            Log.log_debug("Making Replacements {} : {}".format(original, replacement))
+                        elif loop_dict[key] == original:
+                            new_dict[key] = replacement
+                        else:
+                            new_dict[key] = value
 
-        return new_dict
+            return new_dict
+        except Exception as e:
+            raise RequestBodyException("Unexpected error whilst populating template") from e

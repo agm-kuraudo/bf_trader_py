@@ -1,6 +1,6 @@
 from io import StringIO
 
-from betfair.BetfairObject import BetfairObject
+from betfair.BetfairObject import BetfairObject, BetfairObjectException
 import pandas as pd
 from output import Output as Log
 import decorators.log_attrib
@@ -47,6 +47,8 @@ class EventType(BetfairObject):
         self.__marketCount = json['marketCount']
         self.__id = json["eventType"]['id']
         self.__name = json["eventType"]['name']
+        if not all(attr is not None for attr in [self.__marketCount, self.__id, self.__name]):
+            raise BetfairObjectException("Event Type Object can't initialise as all values not returned in json")
         return EventType(event_type_id=self.__id, name=self.__name, market_count=self.__marketCount)
 
     def __str__(self):

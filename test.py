@@ -21,6 +21,8 @@ from betfair.position import Position
 from logic.simpleStategy import DefaultStrategy, FromFileStrategy
 from output import Output as Log
 
+class BFDriverException(Exception):
+    pass
 
 class BFDriver:
 
@@ -294,21 +296,21 @@ Log.log_info("##############    Step 1 Complete")
 # Step 2: Extract the update to date for Event ID(s) for selected events
 myEventTypes = BF.get_event_types()
 if myEventTypes == 0:
-    exit(1)
+    raise BFDriverException("Failed at step 2 - no event types")
 
 Log.log_info("##############    Step 2 Complete")
 
 # Step 3: Extract the competition IDs for my selected competitions
 myComps = BF.get_competition_ids()
 if myComps == 0:
-    exit(1)
+    raise BFDriverException("Failed at step 3 - no Competitions")
 
 Log.log_info("##############    Step 3 Complete")
 
 # Step 4 : Extract the events matching our competition and event types
 myEvents = BF.get_events()
 if myEvents == 0:
-    exit(1)
+    raise BFDriverException("Failed at step 4 - no events")
 
 Log.log_info("##############    Step 4 Complete")
 
@@ -321,7 +323,7 @@ for event in myEvents:
 
 myTargets = BF.get_target_markets(myEvents)
 if len(myTargets) == 0:
-    exit(1)
+    raise BFDriverException("Failed at step 5 - no targets")
 Log.log_info("{} Targets identified".format(len(myTargets)))
 Log.log_debug(myTargets[0].myMarkets.runners)
 

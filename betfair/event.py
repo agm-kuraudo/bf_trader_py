@@ -1,7 +1,7 @@
 from datetime import datetime
 from io import StringIO
 
-from betfair.BetfairObject import BetfairObject
+from betfair.BetfairObject import BetfairObject, BetfairObjectException
 import pandas as pd
 from output import Output as Log
 import decorators.log_attrib
@@ -35,35 +35,43 @@ class Event(BetfairObject):
             self.__countryCode = ""
         self.__timezone = json["event"]["timezone"]
         self.__openDate = datetime.strptime(json["event"]["openDate"], '%Y-%m-%dT%H:%M:%S.000Z')
+
+        if not all(attr is not None for attr in
+                   [self.__marketCount, self.__timezone, self.__id, self.__name, self.__openDate]):
+            raise BetfairObjectException("Event Object can't initialise as all values not returned in json")
+
         return Event(event_id=self.__id, name=self.__name, country_code=self.__countryCode, timezone=self.__timezone,
                      open_date=self.__openDate, market_count=self.__marketCount)
 
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
-        Log.log_debug("buildFrameFromJSON called")
-        Log.log_debug("json: {}".format(json))
-        df = pd.read_json(StringIO(json.text))
-        Log.log_debug("df: {}".format(df.head()))
+        try:
+            Log.log_debug("buildFrameFromJSON called")
+            Log.log_debug("json: {}".format(json))
+            df = pd.read_json(StringIO(json.text))
+            Log.log_debug("df: {}".format(df.head()))
 
-        compiled_df = pd.DataFrame({'eventID': pd.Series(dtype='str'),
-                                    'eventName': pd.Series(dtype='str'),
-                                    'marketCount': pd.Series(dtype='int'),
-                                    'countryCode': pd.Series(dtype='str'),
-                                    'timezone': pd.Series(dtype='str'),
-                                    'openDate': pd.Series(dtype='datetime64[ns]')})
+            compiled_df = pd.DataFrame({'eventID': pd.Series(dtype='str'),
+                                        'eventName': pd.Series(dtype='str'),
+                                        'marketCount': pd.Series(dtype='int'),
+                                        'countryCode': pd.Series(dtype='str'),
+                                        'timezone': pd.Series(dtype='str'),
+                                        'openDate': pd.Series(dtype='datetime64[ns]')})
 
-        event_df = df["result"]
-        Log.log_debug("event_df: {}".format(event_df.head()))
+            event_df = df["result"]
+            Log.log_debug("event_df: {}".format(event_df.head()))
 
-        event_list = []
+            event_list = []
 
-        for key, event in event_df.items():
-            Log.log_debug(event)
-            event_list.append(self.build_from_json(event))
-            compiled_df.loc[len(compiled_df)] = {'eventID': self.__id, 'eventName': self.__name,
-                                                 'marketCount': self.__marketCount, 'countryCode': self.__countryCode,
-                                                 'timezone': self.__timezone, 'openDate': self.__openDate}
-        return compiled_df, event_list
+            for key, event in event_df.items():
+                Log.log_debug(event)
+                event_list.append(self.build_from_json(event))
+                compiled_df.loc[len(compiled_df)] = {'eventID': self.__id, 'eventName': self.__name,
+                                                     'marketCount': self.__marketCount, 'countryCode': self.__countryCode,
+                                                     'timezone': self.__timezone, 'openDate': self.__openDate}
+            return compiled_df, event_list
+        except Exception as e:
+            raise BetfairObjectException("Unexpected error Event Cannot build frame from json") from e
 
     def __str__(self):
         return (
