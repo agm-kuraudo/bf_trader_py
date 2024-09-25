@@ -33,6 +33,11 @@ class Auth:
         self.__bf_userid = None
         self.__bf_pwd = None
         self.__securityToken = None
+
+        if Auth.crt_file is None or Auth.key_file is None or Auth.app_key is None:
+            raise AuthException("Environment variables no defined - check BF_CRT_FILE and BF_KEY_FILE"
+                                " and BF_AppKey exist")
+
         Log.log_debug("Auth object instantiated")
 
     # @api.decorators.SimpleDecorator
@@ -62,19 +67,23 @@ class Auth:
     # true or false
     @staticmethod
     def validate_betfair_token(response) -> bool:
-        Log.log_info(response.json())
-        json_response = response.json()
-        if json_response.get("result") is not None:
-            Log.log_info(json_response["result"])
-            return True
-        elif (json_response.get("error").get("data").get("AccountAPINGException").get("errorCode") ==
-              "INVALID_SESSION_INFORMATION"):
-            Log.log_warning("Session is invalid: {}"
-                            .format(json_response["error"]["data"]["AccountAPINGException"]["errorCode"]))
-            return False
-        else:
-            Log.log_error("Unknown error when attempting to check session: {}".format(response.text))
-            return False
+        try:
+            Log.log_info(response.json())
+            json_response = response.json()
+            if json_response.get("result") is not None:
+                Log.log_info(json_response["result"])
+                return True
+            elif (json_response.get("error").get("data").get("AccountAPINGException").get("errorCode") ==
+                  "INVALID_SESSION_INFORMATION"):
+                Log.log_warning("Session is invalid: {}"
+                                .format(json_response["error"]["data"]["AccountAPINGException"]["errorCode"]))
+                return False
+            else:
+                Log.log_error("Unknown error when attempting to check session: {}".format(response.text))
+                return False
+        except Exception as f:
+            Log.log_error(traceback.format_tb(f.__cause__))
+            raise AuthException(f"Unexpected error when validating betfair token in {response}") from f
 
     # Defining all the getters and setters here - they don't do anything fancy at the moment, but better to have them
     # set

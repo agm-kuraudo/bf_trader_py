@@ -32,17 +32,20 @@ class Call:
     def call(self, http_method: Methods, url: Urls, request_body: dict) -> Response:
         """
         This method makes a HTTP request to a URL. It currently only needs to do POST requests
-        :param http_method: GET/POST/PUT/DELETE etc
+        :param http_method: GET/POST/PUT/DELETE etc.
         :param url: The URL of the end point
         :param request_body: The body of the HTTP message
-        :return: Returns the "Response" object (part of the requests module)
+        :return: Returns the "Response" object (part of the requests' module)
         """
-        self.url = url
-        Log.log_debug("Making request to {}".format(url))
-        Log.log_debug("headers: {}, RequestBody: {}".format(self.headers, request_body))
-        r = requests.request(method=str(http_method),headers=self.headers, url=self.url, json=request_body)
-        Log.log_debug(r.text)
-        return r
+        try:
+            self.url = url
+            Log.log_debug("Making request to {}".format(url))
+            Log.log_debug("headers: {}, RequestBody: {}".format(self.headers, request_body))
+            r = requests.request(method=str(http_method),headers=self.headers, url=self.url, json=request_body)
+            Log.log_debug(r.text)
+            return r
+        except Exception as e:
+            raise CallException("Unexpected Exception during call method") from e
 
     @decorators.log_attrib.dump_args
     def call_auth(self, request_body: dict) -> str:

@@ -29,7 +29,7 @@ class VaultReader:
             Log.log_debug("Created new vault object {}".format(self.client))
         except Exception as e:
             Log.log_error(e.__cause__)
-            raise VaultException('Failed to connect to vault')
+            raise VaultException(f'Failed to connect to vault on {vault_url}')
 
         Log.log_debug("self.client.is_authenticated(): {}".format(self.client.is_authenticated()))
         if not self.client.is_authenticated():
@@ -37,17 +37,25 @@ class VaultReader:
 
     #read_secret method will attempt to read the secret at the specified path
     def read_secret(self, path):
-        Log.log_debug("readSecret called with path: " + path)
-        secret_returned = self.client.secrets.kv.v1.read_secret(mount_point='cubbyhole', path=path)
-        Log.log_debug(secret_returned)
+        try:
+            Log.log_debug("readSecret called with path: " + path)
+            secret_returned = self.client.secrets.kv.v1.read_secret(mount_point='cubbyhole', path=path)
+            Log.log_debug(secret_returned)
+        except Exception as e:
+            Log.log_error(e.__cause__)
+            raise VaultException(f'Failed to read secret from {path} in vault')
         return secret_returned
 
     #update secret will update a secret on the specified path
     def update_secret(self, path, key_value_dict):
-        create_response = self.client.secrets.kv.v1.create_or_update_secret(
-            mount_point='cubbyhole',
-            path=path,
-            secret=key_value_dict
-        )
+        try:
+            create_response = self.client.secrets.kv.v1.create_or_update_secret(
+                mount_point='cubbyhole',
+                path=path,
+                secret=key_value_dict
+            )
 
-        Log.log_info(create_response)
+            Log.log_info(create_response)
+        except Exception as e:
+            Log.log_error(e.__cause__)
+            raise VaultException(f'Failed to update {path} with {key_value_dict} in vault')
