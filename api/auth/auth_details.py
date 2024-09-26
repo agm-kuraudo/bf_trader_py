@@ -1,5 +1,8 @@
 import os
 import traceback
+
+from requests import Response
+
 from output import Output as Log
 import api.auth.vault.vault_reader
 
@@ -71,8 +74,12 @@ class Auth:
     @staticmethod
     def validate_betfair_token(response) -> bool:
         try:
-            Log.log_info(response.json())
-            json_response = response.json()
+            if type(response)==Response:
+                json_response = response.json()
+            else:
+                json_response = response
+
+            Log.log_info(json_response)
             if json_response.get("result") is not None:
                 Log.log_info(json_response["result"])
                 return True

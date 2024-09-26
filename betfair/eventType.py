@@ -1,5 +1,7 @@
 from io import StringIO
 
+from requests import Response
+
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
 import pandas as pd
 from output import Output as Log
@@ -18,26 +20,36 @@ class EventType(BetfairObject):
 
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
-        Log.log_debug("buildFrameFromJSON called")
-        Log.log_debug("json: {}".format(json))
-        df = pd.read_json(StringIO(json.text))
-        Log.log_debug("df: {}".format(df.head()))
 
-        compiled_df = pd.DataFrame({'EventID': pd.Series(dtype='str'),
-                                    'EventName': pd.Series(dtype='str'),
-                                    'marketCount': pd.Series(dtype='int')})
+        try:
+            Log.log_debug("buildFrameFromJSON called")
+            Log.log_debug("json: {}".format(json))
 
-        event_df = df["result"]
-        Log.log_debug("event_df: {}".format(event_df.head()))
+            if type(json) is Response:
+                json_text = json.text
+            else:
+                json_text = json
 
-        event_list = []
+            df = pd.read_json(StringIO(json_text))
+            Log.log_debug("df: {}".format(df.head()))
 
-        for key, event in event_df.items():
-            Log.log_debug(event)
-            event_list.append(self.build_from_json(event))
-            compiled_df.loc[len(compiled_df)] = {'EventID': self.__id, 'EventName': self.__name,
-                                                 'marketCount': self.__marketCount}
-        return compiled_df, event_list
+            compiled_df = pd.DataFrame({'EventID': pd.Series(dtype='str'),
+                                        'EventName': pd.Series(dtype='str'),
+                                        'marketCount': pd.Series(dtype='int')})
+
+            event_df = df["result"]
+            Log.log_debug("event_df: {}".format(event_df.head()))
+
+            event_list = []
+
+            for key, event in event_df.items():
+                Log.log_debug(event)
+                event_list.append(self.build_from_json(event))
+                compiled_df.loc[len(compiled_df)] = {'EventID': self.__id, 'EventName': self.__name,
+                                                     'marketCount': self.__marketCount}
+            return compiled_df, event_list
+        except Exception as e:
+            raise BetfairObjectException(f"Failed to build data frame from JSON {json}") from e
 
     @decorators.log_attrib.dump_args
     def build_from_json(self, json):

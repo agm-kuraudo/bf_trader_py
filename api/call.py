@@ -22,10 +22,11 @@ class Call:
         :param auth:
         """
         self.__url = None
+        self.headers = {}
 
         if auth is not None:
             self.__auth = auth
-            self.headers = {"X-Application": auth.app_key}
+            self.headers["X-Application"] = auth.app_key
 
         Log.log_debug("Call object instantiated")
 
