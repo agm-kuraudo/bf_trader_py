@@ -27,11 +27,11 @@ class VaultReader:
         try:
             self.client = hvac.Client(url=vault_url, token=os.getenv('VAULT_TOKEN'))
             Log.log_debug("Created new vault object {}".format(self.client))
+            Log.log_debug("self.client.is_authenticated(): {}".format(self.client.is_authenticated()))
         except Exception as e:
             Log.log_error(e.__cause__)
             raise VaultException(f'Failed to connect to vault on {vault_url}')
 
-        Log.log_debug("self.client.is_authenticated(): {}".format(self.client.is_authenticated()))
         if not self.client.is_authenticated():
             raise VaultException("Failed to authenticate to vault")
 

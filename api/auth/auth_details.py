@@ -59,6 +59,9 @@ class Auth:
             self.__securityToken = result['data']['bf_sso_token']
             Log.log_debug("bf user {}, bf pwd {}, sso token {}"
                           .format(self.__bf_userid, self.__bf_pwd, self.__securityToken))
+            #Although we are adding the security token directly as a field in this class, will return it as well
+            #for validating and testing purposes
+            return self.__securityToken
         except Exception as f:
             Log.log_error(traceback.format_tb(f.__cause__))
             raise AuthException("Could not load credentials from VAULT") from f
