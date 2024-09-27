@@ -1,4 +1,7 @@
 from io import StringIO
+
+from requests import Response
+
 import decorators.log_attrib
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
 from output import Output as Log
@@ -18,6 +21,8 @@ class Competition(BetfairObject):
 
     @decorators.log_attrib.dump_args
     def build_from_json(self, json):
+        if type(json) is str:
+            json = eval(json)
         Log.log_debug(json['marketCount'])
         Log.log_debug(json["competition"]['id'])
         Log.log_debug(json["competition"]['name'])
@@ -33,9 +38,15 @@ class Competition(BetfairObject):
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         try:
+
+            if type(json) is Response:
+                json_text = json.text
+            else:
+                json_text = json
+
             Log.log_debug("buildFrameFromJSON called")
             Log.log_debug("json: {}".format(json))
-            df = pd.read_json(StringIO(json.text))
+            df = pd.read_json(StringIO(json_text))
             Log.log_debug("df: {}".format(df.head()))
 
             compiled_df = pd.DataFrame({'competitionID': pd.Series(dtype='str'),

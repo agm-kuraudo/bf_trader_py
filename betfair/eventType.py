@@ -53,14 +53,16 @@ class EventType(BetfairObject):
 
     @decorators.log_attrib.dump_args
     def build_from_json(self, json):
+        if type(json) is str:
+            json = eval(json)
+        self.__marketCount = json.get('marketCount')
+        self.__id = json.get("eventType").get('id')
+        self.__name = json.get("eventType").get('name')
+        if not all(attr is not None for attr in [self.__marketCount, self.__id, self.__name]):
+            raise BetfairObjectException("Event Type Object can't initialise as all values not returned in json")
         Log.log_debug(json['marketCount'])
         Log.log_debug(json["eventType"]['id'])
         Log.log_debug(json["eventType"]['name'])
-        self.__marketCount = json['marketCount']
-        self.__id = json["eventType"]['id']
-        self.__name = json["eventType"]['name']
-        if not all(attr is not None for attr in [self.__marketCount, self.__id, self.__name]):
-            raise BetfairObjectException("Event Type Object can't initialise as all values not returned in json")
         return EventType(event_type_id=self.__id, name=self.__name, market_count=self.__marketCount)
 
     def __str__(self):

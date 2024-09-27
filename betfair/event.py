@@ -1,6 +1,6 @@
 from datetime import datetime
 from io import StringIO
-
+from requests import Response
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
 import pandas as pd
 from output import Output as Log
@@ -23,18 +23,24 @@ class Event(BetfairObject):
 
     @decorators.log_attrib.dump_args
     def build_from_json(self, json):
-        Log.log_debug(json['event'])
-        Log.log_debug(json["event"]['id'])
-        Log.log_debug(json["event"]['name'])
-        self.__marketCount = json['marketCount']
-        self.__id = json["event"]['id']
-        self.__name = json["event"]['name']
+        if type(json) is str:
+            json = eval(json)
+        Log.log_debug(json.get('event'))
+        Log.log_debug(json.get("event").get('id'))
+        Log.log_debug(json.get("event").get('name'))
+        self.__marketCount = json.get('marketCount')
+        self.__id = json.get("event").get('id')
+        self.__name = json.get("event").get('name')
         try:
             self.__countryCode = json["event"]["countryCode"]
         except KeyError:
             self.__countryCode = ""
-        self.__timezone = json["event"]["timezone"]
-        self.__openDate = datetime.strptime(json["event"]["openDate"], '%Y-%m-%dT%H:%M:%S.000Z')
+        self.__timezone = json.get("event").get("timezone")
+
+        try:
+            self.__openDate = datetime.strptime(json["event"]["openDate"], '%Y-%m-%dT%H:%M:%S.000Z')
+        except KeyError:
+            self.__openDate = None
 
         if not all(attr is not None for attr in
                    [self.__marketCount, self.__timezone, self.__id, self.__name, self.__openDate]):
@@ -46,9 +52,13 @@ class Event(BetfairObject):
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         try:
+            if type(json) is Response:
+                json_text = json.text
+            else:
+                json_text = json
             Log.log_debug("buildFrameFromJSON called")
             Log.log_debug("json: {}".format(json))
-            df = pd.read_json(StringIO(json.text))
+            df = pd.read_json(StringIO(json_text))
             Log.log_debug("df: {}".format(df.head()))
 
             compiled_df = pd.DataFrame({'eventID': pd.Series(dtype='str'),
