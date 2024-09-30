@@ -1,4 +1,7 @@
 from datetime import datetime
+
+from requests import Response
+
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
 from output import Output as Log
 import pandas as pd
@@ -24,6 +27,8 @@ class Target:
 class Market(BetfairObject):
     @decorators.log_attrib.dump_args
     def __init__(self, market_id=None, name=None, description=None, total_matched=None, runners=None):
+        #self.__marketTime = []
+        self.__marketTime = None
         self.__runnerList = None
         if runners is None:
             runners = []
@@ -35,6 +40,9 @@ class Market(BetfairObject):
 
     @decorators.log_attrib.dump_args
     def build_from_json(self, json):
+        if type(json) is str:
+            json = json.replace("\n", "")
+            json = eval(json)
         Log.log_debug(json['marketId'])
         Log.log_debug(json["marketName"])
         Log.log_debug(json["runners"])
@@ -46,7 +54,7 @@ class Market(BetfairObject):
         self.__id = json["marketId"]
         self.__name = json["marketName"]
         self.__description = json["description"]
-        self.__marketTime["marketTime"] = datetime.strptime(self.__description["marketTime"], '%Y-%m-%dT%H:%M:%S.000Z')
+        self.__marketTime = datetime.strptime(self.__description["marketTime"], '%Y-%m-%dT%H:%M:%S.000Z')
 
         if not all(attr is not None for attr in [self.__totalMatched, self.__description, self.__id, self.__name]):
             raise BetfairObjectException("Market Object can't initialise as all values not returned in json")
@@ -57,9 +65,15 @@ class Market(BetfairObject):
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         try:
+
+            if type(json) is Response:
+                json_text = json.text
+            else:
+                json_text = json
+
             Log.log_debug("buildFrameFromJSON called")
             Log.log_debug("json: {}".format(json))
-            df = pd.read_json(StringIO(json.text))
+            df = pd.read_json(StringIO(json_text))
             Log.log_debug("df: {}".format(df.head()))
 
             compiled_df = pd.DataFrame({'MarketID': pd.Series(dtype='str'),
