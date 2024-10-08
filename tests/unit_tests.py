@@ -80,6 +80,7 @@ class TestBetfairApp(unittest.TestCase):
         my_market = Market()
         my_position = Position()
 
+
         # Try to build data frames with invalid JSON response - should raise BetfairObjectException
         with self.assertRaises(BetfairObjectException, msg="BetfairObjectException should have been raised for this"):
             my_event_type.build_frame_from_json("Blah")
