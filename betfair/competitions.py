@@ -88,3 +88,4 @@ class Competition(BetfairObject):
     @property
     def region(self):
         return self.__region
+

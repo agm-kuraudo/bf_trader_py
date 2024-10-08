@@ -11,24 +11,32 @@ import decorators.log_attrib
 
 class Target:
     @decorators.log_attrib.dump_args
-    def __init__(self, my_events, my_markets):
-        self.myEvents = my_events
-        self.myMarkets = my_markets
+    def __init__(self, my_event, my_market):
+        self.__my_event = my_event
+        self.__my_market = my_market
 
     def __str__(self):
-        Log.log_debug(self.myEvents)
-        Log.log_debug(self.myMarkets)
-        return "Target is event: {}, market: {}".format(self.myEvents.name, self.myMarkets.name)
+        Log.log_debug(self.my_event)
+        Log.log_debug(self.my_market)
+        return "Target is event: {}, market: {}".format(self.__my_event.name, self.__my_market.name)
 
     def update_odds_from_json(self, json_resp):
         pass
+
+    @property
+    def my_event(self):
+        return self.__my_event
+
+    @property
+    def my_market(self):
+        return self.__my_market
 
 
 class Market(BetfairObject):
     @decorators.log_attrib.dump_args
     def __init__(self, market_id=None, name=None, description=None, total_matched=None, runners=None):
         #self.__marketTime = []
-        self.__marketTime = None
+        self.__market_time = None
         self.__runnerList = None
         if runners is None:
             runners = []
@@ -54,7 +62,7 @@ class Market(BetfairObject):
         self.__id = json["marketId"]
         self.__name = json["marketName"]
         self.__description = json["description"]
-        self.__marketTime = datetime.strptime(self.__description["marketTime"], '%Y-%m-%dT%H:%M:%S.000Z')
+        self.__market_time = datetime.strptime(self.__description["marketTime"], '%Y-%m-%dT%H:%M:%S.000Z')
 
         if not all(attr is not None for attr in [self.__totalMatched, self.__description, self.__id, self.__name]):
             raise BetfairObjectException("Market Object can't initialise as all values not returned in json")
@@ -115,6 +123,10 @@ class Market(BetfairObject):
         return self.__id
 
     @property
+    def market_time(self):
+        return self.__market_time
+
+    @property
     def name(self):
         return self.__name
 
@@ -172,6 +184,14 @@ class Runner:
     @property
     def status(self):
         return self.__status
+
+    @property
+    def id(self):
+        return self.__id
+
+    @property
+    def name(self):
+        return self.__name
 
     @property
     def total_matched(self):

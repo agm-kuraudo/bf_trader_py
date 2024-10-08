@@ -13,72 +13,91 @@ class RequestBody:
         """
         RequestBody init - sets up all the template requests we need
         """
-        self.__templates = {}
-        self.__templates["CertAuth"] = {"username": "<USERID>", "password": "<PWD>"}
-        self.__templates["listEventTypes"] = {"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listEventTypes",
-                                            "params": {"filter": {}}, "id": 1}
-
-        self.__templates["listCompetitions"] = {
-            "jsonrpc": "2.0",
-            "method": "SportsAPING/v1.0/listCompetitions",
-            "params": {
-                "filter": {
-                    "eventTypeIds": "<list_of_event_ids>"
-                }
-            },
-            "id": 1
-        }
-
-        self.__templates["listEvents"] = {
-            "jsonrpc": "2.0",
-            "method": "SportsAPING/v1.0/listEvents",
-            "params": {
-                "filter": {
-                    "eventTypeIds": "<list_of_event_ids>",
-                    "competitionIds": "<list_of_competition_ids>",
-                    "marketTypeCodes": "<list_of_market_types>"
-                }
-            },
-            "id": 1
-        }
-
-        self.__templates['marketCatalogue'] = {
-            "jsonrpc": "2.0",
-            "method": "SportsAPING/v1.0/listMarketCatalogue",
-            "params": {
-                "filter": {
-                    "eventIds": "<list_of_event_ids>",
-                    "marketTypeCodes": "<list_of_market_types>"
-                },
-                "maxResults": "100",
-                "marketProjection": ["MARKET_DESCRIPTION", "RUNNER_DESCRIPTION", "RUNNER_METADATA"]
-            },
-            "id": 1
-        }
-
-        self.__templates["listMarketBook"] = {
-            "jsonrpc": "2.0",
-            "method": "SportsAPING/v1.0/listMarketBook",
-            "params": {
-                "marketIds": "<ListOfMarketIDs>",
-                "priceProjection": {
-                    "priceData": [
-                        "EX_BEST_OFFERS",
-                        "EX_ALL_OFFERS",
-                        "EX_TRADED"
-                    ]
-                }
-            },
-            "id": 1
-        }
-
-        self.__templates["getAccountFunds"] = {
-            "jsonrpc": "2.0",
-            "method": "AccountAPING/v1.0/getAccountFunds",
-            "params": {
-                "wallet": "UK"
-            },
-            "id": 1
+        self.__templates = \
+            {
+                "CertAuth":
+                    {
+                        "username": "<USERID>",
+                        "password": "<PWD>"
+                    },
+                "listEventTypes":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listEventTypes",
+                        "params":
+                            {
+                                "filter": {}
+                            },
+                        "id": 1
+                    },
+                "listCompetitions":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listCompetitions",
+                        "params":
+                            {
+                                "filter":
+                                    {
+                                        "eventTypeIds": "<list_of_event_ids>"
+                                    }
+                            },
+                        "id": 1
+                    },
+                "listEvents":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listEvents",
+                        "params":
+                            {
+                                "filter":
+                                    {
+                                        "eventTypeIds": "<list_of_event_ids>",
+                                        "competitionIds": "<list_of_competition_ids>",
+                                        "marketTypeCodes": "<list_of_market_types>"
+                                    }
+                            },
+                        "id": 1
+                    },
+                'marketCatalogue':
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listMarketCatalogue",
+                        "params":
+                            {
+                                "filter":
+                                    {
+                                        "eventIds": "<list_of_event_ids>",
+                                        "marketTypeCodes": "<list_of_market_types>"
+                                    },
+                                "maxResults": "100",
+                                "marketProjection": ["MARKET_DESCRIPTION", "RUNNER_DESCRIPTION", "RUNNER_METADATA"]
+                            },
+                        "id": 1
+                    },
+                "listMarketBook":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listMarketBook",
+                        "params":
+                            {
+                                "marketIds": "<ListOfMarketIDs>",
+                                "priceProjection":
+                                    {
+                                        "priceData": ["EX_BEST_OFFERS", "EX_ALL_OFFERS", "EX_TRADED"]
+                                    }
+                            },
+                        "id": 1
+                    },
+                "getAccountFunds":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "AccountAPING/v1.0/getAccountFunds",
+                        "params":
+                            {
+                                "wallet": "UK"
+                            },
+                        "id": 1
+                    }
             }
 
     @decorators.log_attrib.dump_args
