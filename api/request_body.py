@@ -13,12 +13,12 @@ class RequestBody:
         """
         RequestBody init - sets up all the template requests we need
         """
-        self.templates = {}
-        self.templates["CertAuth"] = {"username": "<USERID>", "password": "<PWD>"}
-        self.templates["listEventTypes"] = {"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listEventTypes",
+        self.__templates = {}
+        self.__templates["CertAuth"] = {"username": "<USERID>", "password": "<PWD>"}
+        self.__templates["listEventTypes"] = {"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listEventTypes",
                                             "params": {"filter": {}}, "id": 1}
 
-        self.templates["listCompetitions"] = {
+        self.__templates["listCompetitions"] = {
             "jsonrpc": "2.0",
             "method": "SportsAPING/v1.0/listCompetitions",
             "params": {
@@ -29,7 +29,7 @@ class RequestBody:
             "id": 1
         }
 
-        self.templates["listEvents"] = {
+        self.__templates["listEvents"] = {
             "jsonrpc": "2.0",
             "method": "SportsAPING/v1.0/listEvents",
             "params": {
@@ -42,7 +42,7 @@ class RequestBody:
             "id": 1
         }
 
-        self.templates['marketCatalogue'] = {
+        self.__templates['marketCatalogue'] = {
             "jsonrpc": "2.0",
             "method": "SportsAPING/v1.0/listMarketCatalogue",
             "params": {
@@ -56,7 +56,7 @@ class RequestBody:
             "id": 1
         }
 
-        self.templates["listMarketBook"] = {
+        self.__templates["listMarketBook"] = {
             "jsonrpc": "2.0",
             "method": "SportsAPING/v1.0/listMarketBook",
             "params": {
@@ -72,7 +72,7 @@ class RequestBody:
             "id": 1
         }
 
-        self.templates["getAccountFunds"] = {
+        self.__templates["getAccountFunds"] = {
             "jsonrpc": "2.0",
             "method": "AccountAPING/v1.0/getAccountFunds",
             "params": {
@@ -84,11 +84,11 @@ class RequestBody:
     @decorators.log_attrib.dump_args
     def set_template(self, template_name: str, template_body: dict) -> None:
         """
-        Updates or creates a template... TODO: this should just be a standard "setter"
+        Updates or creates a template...
         :param template_name: Sting to identify the template
         :param template_body: The body of the template itself - should be a dictionary
         """
-        self.templates[template_name] = template_body
+        self.__templates[template_name] = template_body
 
     @decorators.log_attrib.dump_args
     def get_template(self, template_name: str) -> dict:
@@ -97,7 +97,7 @@ class RequestBody:
         :param template_name:
         :return: The template value - a dictionary
         """
-        return self.templates[template_name]
+        return self.__templates[template_name]
 
     @decorators.log_attrib.dump_args
     def populate_template(self, template_name: str, replace_pairs: dict, inner_dict: dict = None) -> dict:
@@ -113,7 +113,7 @@ class RequestBody:
             new_dict = {}
 
             if inner_dict is None:
-                loop_dict = self.templates[template_name]
+                loop_dict = self.__templates[template_name]
             else:
                 loop_dict = inner_dict
 

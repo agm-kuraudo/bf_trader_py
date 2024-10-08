@@ -22,11 +22,11 @@ class Call:
         :param auth:
         """
         self.__url = None
-        self.headers = {}
+        self.__headers = {}
 
         if auth is not None:
             self.__auth = auth
-            self.headers["X-Application"] = auth.app_key
+            self.__headers["X-Application"] = auth.app_key
 
         Log.log_debug("Call object instantiated")
 
@@ -41,8 +41,8 @@ class Call:
         try:
             self.url = url
             Log.log_debug("Making request to {}".format(url))
-            Log.log_debug("headers: {}, RequestBody: {}".format(self.headers, request_body))
-            r = requests.request(method=str(http_method),headers=self.headers, url=self.url, json=request_body)
+            Log.log_debug("headers: {}, RequestBody: {}".format(self.__headers, request_body))
+            r = requests.request(method=str(http_method), headers=self.__headers, url=self.url, json=request_body)
             Log.log_debug(r.text)
             return r
         except Exception as e:
@@ -69,7 +69,7 @@ class Call:
             if json_resp['loginStatus'] != 'SUCCESS':
                 raise Exception("Login unsuccessful! \n" + r.text)
             else:
-                self.headers.update({"X-Authentication": json_resp['sessionToken']})
+                self.__headers.update({"X-Authentication": json_resp['sessionToken']})
                 return json_resp['sessionToken']
 
         except Exception as a:
@@ -87,8 +87,17 @@ class Call:
     def auth(self):
         return self.__auth
 
+    @property
+    def headers(self):
+        return self.__headers
+
+    @headers.setter
+    def headers(self, value):
+        Log.log_warning(f"Directly setting headers to {str(value)}- is this correct?")
+        self.__headers = value
+
     # If a new auth object is added, it needs to be reflected in the header
     @auth.setter
     def auth(self, value):
         self.__auth = value
-        self.headers.update({"X-Authentication": value.security_token})
+        self.__headers.update({"X-Authentication": value.security_token})
