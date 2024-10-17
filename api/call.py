@@ -42,7 +42,8 @@ class Call:
             self.url = url
             Log.log_debug("Making request to {}".format(url))
             Log.log_debug("headers: {}, RequestBody: {}".format(self.__headers, request_body))
-            r = requests.request(method=str(http_method), headers=self.__headers, url=self.url, json=request_body)
+
+            r = requests.request(method=str(http_method).replace("Methods.", ""), headers=self.__headers, url=self.url, json=request_body)
             Log.log_debug(r.text)
             return r
         except Exception as e:
