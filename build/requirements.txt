@@ -1,11 +1,11 @@
-PyYAML==6.0.1
-certifi==2023.11.17
-charset-normalizer==3.3.2
-hvac==2.0.0
-idna==3.6
-numpy==1.26.2
-pandas==2.1.4
-pip==23.2.1
+PyYAML==6.0.2
+certifi==2024.8.30
+charset-normalizer==3.4.0
+hvac==2.3.0
+idna==3.10
+numpy==2.1.2
+pandas==2.2.3
+pip==24.2
 python-dateutil==2.8.2
 pytz==2023.3.post1
 requests==2.31.0
@@ -14,4 +14,4 @@ six==1.16.0
 tzdata==2023.3
 urllib3==2.1.0
 wheel==0.42.0
-
+psycopg2==2.9.10
