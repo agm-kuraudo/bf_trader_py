@@ -1,5 +1,31 @@
 import datetime
 import os
+from uuid import uuid4
+
+import psycopg2
+
+
+class DBOutputConnection:
+    def __init__(self):
+        self.cursor = None
+        self.conn = None
+
+    def connect(self):
+        self.conn = psycopg2.connect(database="bf_trader",
+                                     host="172.17.0.3",
+                                     user="postgres",
+                                     password="PollyOlgaSierra12!",
+                                     port="5432")
+
+        self.cursor = self.conn.cursor()
+
+    def db_write(self, msg):
+        print(f'INSERT INTO bf.log_file(id, "timestamp", message) VALUES (\'{uuid4()}\', NOW(), \'{msg}\');')
+        self.cursor.execute( 'INSERT INTO bf.log_file(id, "timestamp", message) VALUES (%s, %s, %s)', (str(uuid4()), "NOW()", msg))
+
+
+
+        self.conn.commit()
 
 
 class Output:
@@ -10,13 +36,18 @@ class Output:
 
     LOG_CONSOLE = True
     LOG_FILE = True
+    LOG_DB=True
 
     SELECTED_LOG_LEVEL = 1  # Defaults to debug - can be changed by calling "set_log_level"
     full_path = os.path.join(os.path.dirname(__file__), "log/runlog" + datetime.datetime.now().
                              strftime("%y%m%d") + ".log")
 
+    DB_Obj = DBOutputConnection()
+    DB_Obj.connect()
+
     def __init__(self):
         pass
+
 
     @classmethod
     def set_log_level(cls, log_level):
@@ -49,6 +80,8 @@ class Output:
             cls.console_output(level + str(msg))
         if cls.LOG_FILE:
             cls.file_output(level + str(msg))
+        if cls.LOG_DB:
+            cls.db_output(level + str(msg))
 
     @classmethod
     def console_output(cls, output_string):
@@ -59,3 +92,7 @@ class Output:
         # stream = open(cls.full_path, mode='x', encoding="UTF-8")
         stream = open(cls.full_path, mode='a+', encoding="UTF-8")
         stream.write(str(datetime.datetime.now()) + " " + output_string + "\n")
+
+    @classmethod
+    def db_output(cls, output_string):
+        cls.DB_Obj.db_write(output_string)
