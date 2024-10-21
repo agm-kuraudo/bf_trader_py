@@ -3,7 +3,7 @@ from io import StringIO
 from requests import Response
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
 import pandas as pd
-from output import Output as Log
+from output.log import Output as Log
 import decorators.log_attrib
 
 

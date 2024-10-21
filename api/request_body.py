@@ -1,7 +1,4 @@
-from typing import Dict, Any, List
-
-import api
-from output import Output as Log
+from output.log import Output as Log
 import decorators.log_attrib
 
 class RequestBodyException(Exception):

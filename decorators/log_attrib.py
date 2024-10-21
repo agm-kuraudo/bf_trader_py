@@ -1,6 +1,6 @@
 import inspect
 from functools import wraps
-from output import Output as Log
+from output.log import Output as Log
 
 
 def dump_args(func):

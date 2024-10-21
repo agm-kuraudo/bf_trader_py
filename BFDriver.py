@@ -8,7 +8,7 @@ have to run in order to work as expected.
 from datetime import datetime, timedelta
 
 import api.auth.auth_details as bf_auth
-from api.auth.vault.vault_reader import VaultReader as Vault
+from api.auth.vault.vault_reader import VaultReader as Vault, VaultException
 from api.call import Call
 from api.http_methods import Methods
 from api.request_body import RequestBody
@@ -19,7 +19,8 @@ from betfair.eventType import EventType
 from betfair.market import Market, Target
 from betfair.position import Position
 from logic.simpleStategy import DefaultStrategy, FromFileStrategy
-from output import Output as Log
+from output.dboutput import DBOutputConnection
+from output.log import Output as Log
 
 class BFDriverException(Exception):
     pass
@@ -45,6 +46,19 @@ class BFDriver:
         self.__competition_obj = Competition()
         self.__event_obj = Event()
         self.__position_obj = Position()
+
+    def get_local_db_details(self):
+        try:
+            result = self.__vault_obj .read_secret("postgres")
+            host = result['data']['host']
+            port = result['data']['port']
+            db_name = result['data']['db_name']
+            db_user = result['data']['db_user']
+            db_pwd = result['data']['db_pwd']
+        except Exception as f:
+            raise VaultException("Could not load credentials from VAULT") from f
+        return {"host": host, "port": port, "db_name": db_name, "db_user": db_user, "db_pwd": db_pwd}
+
 
     # get_token method is used to retrieve the SSO Token required to access the Betfair API.  THe last token
     # stored in the vault will be used initially for a test call, if It's still valid we will continue with it.
@@ -286,32 +300,54 @@ BF = BFDriver(FromFileStrategy(), Log.DEBUG)
 # Below added just to test the position work for SP-72
 # BF.myPosition.position_events = '32866443'
 
+#Pre-Steps 1: Get Local DB Connection Details
+
+global db_connection
+
+try:
+    db_details_string = BF.get_local_db_details()
+    db_connection = DBOutputConnection()
+
+    db_connection.open_connection(db_details_string)
+    db_connection.db_write("Starting run")
+
+except Exception as e:
+    raise BFDriverException("Failed to get local DB details: {}".format(e))
+
 # Step 1: Authenticate and get a Session Token!
 if not BF.get_token():
+    db_connection.db_write("Failed to retrieve token")
     raise bf_auth.AuthException("Failed to authenticate to vault.  Validate that it is running (and unsealed) on "
                                 "port 8200.  See error message above for exception details")
 
+db_connection.db_write("Token retrieved")
 Log.log_info("##############    Step 1 Complete")
 
 # Step 2: Extract the update to date for Event ID(s) for selected events
 myEventTypes = BF.get_event_types()
 if myEventTypes == 0:
+    db_connection.db_write("Failed at step 2 - no event types")
     raise BFDriverException("Failed at step 2 - no event types")
 
+db_connection.db_write("Event Types: {}".format(myEventTypes))
 Log.log_info("##############    Step 2 Complete")
 
 # Step 3: Extract the competition IDs for my selected competitions
 myComps = BF.get_competition_ids()
 if myComps == 0:
+    db_connection.db_write("Failed at step 3 - no Competitions")
     raise BFDriverException("Failed at step 3 - no Competitions")
 
+db_connection.db_write("Competitions: {}".format(myComps))
 Log.log_info("##############    Step 3 Complete")
 
 # Step 4 : Extract the events matching our competition and event types
 myEvents = BF.get_events()
 if myEvents == 0:
+    db_connection.db_write("Failed at step 4 - no events")
     raise BFDriverException("Failed at step 4 - no events")
 
+db_connection.db_write("myEvents: {}".format(myEvents))
 Log.log_info("##############    Step 4 Complete")
 
 Log.log_info("There are {} events available".format(len(myEvents)))
@@ -323,6 +359,7 @@ for event in myEvents:
 
 myTargets = BF.get_target_markets(myEvents)
 if len(myTargets) == 0:
+    db_connection.db_write("Failed at step 5 - no targets")
     raise BFDriverException("Failed at step 5 - no targets")
 Log.log_info("{} Targets identified".format(len(myTargets)))
 Log.log_debug(myTargets[0].my_market.runners)

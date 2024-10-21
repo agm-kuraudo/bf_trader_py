@@ -1,7 +1,6 @@
-import functools
 import hvac
 import os
-from output import Output as Log
+from output.log import Output as Log
 
 '''Vault Reader requires 
 + Vault to be running, unsealed and listening on port 8200.

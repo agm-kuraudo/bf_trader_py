@@ -3,7 +3,7 @@ import traceback
 
 from requests import Response
 
-from output import Output as Log
+from output.log import Output as Log
 import api.auth.vault.vault_reader
 
 

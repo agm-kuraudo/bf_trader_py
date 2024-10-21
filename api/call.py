@@ -5,7 +5,7 @@ from requests import Response
 
 import decorators.log_attrib
 from api.http_methods import Methods
-from output import Output as Log
+from output.log import Output as Log
 from api.urls import Urls
 from api.auth.auth_details import Auth
 

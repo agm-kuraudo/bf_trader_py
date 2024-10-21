@@ -1,3 +1,4 @@
+from BFDriver import BFDriver
 from api.auth.auth_details import Auth, AuthException
 from api.auth.vault.vault_reader import VaultReader, VaultException
 from api.call import Call, CallException
@@ -9,14 +10,17 @@ from betfair.market import Market
 from betfair.position import Position
 from betfair.event import Event
 from betfair.eventType import EventType
-from output import Output
+from logic.simpleStategy import FromFileStrategy
+from output.log import Output
 import unittest
+from output.dboutput import DBOutputException, DBOutputConnection
 
 
 class TestBetfairApp(unittest.TestCase):
 
     Output.LOG_FILE = False
     Output.LOG_CONSOLE = False
+    Output.set_log_level(Output.ERROR)
 
     my_auth = None
 
@@ -70,7 +74,7 @@ class TestBetfairApp(unittest.TestCase):
         with self.assertRaises(CallException):
             my_call.call(Methods.GET, "a.b.c", {})
 
-        self.assertEqual(my_call.call(Methods.GET, Urls.BASE_URL, {}).status_code, 400,
+        self.assertEqual(my_call.call(Methods.GET, Urls.JSON_RPC_BET, {}).status_code, 400,
                           "Expect a HTTP 400 response")
 
     def test_betfair_objects(self):
@@ -152,6 +156,31 @@ class TestBetfairApp(unittest.TestCase):
         self.assertEqual(my_market.build_from_json(
             "{'marketId': '1.232498611', 'marketName': 'Match Odds', 'description': {'persistenceEnabled': True, 'bspMarket': True, 'marketTime': '2024-09-17T16:45:00.000Z', 'suspendTime': '2024-09-17T16:45:00.000Z', 'bettingType': 'ODDS', 'turnInPlayEnabled': True, 'marketType': 'MATCH_ODDS', 'regulator': 'MALTA LOTTERIES AND GAMBLING AUTHORITY', 'marketBaseRate': 5.0, 'discountAllowed': False, 'wallet': 'UK wallet', 'rules': '<!--Football - Match Odds --><br>Predict the result of this match.<br> All bets apply to Full Time according to the match officials, plus any stoppage time. Extra-time/penalty shoot-outs are not included.<br><br></b>For further information please see <a href=http://content.betfair.com/aboutus/content.asp?sWhichKey=Rules%20and%20Regulations#undefined.do style=color:0163ad; text-decoration: underline; target=_blank>Rules & Regs<br><br>\n', 'rulesHasDate': True, 'priceLadderDescription': {'type': 'CLASSIC'}}, 'totalMatched': 12303.74, 'runners': [{'selectionId': 65778, 'runnerName': 'Young Boys', 'handicap': 0.0, 'sortPriority': 1, 'metadata': {'runnerId': '65778'}}, {'selectionId': 63908, 'runnerName': 'Aston Villa', 'handicap': 0.0, 'sortPriority': 2, 'metadata': {'runnerId': '63908'}}, {'selectionId': 58805, 'runnerName': 'The Draw', 'handicap': 0.0, 'sortPriority': 3, 'metadata': {'runnerId': '58805'}}]}").name,
                          "Match Odds", "Market object created should be Match Odds")
+
+
+    def test_db_connection(self):
+        bf = BFDriver(FromFileStrategy(), Output.ERROR)
+        self.assertIsInstance(bf, BFDriver, "BFDriver object should be created")
+
+        db_details_string = bf.get_local_db_details()
+
+        self.assertTrue(db_details_string.get("host") is not None, "Host should be returned as part of db connection string")
+        self.assertTrue(db_details_string.get("port") is not None,
+                        "Host should be returned as part of db connection string")
+        self.assertTrue(db_details_string.get("db_name") is not None,
+                        "Host should be returned as part of db connection string")
+        db_connection = DBOutputConnection()
+        self.assertIsInstance(db_connection, DBOutputConnection, "DBOutputConnection object should be created")
+
+        db_connection.open_connection(db_details_string)
+
+        db_connection.db_write("Hello")
+
+        #print (db_connection.db_read(f"select * from bf.log_file where id='{db_connection.run_id}'"))
+
+        self.assertEqual(len(db_connection.db_read(f"select * from bf.log_file where id='{db_connection.run_id}'")[0]), 3, "Should be 3 columns returned")
+
+        db_connection.close()
 
 
 if __name__ == '__main__':

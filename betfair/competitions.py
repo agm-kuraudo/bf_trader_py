@@ -4,7 +4,7 @@ from requests import Response
 
 import decorators.log_attrib
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
-from output import Output as Log
+from output.log import Output as Log
 import pandas as pd
 
 
