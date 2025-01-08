@@ -332,6 +332,11 @@ if __name__ == '__main__':
         db_connection.db_write_log("Failed at step 2 - no event types")
         raise BFDriverException("Failed at step 2 - no event types")
 
+    print("Event Types: {}".format(myEventTypes))
+
+    for event in myEventTypes:
+        db_connection.db_write_object_id(object_type="event-type", object_name=event.name, object_id=event.id)
+
     db_connection.db_write_log("Event Types: {}".format(myEventTypes))
     Log.log_info("##############    Step 2 Complete")
 
