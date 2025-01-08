@@ -14,7 +14,7 @@ from logic.simpleStategy import FromFileStrategy
 from output.log import Output
 import unittest
 from output.dboutput import DBOutputException, DBOutputConnection
-
+import time
 
 class TestBetfairApp(unittest.TestCase):
 
@@ -159,7 +159,7 @@ class TestBetfairApp(unittest.TestCase):
 
 
     def test_db_connection(self):
-        bf = BFDriver(FromFileStrategy(), Output.ERROR)
+        bf = BFDriver(FromFileStrategy(), Output.INFO)
         self.assertIsInstance(bf, BFDriver, "BFDriver object should be created")
 
         db_details_string = bf.get_local_db_details()
@@ -174,13 +174,42 @@ class TestBetfairApp(unittest.TestCase):
 
         db_connection.open_connection(db_details_string)
 
-        db_connection.db_write("Hello")
-
-        #print (db_connection.db_read(f"select * from bf.log_file where id='{db_connection.run_id}'"))
-
+        db_connection.db_write_log("Hello")
         self.assertEqual(len(db_connection.db_read(f"select * from bf.log_file where id='{db_connection.run_id}'")[0]), 3, "Should be 3 columns returned")
 
         db_connection.close()
+
+    def test_db_object_ids(self):
+        bf = BFDriver(FromFileStrategy(), Output.ERROR)
+        my_db = DBOutputConnection()
+        db_details_string = bf.get_local_db_details()
+
+        my_db.open_connection(db_details_string)
+
+        # Firstly make sure there is no existing unit type objects
+        my_db.db_delete('bf.betfair_object_ids', "object_type='unit-test-type'")
+
+        my_db.db_write_object_id(object_type="unit-test-type", object_name="name", object_id="12345")
+
+        first_update = my_db.db_read(f"select * from bf.betfair_object_ids where object_type='unit-test-type'")
+
+        self.assertTrue(len(first_update) > 0, "There should be at least one row returned")
+
+        #print(my_db.db_read(f"select * from bf.betfair_object_ids where object_type='unit-test-type'"))
+        time.sleep(1)
+        # This should do nothing as the object already exists. The timestamp should be not updated
+        my_db.db_write_object_id(object_type="unit-test-type", object_name="name", object_id="12345")
+        second_update = my_db.db_read(f"select * from bf.betfair_object_ids where object_type='unit-test-type'")
+
+        self.assertEqual(first_update[0][3], second_update[0][3], "Unnecessary update made for same value")
+
+        # Now add a new id, this should run the update statement
+        my_db.db_write_object_id(object_type="unit-test-type", object_name="name", object_id="54321")
+        third_update = my_db.db_read(f"select * from bf.betfair_object_ids where object_type='unit-test-type'")
+
+        self.assertEqual(third_update[0][2], 54321, "Event ID was not updated")
+
+        my_db.close()
 
 
 if __name__ == '__main__':
