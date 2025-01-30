@@ -346,6 +346,9 @@ if __name__ == '__main__':
         db_connection.db_write_log("Failed at step 3 - no Competitions")
         raise BFDriverException("Failed at step 3 - no Competitions")
 
+    for comp in myComps:
+        db_connection.db_write_object_id(object_type="competition", object_name=comp.name, object_id=comp.id)
+
     db_connection.db_write_log("Competitions: {}".format(myComps))
     Log.log_info("##############    Step 3 Complete")
 
