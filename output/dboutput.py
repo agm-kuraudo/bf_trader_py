@@ -92,6 +92,31 @@ class DBOutputConnection:
             Log.log_error(error)
             raise DBOutputException("Failed to write object ID to database")
 
+    def db_write_target(self, target_id, event_id, market_id, start_time, status):
+        try:
+            with self.get_cursor() as cursor:
+                # Check if the record exists
+                cursor.execute(
+                    'SELECT target_id FROM bf.target WHERE target_id = %s',
+                    (target_id,)
+                )
+                result = cursor.fetchone()
+
+                if result:
+                    # Record exists, no need to update
+                    Log.log_debug(f"Target record already exists: {target_id}")
+                else:
+                    # Record does not exist, insert a new record
+                    cursor.execute(
+                        'INSERT INTO bf.target (target_id, event_id, market_id, start_time, status) VALUES (%s, %s, %s, %s, %s)',
+                        (target_id, event_id, market_id, start_time, status)
+                    )
+                    Log.log_debug(f"Inserted new target record: {target_id}")
+
+        except (Exception, psycopg2.DatabaseError) as error:
+            Log.log_error(error)
+            raise DBOutputException("Failed to write target to database")
+
     def db_read(self, sql_query):
         try:
             with self.get_cursor() as cursor:

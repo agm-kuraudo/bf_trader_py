@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Unittests in unit_tests.py" type="tests" factoryName="Unittests" nameIsGenerated="true">
+  <configuration default="false" name="Unittests in unit_tests_betfair_objects.py" type="tests" factoryName="Unittests" nameIsGenerated="true">
     <module name="py" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -41,7 +41,7 @@
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="_new_pattern" value="&quot;&quot;" />
     <option name="_new_additionalArguments" value="&quot;&quot;" />
-    <option name="_new_target" value="&quot;$PROJECT_DIR$/tests/unit_tests.py&quot;" />
+    <option name="_new_target" value="&quot;$PROJECT_DIR$/tests/unit_tests_betfair_objects.py&quot;" />
     <option name="_new_targetType" value="&quot;PATH&quot;" />
     <method v="2" />
   </configuration>

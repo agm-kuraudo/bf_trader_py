@@ -211,6 +211,5 @@ class TestBetfairApp(unittest.TestCase):
 
         my_db.close()
 
-
 if __name__ == '__main__':
     unittest.main()

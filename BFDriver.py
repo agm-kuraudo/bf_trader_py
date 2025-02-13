@@ -377,6 +377,15 @@ if __name__ == '__main__':
 
     Log.log_info("##############  Step 5 Complete")
 
+    for target in myTargets:
+        Log.log_debug("Event ID {}, Name {}.  Market ID {}, Name {}. Time: {}".format(target.my_event.id,
+                                                                            target.my_event.name,
+                                                                            target.my_market.id,
+                                                                            target.my_market.name,
+                                                                            target.my_market.description['marketTime']))
+        db_connection.db_write_target(target.target_id, target.my_event.id, target.my_market.id, target.my_market.description['marketTime'],
+                                   'IDENTIFIED')
+
     # Get the updated odds for these targets
 
     BF.update_odds_for_targets(myTargets)
