@@ -1,3 +1,4 @@
+import json
 import api.auth.auth_details as bf_auth
 from BFDriver import BFDriver, BFDriverException
 from api.http_methods import Methods
@@ -97,7 +98,7 @@ for target in open_targets:
 
     Log.log_debug(f"Looking up odds for target {target}")
     runner_details = target[3]
-    runner_details.split("|")
+    runner_details = runner_details.split("|")
 
     for individual_runner in runner_details:
         Log.log_debug(f"Looking up odds for runner {individual_runner}")
@@ -105,21 +106,29 @@ for target in open_targets:
 
         Log.log_debug(f"Looking up odds {target[2]} : {type(target[2])}for selection id {selection_id} : type {type(selection_id)}")
 
-        json_resp = BF.call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
+        resp = BF.call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
                                      request_body=BF.request_body_obj.populate_template(
                                          "listRunnerBook",
                                          {
-                                             "<MarketID>": target[2],
-                                             "<RunnerID>": selection_id
+                                             "<MarketID>": str(target[2]),
+                                             "<RunnerID>": str(selection_id)
                                          }
                                      )
                                      )
-        Log.log_debug(json_resp)
+        Log.log_debug(resp)
 
+        json_resp = resp.json()
+        status = json_resp["result"][0]["status"]
+        Log.log_info(f"Market: {target[2]}, Runner: {selection_id}, Status: {status}")
+        odds = json_resp["result"][0]["runners"][0]["ex"]
+        Log.log_info(f"odds back: {odds}")
 
-#STEP 7 - Add the odds to the database table
-#
-# for target in open_targets:
-#     sql_command = f"INSERT INTO bf.market_table(\"timestamp\", market_id, runner_id, odds) VALUES (current_timestamp, ?, ?, ?);"
-#     success = db_connection.db_write(sql_command)
-#     Log.log_debug(f"Setting {target[0]} as {target[1]} status: {success}")
+        odds_str = json.dumps(odds)
+
+    #STEP 7 - Add the odds to the database table
+        # Create the SQL command using parameterized queries to avoid SQL injection
+        sql_command = ("INSERT INTO bf.market_table(\"timestamp\", market_id, runner_id, odds) "
+                       "VALUES (current_timestamp, %s, %s, %s);")
+
+        success = db_connection.db_write(sql_command, (target[2], selection_id, odds_str))
+        Log.log_debug(f"Setting {target[0]} as {target[1]} status: {success}")
