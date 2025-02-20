@@ -85,6 +85,21 @@ class RequestBody:
                             },
                         "id": 1
                     },
+                "listRunnerBook":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listRunnerBook",
+                        "params":
+                            {
+                                "marketId": "<MarketID>",
+                                "selectionId": "<RunnerID>",
+                                "priceProjection":
+                                    {
+                                        "priceData": ["EX_BEST_OFFERS"]
+                                    }
+                            },
+                        "id": 1
+                    },
                 "getAccountFunds":
                     {
                         "jsonrpc": "2.0",
@@ -97,6 +112,9 @@ class RequestBody:
                     }
             }
 
+
+
+#[{"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listRunnerBook", "params": {"marketId":"1.239523706","selectionId":"2426","priceProjection":{"priceData":["EX_BEST_OFFERS"]}}, "id": 1}]
     @decorators.log_attrib.dump_args
     def set_template(self, template_name: str, template_body: dict) -> None:
         """

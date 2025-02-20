@@ -267,25 +267,10 @@ class BFDriver:
         # Return the complete list of Targets
         return self.__targets_list
 
-    # update_odds_for_targets calls "listMarketBook" to update the odds for all the targets supplied in the
-    # target_list. It updates the values directly in the object so it doesn't directly return anything.
-    def update_odds_for_targets(self, target_list) -> None:
-        for target in target_list:
-            Log.log_debug("Looking up odds for {}".format(target.my_market.id))
-            Log.log_debug("Runners odds {}".format(target.my_market.runners))
-            json_resp = self.__call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                             request_body=self.__request_body_obj.populate_template(
-                                             "listMarketBook",
-                                             {
-                                             "<ListOfMarketIDs>": [target.my_market.id]
-                                             }
-                                         )
-                                             )
-            Log.log_debug(json_resp)
-            # the updated odds will be returned in the runners section
-            runner_list = json_resp.json()["result"][0]["runners"]
-            Log.log_debug(len(target.my_market.runners))
-            # Update each running in our object with the right odds.  Writing these comments
-            # way after the code and I am not 100% sure here! need to refresh
-            for runners in target.my_market.runners:
-                runners.odds = runner_list
+    @property
+    def call_obj(self) -> Call:
+        return self.__call_obj
+
+    @property
+    def request_body_obj(self) -> RequestBody:
+        return self.__request_body_obj

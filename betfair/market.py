@@ -135,16 +135,8 @@ class Market(BetfairObject):
         return self.__id
 
     @property
-    def market_time(self):
-        return self.__market_time
-
-    @property
     def name(self):
         return self.__name
-
-    @property
-    def description(self):
-        return self.__description
 
     @property
     def total_matched(self):
@@ -161,7 +153,6 @@ class Market(BetfairObject):
     @runners.setter
     def runners(self, value):
         self.__runners = value
-
 
 class Runner:
     @decorators.log_attrib.dump_args

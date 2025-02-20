@@ -90,12 +90,25 @@ Log.log_debug(myTargets[0].my_market.runners)
 Log.log_info("##############  Step 5 Complete")
 
 for target in myTargets:
-    Log.log_debug("Event ID {}, Name {}.  Market ID {}, Name {}. Time: {}".format(target.my_event.id,
-                                                                                  target.my_event.name,
-                                                                                  target.my_market.id,
-                                                                                  target.my_market.name,
-                                                                                  target.my_market.description[
-                                                                                      'marketTime']))
-    db_connection.db_write_target(target.target_id, target.my_event.id, target.my_market.id,
-                                  target.my_market.description['marketTime'],
-                                  'IDENTIFIED')
+
+    runner_string = ""
+    for runner in target.my_market.runners:
+        runner_string += str(runner.id) + "-" + runner.name + "|"
+
+    runner_string = runner_string[:-1]
+
+    Log.log_debug("Event ID {}, Name {}.  Market ID {}, Name {}. RunnerIDs: {}. Time: {}".format(
+        target.my_event.id,
+            target.my_event.name,
+            target.my_market.id,
+            target.my_market.name,
+            runner_string,
+            target.my_market.description['marketTime']))
+
+    db_connection.db_write_target(target_id=target.target_id,
+                                  event_id=target.my_event.id,
+                                  market_id=target.my_market.id,
+                                  runner_ids=runner_string,
+                                  start_time=target.my_market.description['marketTime'],
+                                  status='IDENTIFIED',
+                                  notes=str(target.my_market.description))

@@ -92,7 +92,7 @@ class DBOutputConnection:
             Log.log_error(error)
             raise DBOutputException("Failed to write object ID to database")
 
-    def db_write_target(self, target_id, event_id, market_id, start_time, status):
+    def db_write_target(self, target_id, event_id, market_id, runner_ids, start_time, status, notes="None"):
         try:
             with self.get_cursor() as cursor:
                 # Check if the record exists
@@ -108,8 +108,8 @@ class DBOutputConnection:
                 else:
                     # Record does not exist, insert a new record
                     cursor.execute(
-                        'INSERT INTO bf.target (target_id, event_id, market_id, start_time, status) VALUES (%s, %s, %s, %s, %s)',
-                        (target_id, event_id, market_id, start_time, status)
+                        'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, notes) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                        (target_id, event_id, market_id, runner_ids, start_time, status, notes)
                     )
                     Log.log_debug(f"Inserted new target record: {target_id}")
 
@@ -141,6 +141,23 @@ class DBOutputConnection:
             Log.log_error(error)
             print(f"Error: {error}")  # Added print statement for debugging
             raise DBOutputException("Failed to delete from database")
+
+    def db_write(self, sql_command, params=None):
+        """
+        Execute a given SQL command and return True if successful, False if it fails.
+
+        :param sql_command: The SQL command to execute.
+        :param params: Optional parameters for the SQL command.
+        :return: True if the command is executed successfully, False otherwise.
+        """
+        try:
+            with self.get_cursor() as cursor:
+                cursor.execute(sql_command, params)
+                Log.log_info(f"Executed SQL command: {sql_command}")
+                return True
+        except (Exception, psycopg2.DatabaseError) as error:
+            Log.log_error(error)
+            return False
 
     def close(self):
         if self.conn:
