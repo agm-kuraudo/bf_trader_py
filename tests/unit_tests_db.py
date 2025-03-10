@@ -1,8 +1,11 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from output.dboutput import DBOutputConnection, DBOutputException
+from output.log import Output as Log
 
 class TestDBOutputConnection(unittest.TestCase):
+
+    Log.LOG_FILE = False
 
     @patch('output.dboutput.psycopg2.connect')
     def setUp(self, mock_connect):
@@ -28,7 +31,8 @@ class TestDBOutputConnection(unittest.TestCase):
         mock_cursor.fetchone.return_value = None
 
         # Call the method
-        self.db_output.db_write_target("test_target_id", "test_event_id", "test_market_id", "2025-02-13 00:00:00", "unit_test")
+        self.db_output.db_write_target("test_target_id", "test_event_id", "test_market_id", runner_ids="12|12", start_time="2025-02-13 00:00:00", status='unit_test',
+                                  notes="str(target.my_market.description)")
 
         # Check if the insert query was executed
         mock_cursor.execute.assert_any_call(
@@ -36,8 +40,8 @@ class TestDBOutputConnection(unittest.TestCase):
             ("test_target_id",)
         )
         mock_cursor.execute.assert_any_call(
-            'INSERT INTO bf.target (target_id, event_id, market_id, start_time, status) VALUES (%s, %s, %s, %s, %s)',
-            ("test_target_id", "test_event_id", "test_market_id", "2025-02-13 00:00:00", "unit_test")
+            'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, notes) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+            ("test_target_id", "test_event_id", "test_market_id", "12|12", "2025-02-13 00:00:00", "unit_test", "str(target.my_market.description)")
         )
 
     @patch('output.dboutput.DBOutputConnection.get_cursor')

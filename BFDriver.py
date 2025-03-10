@@ -93,7 +93,8 @@ class BFDriver:
             self.__auth_obj.security_token = self.__call_obj.call_auth(
                 self.__request_body_obj.populate_template(
                     "CertAuth",
-                    {"<USERID>": self.__auth_obj.bf_userid, "<PWD>": self.__auth_obj.bf_pwd}
+                    {"<USERID>": self.__auth_obj.bf_userid, "<PWD>": self.__auth_obj.bf_pwd},
+                    add_quotes=True,
                 )
             )
             # Update the myCall object with the update Auth object (which will have the right token)

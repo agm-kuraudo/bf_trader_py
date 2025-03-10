@@ -136,19 +136,28 @@ class RequestBody:
         return self.__templates[template_name]
 
     @decorators.log_attrib.dump_args
-    def populate_template(self, template_name: str, replace_pairs: dict) -> dict:
+    def populate_template(self, template_name: str, replace_pairs: dict, add_quotes=False) -> dict:
         try:
             if template_name not in self.__templates:
                 raise ValueError(f"Template '{template_name}' not found.")
 
             template = self.__templates[template_name]
+
+            #print("Original Template:", template)
+
             template_str = json.dumps(template)
+            #print("Template String:", template_str)  # Debugging line
 
             for key, value in replace_pairs.items():
                 if isinstance(value, list):
                     value = json.dumps(value)
-                template_str = template_str.replace(f'"{key}"', value if isinstance(value, str) else json.dumps(value))
+                if add_quotes:
+                    template_str = template_str.replace(f'"{key}"', json.dumps(value) if not isinstance(value, str) else f'"{value}"')
+                else:
+                    template_str = template_str.replace(f'"{key}"', value if isinstance(value, str) else json.dumps(value))
+
+            #print("Final Template String:", template_str)  # Debugging line
 
             return json.loads(template_str)
         except Exception as e:
-            raise RequestBodyException("Unexpected error whilst populating template") from e
+            raise RequestBodyException(f"Unexpected error {e} whilst populating template {template_name}, replace_pairs: {replace_pairs}") from e
