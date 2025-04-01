@@ -93,7 +93,8 @@ class BFDriver:
             self.__auth_obj.security_token = self.__call_obj.call_auth(
                 self.__request_body_obj.populate_template(
                     "CertAuth",
-                    {"<USERID>": self.__auth_obj.bf_userid, "<PWD>": self.__auth_obj.bf_pwd}
+                    {"<USERID>": self.__auth_obj.bf_userid, "<PWD>": self.__auth_obj.bf_pwd},
+                    add_quotes=True,
                 )
             )
             # Update the myCall object with the update Auth object (which will have the right token)
@@ -267,105 +268,10 @@ class BFDriver:
         # Return the complete list of Targets
         return self.__targets_list
 
-    # update_odds_for_targets calls "listMarketBook" to update the odds for all the targets supplied in the
-    # target_list. It updates the values directly in the object so it doesn't directly return anything.
-    def update_odds_for_targets(self, target_list) -> None:
-        for target in target_list:
-            Log.log_debug("Looking up odds for {}".format(target.my_market.id))
-            Log.log_debug("Runners odds {}".format(target.my_market.runners))
-            json_resp = self.__call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                             request_body=self.__request_body_obj.populate_template(
-                                             "listMarketBook",
-                                             {
-                                             "<ListOfMarketIDs>": [target.my_market.id]
-                                             }
-                                         )
-                                             )
-            Log.log_debug(json_resp)
-            # the updated odds will be returned in the runners section
-            runner_list = json_resp.json()["result"][0]["runners"]
-            Log.log_debug(len(target.my_market.runners))
-            # Update each running in our object with the right odds.  Writing these comments
-            # way after the code and I am not 100% sure here! need to refresh
-            for runners in target.my_market.runners:
-                runners.odds = runner_list
+    @property
+    def call_obj(self) -> Call:
+        return self.__call_obj
 
-
-#Create a new BFDriver class, supplying the strategy and the log level.
-
-# BF = BFDriver(DefaultStrategy(), Log.INFO)
-# BF = BFDriver(DefaultStrategy(), Log.DEBUG)
-BF = BFDriver(FromFileStrategy(), Log.DEBUG)
-
-# Below added just to test the position work for SP-72
-# BF.myPosition.position_events = '32866443'
-
-#Pre-Steps 1: Get Local DB Connection Details
-
-global db_connection
-
-try:
-    db_details_string = BF.get_local_db_details()
-    db_connection = DBOutputConnection()
-
-    db_connection.open_connection(db_details_string)
-    db_connection.db_write("Starting run")
-
-except Exception as e:
-    raise BFDriverException("Failed to get local DB details: {}".format(e))
-
-# Step 1: Authenticate and get a Session Token!
-if not BF.get_token():
-    db_connection.db_write("Failed to retrieve token")
-    raise bf_auth.AuthException("Failed to authenticate to vault.  Validate that it is running (and unsealed) on "
-                                "port 8200.  See error message above for exception details")
-
-db_connection.db_write("Token retrieved")
-Log.log_info("##############    Step 1 Complete")
-
-# Step 2: Extract the update to date for Event ID(s) for selected events
-myEventTypes = BF.get_event_types()
-if myEventTypes == 0:
-    db_connection.db_write("Failed at step 2 - no event types")
-    raise BFDriverException("Failed at step 2 - no event types")
-
-db_connection.db_write("Event Types: {}".format(myEventTypes))
-Log.log_info("##############    Step 2 Complete")
-
-# Step 3: Extract the competition IDs for my selected competitions
-myComps = BF.get_competition_ids()
-if myComps == 0:
-    db_connection.db_write("Failed at step 3 - no Competitions")
-    raise BFDriverException("Failed at step 3 - no Competitions")
-
-db_connection.db_write("Competitions: {}".format(myComps))
-Log.log_info("##############    Step 3 Complete")
-
-# Step 4 : Extract the events matching our competition and event types
-myEvents = BF.get_events()
-if myEvents == 0:
-    db_connection.db_write("Failed at step 4 - no events")
-    raise BFDriverException("Failed at step 4 - no events")
-
-db_connection.db_write("myEvents: {}".format(myEvents))
-Log.log_info("##############    Step 4 Complete")
-
-Log.log_info("There are {} events available".format(len(myEvents)))
-
-for event in myEvents:
-    Log.log_info(f"Event: {event.name}")
-
-# Step 5: Get the correct markets associated with these events.
-
-myTargets = BF.get_target_markets(myEvents)
-if len(myTargets) == 0:
-    db_connection.db_write("Failed at step 5 - no targets")
-    raise BFDriverException("Failed at step 5 - no targets")
-Log.log_info("{} Targets identified".format(len(myTargets)))
-Log.log_debug(myTargets[0].my_market.runners)
-
-Log.log_info("##############  Step 5 Complete")
-
-# Get the updated odds for these targets
-
-BF.update_odds_for_targets(myTargets)
+    @property
+    def request_body_obj(self) -> RequestBody:
+        return self.__request_body_obj

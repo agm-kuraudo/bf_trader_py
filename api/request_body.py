@@ -1,3 +1,5 @@
+import json
+
 from output.log import Output as Log
 import decorators.log_attrib
 
@@ -85,6 +87,21 @@ class RequestBody:
                             },
                         "id": 1
                     },
+                "listRunnerBook":
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "SportsAPING/v1.0/listRunnerBook",
+                        "params":
+                            {
+                                "marketId": "<MarketID>",
+                                "selectionId": "<RunnerID>",
+                                "priceProjection":
+                                    {
+                                        "priceData": ["EX_BEST_OFFERS"]
+                                    }
+                            },
+                        "id": 1
+                    },
                 "getAccountFunds":
                     {
                         "jsonrpc": "2.0",
@@ -97,6 +114,9 @@ class RequestBody:
                     }
             }
 
+
+
+#[{"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listRunnerBook", "params": {"marketId":"1.239523706","selectionId":"2426","priceProjection":{"priceData":["EX_BEST_OFFERS"]}}, "id": 1}]
     @decorators.log_attrib.dump_args
     def set_template(self, template_name: str, template_body: dict) -> None:
         """
@@ -116,41 +136,28 @@ class RequestBody:
         return self.__templates[template_name]
 
     @decorators.log_attrib.dump_args
-    def populate_template(self, template_name: str, replace_pairs: dict, inner_dict: dict = None) -> dict:
-        """
-        take the template value specified in the template name param (or use inline inner_dict argument) and replace
-        the key value pairs specified by replace_pair. Return the updated dictionary
-        :param template_name:
-        :param replace_pairs:
-        :param inner_dict:
-        :return:
-        """
+    def populate_template(self, template_name: str, replace_pairs: dict, add_quotes=False) -> dict:
         try:
-            new_dict = {}
+            if template_name not in self.__templates:
+                raise ValueError(f"Template '{template_name}' not found.")
 
-            if inner_dict is None:
-                loop_dict = self.__templates[template_name]
-            else:
-                loop_dict = inner_dict
+            template = self.__templates[template_name]
 
-            for original, replacement in replace_pairs.items():
-                Log.log_debug("Original: {}, Replacement: {}".format(original, replacement))
-                for key, value in loop_dict.items():
-                    Log.log_debug("key: {}, value: {}".format(key, value))
+            #print("Original Template:", template)
 
-                    if type(value) == dict:
-                        Log.log_debug("Nested Dictionary in this request: {}".format(value))
-                        new_dict[key] = self.populate_template(None, replace_pairs, value)
-                    if key not in new_dict or original in str(new_dict.get(key)):
-                        Log.log_debug("IF Statement TRUE {}".format(loop_dict[key]))
-                        if type(replacement) == str:
-                            new_dict[key] = value.replace(original, replacement)
-                            Log.log_debug("Making Replacements {} : {}".format(original, replacement))
-                        elif loop_dict[key] == original:
-                            new_dict[key] = replacement
-                        else:
-                            new_dict[key] = value
+            template_str = json.dumps(template)
+            #print("Template String:", template_str)  # Debugging line
 
-            return new_dict
+            for key, value in replace_pairs.items():
+                if isinstance(value, list):
+                    value = json.dumps(value)
+                if add_quotes:
+                    template_str = template_str.replace(f'"{key}"', json.dumps(value) if not isinstance(value, str) else f'"{value}"')
+                else:
+                    template_str = template_str.replace(f'"{key}"', value if isinstance(value, str) else json.dumps(value))
+
+            #print("Final Template String:", template_str)  # Debugging line
+
+            return json.loads(template_str)
         except Exception as e:
-            raise RequestBodyException("Unexpected error whilst populating template") from e
+            raise RequestBodyException(f"Unexpected error {e} whilst populating template {template_name}, replace_pairs: {replace_pairs}") from e

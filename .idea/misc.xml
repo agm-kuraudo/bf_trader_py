@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.11 (py)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.13.0 Docker (agm_karaudo/betfair2_1:latest)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.12.9 Docker (agm-karaudo/betfair_app_02:latest)" project-jdk-type="Python SDK" />
 </project>

@@ -14,6 +14,7 @@ class Target:
     def __init__(self, my_event, my_market):
         self.__my_event = my_event
         self.__my_market = my_market
+        self.__target_id = my_event.id + "_" + my_market.id
 
     def __str__(self):
         Log.log_debug(self.my_event)
@@ -30,6 +31,10 @@ class Target:
     @property
     def my_market(self):
         return self.__my_market
+
+    @property
+    def target_id(self):
+        return self.__target_id
 
 
 class Market(BetfairObject):
@@ -62,13 +67,20 @@ class Market(BetfairObject):
         self.__id = json["marketId"]
         self.__name = json["marketName"]
         self.__description = json["description"]
-        self.__market_time = datetime.strptime(self.__description["marketTime"], '%Y-%m-%dT%H:%M:%S.000Z')
 
         if not all(attr is not None for attr in [self.__totalMatched, self.__description, self.__id, self.__name]):
             raise BetfairObjectException("Market Object can't initialise as all values not returned in json")
 
         return Market(market_id=self.__id, name=self.__name, description=self.__description,
                       total_matched=self.__totalMatched, runners=self.__runners)
+    @property
+    def market_time(self):
+        return self.__market_time
+
+    @property
+    def description(self):
+        return self.__description
+
 
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
@@ -123,16 +135,8 @@ class Market(BetfairObject):
         return self.__id
 
     @property
-    def market_time(self):
-        return self.__market_time
-
-    @property
     def name(self):
         return self.__name
-
-    @property
-    def description(self):
-        return self.__description
 
     @property
     def total_matched(self):
@@ -149,7 +153,6 @@ class Market(BetfairObject):
     @runners.setter
     def runners(self, value):
         self.__runners = value
-
 
 class Runner:
     @decorators.log_attrib.dump_args

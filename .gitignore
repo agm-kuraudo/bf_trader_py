@@ -1,3 +1,5 @@
 *.pyc
 *.log
 certs
+charts
+/build/run_deck_data
