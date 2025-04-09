@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Load variables from /etc/environment
+if [ -f /etc/environment ]; then
+    set -o allexport
+    source /etc/environment
+    set +o allexport
+else
+    echo "Error: /etc/environment file not found."
+    exit 1
+fi
+
 # Get the script's directory
 scriptDir=$(dirname "$(readlink -f "$0")")
 

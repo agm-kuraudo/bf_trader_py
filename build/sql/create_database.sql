@@ -9,6 +9,8 @@ CREATE DATABASE bf_trader
     CONNECTION LIMIT = -1
     IS_TEMPLATE = False;
 
+\c bf_trader
+
 CREATE SCHEMA bf;
 
 CREATE TABLE IF NOT EXISTS bf.betfair_object_ids

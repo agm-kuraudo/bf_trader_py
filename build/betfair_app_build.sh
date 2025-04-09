@@ -1,0 +1,1 @@
+docker build -f betfair_app.dockerfile -t agm-karaudo/betfair_app_01 .
