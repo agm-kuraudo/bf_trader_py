@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS bf.target
     runner_ids text COLLATE pg_catalog."default",
     start_time timestamp with time zone,
     status text COLLATE pg_catalog."default",
+    update_frequency integer,
+    last_updated timestamp with time zone,
     notes text COLLATE pg_catalog."default"
 )
 

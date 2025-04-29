@@ -26,8 +26,8 @@ EXPOSE 4440
 # Switch back to Rundeck user
 USER rundeck
 
-# Define the entrypoint
-ENTRYPOINT ["/home/rundeck/docker-lib/entry.sh"]
+# Define the entrypoint using rundeckd script
+ENTRYPOINT ["/usr/bin/rundeckd"]
 
 # Define the command to run Rundeck
 CMD ["-p", "4440"]

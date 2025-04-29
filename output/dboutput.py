@@ -108,8 +108,8 @@ class DBOutputConnection:
                 else:
                     # Record does not exist, insert a new record
                     cursor.execute(
-                        'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, notes) VALUES (%s, %s, %s, %s, %s, %s, %s)',
-                        (target_id, event_id, market_id, runner_ids, start_time, status, notes)
+                        'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, last_updated, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s)',
+                        (target_id, event_id, market_id, runner_ids, start_time, status, 240, notes)
                     )
                     Log.log_debug(f"Inserted new target record: {target_id}")
 
