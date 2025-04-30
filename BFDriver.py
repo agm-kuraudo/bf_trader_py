@@ -125,7 +125,7 @@ class BFDriver:
             if event_type.name in self.__my_strategy.EVENTS:
                 # Add to our selected events list
                 selected_event_types.append(event_type)
-                Log.log_info(event_type)
+                Log.log_debug(event_type)
 
         # if we didn't get any matched events, raise a useful error message
         if len(selected_event_types) == 0:
@@ -175,7 +175,7 @@ class BFDriver:
             if ev.name in self.__my_strategy.COMPETITIONS:
                 # append it to our selected list
                 selected_comps.append(ev)
-                Log.log_info(ev)
+                Log.log_debug(ev)
         # If we didn't find any matching competitions output a useful error message
         if len(selected_comps) == 0:
             Log.log_error("No competitions found matching: {}. Possible options will be listed below".format(
@@ -231,7 +231,7 @@ class BFDriver:
             elif (ev.open_date - datetime.now()) > timedelta(days=self.__my_strategy.MAX_DAYS_TILL_START):
                 Log.log_debug(f"Event to far away: {ev.open_date}")
             else:
-                Log.log_info(f"Event {ev.name} in range: {ev.open_date}")
+                Log.log_debug(f"Event {ev.name} in range: {ev.open_date}")
                 filtered_events.append(ev)
         # return a sorted list either newest or oldest first - depending on what is set in the strategy
         return sorted(filtered_events, key=lambda item: item.open_date, reverse=not self.__my_strategy.NEWEST_FIRST)

@@ -8,6 +8,7 @@ from logic.simpleStategy import DefaultStrategy, FromFileStrategy
 from output.dboutput import DBOutputConnection
 from output.log import Output as Log
 from datetime import datetime, timedelta, timezone
+import time
 
 class MonitorServiceException(Exception):
     pass
@@ -49,12 +50,12 @@ class MonitorService:
                 Log.log_debug(json_resp)
                 json = json_resp.json()
                 status = json["result"][0]["status"]
-                Log.log_info(f"Market: {market}, Status: {status}")
+                Log.log_debug(f"Market: {market}, Status: {status}")
                 runner_list = json["result"][0]["runners"]
-                Log.log_info(f"Market {market}, Runners: {len(runner_list)}")
+                Log.log_debug(f"Market {market}, Runners: {len(runner_list)}")
                 runners = [runner["selectionId"] for runner in runner_list]
                 targets.append((market, status, len(runner_list), runners, target[6], target[7]))
-            Log.log_info("##############    Step 2 Complete")
+            Log.log_info(f"##############    Step 2 Complete {len(targets)} processed targets:")
             Log.log_debug(targets)
             return targets
         except Exception as e:
@@ -73,6 +74,7 @@ class MonitorService:
         except Exception as e:
             raise MonitorServiceException(f"Failed to update target status: {e}")
 
+    # This function is essentially deprecated as the "get_filtered_targets" now selects only open targets
     def get_open_targets(self):
         try:
             open_targets = self.db_connection.db_read("SELECT target_id, event_id, market_id, runner_ids, start_time, status, notes FROM bf.target WHERE status = 'OPEN';")
@@ -87,28 +89,28 @@ class MonitorService:
     def get_filtered_targets(self, open_targets):
         try:
             targets_to_update = []
-            print("##############    Step 3 get_filtered_targets")
+            Log.log_info("##############    Step 3 get_filtered_targets")
             for target in open_targets:
-                print(target)
+                Log.log_debug(target)
 
                 # Retrieve the current date and time
                 current_time = datetime.now(timezone.utc)
                 Log.log_debug(f"Current date and time: {current_time}")
 
-                minutes_until_next_update = target[4]
-                Log.log_debug(f"Minutes until next update: {minutes_until_next_update}")
+                seconds_until_next_update = target[4]
+                Log.log_debug(f"Seconds until next update: {seconds_until_next_update}")
 
                 # Assuming target[5] contains the last updated time as a datetime object
                 last_update_time = target[5]
                 Log.log_debug(f"Last update time: {last_update_time}")
 
                 # Calculate the next update time
-                next_update_time = last_update_time + timedelta(minutes=minutes_until_next_update)
+                next_update_time = last_update_time + timedelta(seconds=seconds_until_next_update)
                 Log.log_debug(f"Next update time: {next_update_time}")
 
                 # Calculate the number of minutes until the next update is required
                 time_until_next_update = next_update_time - current_time
-                seconds_until_next_update_required = time_until_next_update.total_seconds() / 60
+                seconds_until_next_update_required = time_until_next_update.total_seconds()
                 Log.log_debug(f"Seconds until next update is required: {seconds_until_next_update_required}")
 
                 if target[1] == 'OPEN' and seconds_until_next_update_required < 0:
@@ -117,7 +119,6 @@ class MonitorService:
             return targets_to_update
         except Exception as e:
             raise MonitorServiceException(f"Failed to filter targets that require update: {e}")
-
 
     def update_runner_odds(self, open_targets):
         try:
@@ -164,7 +165,7 @@ class MonitorService:
             # Process the targets into data we can work with easily
             targets = self.process_targets(raw_targets)
 
-            # Update the status of targets (for example CLOSE any markets that have closed!)
+            # Update the status of targets (for example, CLOSE any markets that have closed!)
             self.update_target_status(targets)
 
             # Filter only for targets that need to be updated
@@ -179,11 +180,28 @@ class MonitorService:
                 Log.log_info("##############    Updating Targets")
                 # Updating odds for targets
                 self.update_runner_odds(filtered_targets)
+
         except Exception as e:
             Log.log_error(f"Failed to update targets: {e}")
             raise MonitorServiceException(f"Failed to update targets: {e}")
 
-# Example usage
 if __name__ == "__main__":
-    service = MonitorService(log_level=Log.DEBUG)
+    service = MonitorService(log_level=Log.INFO)
+
+    # Start the timer
+    start_time = time.time()
+
+    # Call your service.run() function
     service.run()
+
+    # Calculate the elapsed time
+    elapsed_time = time.time() - start_time
+
+    print(elapsed_time)
+    # Calculate the remaining time to wait
+    remaining_time = max(0.0, 1.0 - elapsed_time)
+
+    print(remaining_time)
+
+    # Wait for the remaining time
+    time.sleep(remaining_time)
