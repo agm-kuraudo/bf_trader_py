@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Load variables from /etc/environment
+if [ -f /etc/environment ]; then
+    set -o allexport
+    source /etc/environment
+    set +o allexport
+else
+    echo "Error: /etc/environment file not found."
+    exit 1
+fi
+
 # Check if the environment variable is set
 if [ -z "$vault_unseal_keys" ]; then
     echo "Error: vault_unseal_keys environment variable is not set."

@@ -1,0 +1,35 @@
+[ {
+  "defaultTab" : "nodes",
+  "description" : "",
+  "executionEnabled" : true,
+  "id" : "eb847778-dd2c-409c-a8b3-4e85b00ea315",
+  "loglevel" : "INFO",
+  "name" : "Monitor Service",
+  "nodeFilterEditable" : false,
+  "plugins" : {
+    "ExecutionLifecycle" : { }
+  },
+  "schedule" : {
+    "dayofmonth" : {
+      "day" : "*"
+    },
+    "month" : "*",
+    "time" : {
+      "hour" : "11-23",
+      "minute" : "0/15",
+      "seconds" : "0"
+    },
+    "year" : "*"
+  },
+  "scheduleEnabled" : true,
+  "sequence" : {
+    "commands" : [ {
+      "autoSecureInput" : "false",
+      "passSecureInput" : "false",
+      "scriptfile" : "/usr/local/bf_trader_py/scripts/run_monitor_service.sh"
+    } ],
+    "keepgoing" : false,
+    "strategy" : "node-first"
+  },
+  "uuid" : "eb847778-dd2c-409c-a8b3-4e85b00ea315"
+} ]

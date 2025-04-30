@@ -10,11 +10,7 @@ else
     exit 1
 fi
 
-# Get the script's directory
-scriptDir=$(dirname "$(readlink -f "$0")")
-
-# Define the relative path to the folder one level up
-localFolder=$(realpath "$scriptDir/..")
+localFolder="/usr/local/bf_trader_py"
 
 # Define other variables
 imageName="agm-karaudo/betfair_app_01:latest"

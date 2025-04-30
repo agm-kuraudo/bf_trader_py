@@ -1,0 +1,37 @@
+[ {
+  "defaultTab" : "nodes",
+  "description" : "",
+  "executionEnabled" : true,
+  "id" : "9129a621-7985-404d-91cd-5c39b4bb03ce",
+  "loglevel" : "INFO",
+  "name" : "Unlock the Vault",
+  "nodeFilterEditable" : false,
+  "plugins" : {
+    "ExecutionLifecycle" : { }
+  },
+  "schedule" : {
+    "month" : "*",
+    "time" : {
+      "hour" : "09",
+      "minute" : "00",
+      "seconds" : "0"
+    },
+    "weekday" : {
+      "day" : "*"
+    },
+    "year" : "*"
+  },
+  "scheduleEnabled" : true,
+  "sequence" : {
+    "commands" : [ {
+      "autoSecureInput" : "false",
+      "interpreterArgsQuoted" : false,
+      "passSecureInput" : "false",
+      "scriptInterpreter" : "/bin/bash -l -c",
+      "scriptfile" : "/usr/local/bf_trader_py/scripts/start_up_vault.sh"
+    } ],
+    "keepgoing" : false,
+    "strategy" : "node-first"
+  },
+  "uuid" : "9129a621-7985-404d-91cd-5c39b4bb03ce"
+} ]
