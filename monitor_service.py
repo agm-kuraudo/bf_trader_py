@@ -202,6 +202,9 @@ class MonitorService:
                 else:
                     break
 
+                if i == 4:
+                    raise MonitorServiceException("Monitor Service: Failed to acquire lock")
+
             self.db_connection.db_write_log("Monitor Service: Starting run")
             self.authenticate_and_get_token()
 
@@ -220,7 +223,7 @@ class MonitorService:
                 reload_from_db = False
 
                 # Start the timer
-                start_time = time.time()
+                # start_time = time.time()
 
                 # Filter only for targets that need to be updated
                 filtered_targets, nearest_update_seconds = self.get_filtered_targets(targets)
