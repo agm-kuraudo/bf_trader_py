@@ -26,7 +26,7 @@ if [ ${#vaultUnsealKey[@]} -ne 3 ]; then
 fi
 
 # Define the container name or ID
-containerName="my_keyvault"
+containerName="my_vault"
 
 # Start the container
 docker start $containerName

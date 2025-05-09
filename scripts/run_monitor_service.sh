@@ -10,17 +10,16 @@ else
     exit 1
 fi
 
-localFolder="/usr/local/bf_trader_py"
+# Start the Docker container
+docker start bf_monitor_service
 
-# Define other variables
-imageName="agm-karaudo/betfair_app_01:latest"
-command="python /app/monitor_service.py"
+# Loop until the container is running
+while [[ "$(docker inspect -f '{{.State.Running}}' bf_monitor_service)" != "true" ]]; do
+   echo "Waiting for bf_monitor_service to start..."
+   sleep 1
+done
 
-# Run the Docker image, map the local folder, and execute the command
-containerId=$(docker run -d -v "${localFolder}:/app" $imageName /bin/sh -c "$command")
-
-# Wait for a few seconds to ensure the container is fully started
-sleep 5
+echo "bf_monitor_service is now running."
 
 # Tail the logs of the container
-docker logs -f $containerId
+docker logs -f bf_monitor_service
