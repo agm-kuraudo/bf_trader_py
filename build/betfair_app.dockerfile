@@ -9,4 +9,4 @@ ENV BF_AppKey=wId8CbMYLNRjCwWm
 ENV BF_CRT_FILE=/app/certs/client-2048.crt
 ENV BF_KEY_FILE=/app/certs/client-2048.key
 ENV BF_P12_FILE=/app/certs/client-2048.p12
-ENV VAULT_TOKEN=hvs.AB6Oevl3yQV9KCMT3KYdpfWM
+ENV VAULT_TOKEN=hvs.XoQOkFxtqN5X7BdUQg0NGP6n

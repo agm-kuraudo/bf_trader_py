@@ -1,18 +1,13 @@
-﻿# Get the script's directory
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+﻿# Start the bf_monitor_service container
+docker start bf_monitor_service
 
-# Define the relative path to the folder one level up
-$localFolder = Join-Path $scriptDir ".."
+# Loop until the container is running
+while ((docker inspect -f '{{.State.Running}}' bf_monitor_service) -ne $true) {
+    Write-Output "Waiting for bf_monitor_service to start..."
+    Start-Sleep -Seconds 1
+}
 
-# Define other variables
-$imageName = "agm-karaudo/betfair_app_01:latest"
-$command = "python /app/monitor_service.py"
-
-# Run the Docker image, map the local folder, and execute the command
-$containerId = docker run -d -v ${localFolder}:/app $imageName /bin/sh -c "$command"
-
-# Wait for a few seconds to ensure the container is fully started
-Start-Sleep -Seconds 5
+Write-Output "bf_monitor_service is now running."
 
 # Tail the logs of the container
-docker logs -f $containerId
+docker logs -f bf_monitor_service
