@@ -7,7 +7,7 @@ class Output:
     WARNING = 3
     ERROR = 4
 
-    LOG_CONSOLE = True
+    LOG_CONSOLE = False
     LOG_FILE = True
 
     SELECTED_LOG_LEVEL = 1  # Defaults to debug - can be changed by calling "set_log_level"
@@ -23,29 +23,29 @@ class Output:
         cls.SELECTED_LOG_LEVEL = log_level
 
     @classmethod
-    def log_debug(cls, msg):
+    def log_debug(cls, msg, force_console_log=False):
         if Output.SELECTED_LOG_LEVEL <= Output.DEBUG:
             if cls.LOG_CONSOLE:
-                cls.log("DEBUG:", msg)
+                cls.log("DEBUG:", msg, force_console_log)
 
     @classmethod
-    def log_info(cls, msg):
+    def log_info(cls, msg, force_console_log=False):
         if Output.SELECTED_LOG_LEVEL <= Output.INFO:
-            cls.log("INFO:", msg)
+            cls.log("INFO:", msg, force_console_log)
 
     @classmethod
-    def log_warning(cls, msg):
+    def log_warning(cls, msg, force_console_log=False):
         if Output.SELECTED_LOG_LEVEL <= Output.WARNING:
-            cls.log("WARNING:", msg)
+            cls.log("WARNING:", msg, force_console_log)
 
     @classmethod
-    def log_error(cls, msg):
+    def log_error(cls, msg, force_console_log=False):
         if Output.SELECTED_LOG_LEVEL <= Output.ERROR:
-            cls.log("ERROR:", msg)
+            cls.log("ERROR:", msg, force_console_log)
 
     @classmethod
-    def log(cls, level, msg):
-        if cls.LOG_CONSOLE:
+    def log(cls, level, msg, force_console_log=False):
+        if cls.LOG_CONSOLE or force_console_log:
             cls.console_output(level + str(msg))
         if cls.LOG_FILE:
             cls.file_output(level + str(msg))

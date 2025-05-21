@@ -164,7 +164,7 @@ class BFDriver:
         )
         )
 
-        Log.log_debug(df.head())
+        #Log.log_debug("" + df.head())
 
         # selected comps is initialised as a blank list
         selected_comps = []
@@ -175,13 +175,13 @@ class BFDriver:
             if ev.name in self.__my_strategy.COMPETITIONS:
                 # append it to our selected list
                 selected_comps.append(ev)
-                Log.log_debug(ev)
+                Log.log_debug(f"Event: {ev}")
         # If we didn't find any matching competitions output a useful error message
         if len(selected_comps) == 0:
             Log.log_error("No competitions found matching: {}. Possible options will be listed below".format(
                 self.__my_strategy.COMPETITIONS))
             for ev in my_comps:
-                Log.log_error(ev)
+                Log.log_debug(f"Event: {ev}")
             return 0
         # else we save the competition ids only to a list
         else:
@@ -210,7 +210,7 @@ class BFDriver:
                                  )
         )
 
-        Log.log_debug(df.info())
+        #Log.log_debug(df.info())
         # This return statement calls the "fiter_events" method also contained in this class remove events outside the
         # required timeline and those which already have an active position open. It also uses slicing to cut down the
         # events to the Maximum number supplied in the strategy

@@ -21,9 +21,9 @@ class MonitorService:
     def authenticate_and_get_token(self):
         try:
             if not self.BF.get_token():
-                self.db_connection.db_write_log("Failed to retrieve token")
+                self.db_connection.db_write_log("Monitor Service: ERROR : Ending Run : Failed to retrieve token")
                 raise bf_auth.AuthException("Failed to authenticate to vault. Validate that it is running (and unsealed) on port 8200.")
-            self.db_connection.db_write_log("Token retrieved")
+            #self.db_connection.db_write_log("Token retrieved")
             Log.log_info("##############    Login Token Retrieved")
         except Exception as e:
             raise MonitorServiceException(f"Authentication failed: {e}")
@@ -31,9 +31,10 @@ class MonitorService:
     def get_targets(self):
         try:
             raw_targets = self.db_connection.db_read("SELECT target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, last_updated, notes FROM bf.target WHERE status in ('IDENTIFIED', 'OPEN');")
-            Log.log_info(f"##############    Step 1 Complete - {len(raw_targets)} targets in IDENTIFIED")
+            Log.log_info(f"##############    Step 1 Complete - {len(raw_targets)} targets in IDENTIFIED", force_console_log=True)
             return raw_targets
         except Exception as e:
+            self.db_connection.db_write_log(f"Monitor Service: ERROR : Ending Run : Failed to get targets: {e}")
             raise MonitorServiceException(f"Failed to get targets: {e}")
 
     def process_targets(self, raw_targets):
@@ -55,10 +56,11 @@ class MonitorService:
                 Log.log_debug(f"Market {market}, Runners: {len(runner_list)}")
                 runners = [runner["selectionId"] for runner in runner_list]
                 targets.append((market, status, len(runner_list), runners, target[6], target[7], target[4]))
-            Log.log_info(f"##############    Step 2 Complete {len(targets)} processed targets:")
+            Log.log_info(f"##############    Step 2 Complete {len(targets)} processed targets:", force_console_log=True)
             Log.log_debug(targets)
             return targets
         except Exception as e:
+            self.db_connection.db_write_log(f"Monitor Service: ERROR : Ending Run : Failed to update odds for targets: {e}")
             raise MonitorServiceException(f"Failed to update odds for targets: {e}")
 
     def update_target_status(self, targets):
@@ -70,8 +72,12 @@ class MonitorService:
                     success = self.db_connection.db_write(sql_command)
                     Log.log_debug(f"Setting {target[0]} as {target[1]} status: {success}")
                 else:
+                    self.db_connection.db_write_log(
+                        f"Monitor Service: ERROR : Ending Run : Unknown market state: {target}")
                     raise MonitorServiceException(f"Unknown market state: {target}")
         except Exception as e:
+            self.db_connection.db_write_log(
+                f"Monitor Service: ERROR : Ending Run : Failed to update target status: {e}")
             raise MonitorServiceException(f"Failed to update target status: {e}")
 
     # This function is essentially deprecated as the "get_filtered_targets" now selects only open targets
@@ -84,6 +90,8 @@ class MonitorService:
                 Log.log_info("Active Targets: {}".format(open_targets))
             return open_targets
         except Exception as e:
+            self.db_connection.db_write_log(
+                f"Monitor Service: ERROR : Ending Run : Failed to get open targets: {e}")
             raise MonitorServiceException(f"Failed to get open targets: {e}")
 
     def get_filtered_targets(self, open_targets):
@@ -126,6 +134,8 @@ class MonitorService:
 
             return (targets_to_update, nearest_update_time)
         except Exception as e:
+            self.db_connection.db_write_log(
+                f"Monitor Service: ERROR : Ending Run : Failed to filter targets that require update: {e}")
             raise MonitorServiceException(f"Failed to filter targets that require update: {e}")
 
     def update_runner_odds(self, open_targets):
@@ -180,6 +190,8 @@ class MonitorService:
 
 
         except Exception as e:
+            self.db_connection.db_write_log(
+                f"Monitor Service: ERROR : Ending Run : Failed to update runner odds: {e}")
             raise MonitorServiceException(f"Failed to update runner odds: {e}")
 
     def run(self):
@@ -194,7 +206,7 @@ class MonitorService:
 
             # Logic to make sure only 1 instance can run at a time
             for i in range(5):
-                start_count, finish_count = self.db_connection.db_read("SELECT SUM(CASE WHEN message = 'Monitor Service: Starting run' THEN 1 ELSE 0 END) AS starting_run_count,  SUM(CASE WHEN message = 'Monitor Service: Ending run' THEN 1 ELSE 0 END) AS ending_run_count FROM bf.log_file;")[0]
+                start_count, finish_count = self.db_connection.db_read("SELECT SUM(CASE WHEN message = 'Monitor Service: INFO: Starting run' THEN 1 ELSE 0 END) AS starting_run_count,  SUM(CASE WHEN message = 'Monitor Service: INFO: Ending run successfully' THEN 1 ELSE 0 END) AS ending_run_count FROM bf.log_file;")[0]
 
                 if start_count != finish_count:
                     Log.log_warning("Monitor Service: Appears to be already running. Will retry every 60 seconds for 5 minutes")
@@ -205,7 +217,7 @@ class MonitorService:
                 if i == 4:
                     raise MonitorServiceException("Monitor Service: Failed to acquire lock")
 
-            self.db_connection.db_write_log("Monitor Service: Starting run")
+            self.db_connection.db_write_log("Monitor Service: INFO: Starting run")
             self.authenticate_and_get_token()
 
             for i in range(15* 60):
@@ -231,15 +243,16 @@ class MonitorService:
                 Log.log_info(f"##############    Filtered Targets Count : {len(filtered_targets)}. Nearest Update Time: {nearest_update_seconds}")
 
                 if len(filtered_targets) == 0:
-                    Log.log_debug("##############    No targets to update")
+                    Log.log_info("##############    No targets to update")
+                    break
                 else:
-                    Log.log_info("##############    Updating Targets")
+                    Log.log_info("##############    Updating Targets", force_console_log=True)
                     # Updating odds for targets
                     self.update_runner_odds(filtered_targets)
                     reload_from_db = True
 
                 if nearest_update_seconds > 900:
-                    Log.log_info("##############    Next update time not within 15 minutes")
+                    Log.log_info("##############    Next update time not within 15 minutes", force_console_log=True)
                     break
 
                 # # Wait for the remaining time (to 1 second)
@@ -247,7 +260,8 @@ class MonitorService:
                 # remaining_time = max(0.0, 1.0 - elapsed_time)
                 time.sleep(max(0.1, nearest_update_seconds - 1))
 
-            self.db_connection.db_write_log("Monitor Service: Ending run")
+            self.db_connection.db_write_log("Monitor Service: INFO: Ending run successfully")
+            Log.log_info("Monitor Service: INFO: Ending run successfully", force_console_log=True)
 
         except Exception as e:
             Log.log_error(f"Failed to update targets: {e}")

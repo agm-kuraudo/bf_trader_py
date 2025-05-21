@@ -9,4 +9,4 @@ while ((docker inspect -f '{{.State.Running}}' bf_target_service) -ne $true) {
 
 Write-Output "bf_target_service is now running."
 # Tail the logs of the container
-docker logs -f bf_target_service
+docker logs --since 10s -f bf_target_service

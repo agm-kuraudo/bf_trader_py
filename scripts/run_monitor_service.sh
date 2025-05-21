@@ -22,4 +22,4 @@ done
 echo "bf_monitor_service is now running."
 
 # Tail the logs of the container
-docker logs -f bf_monitor_service
+docker logs --since 10s -f bf_monitor_service
