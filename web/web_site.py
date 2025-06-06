@@ -1,15 +1,15 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template
 import psycopg2
-from psycopg2 import sql
+from psycopg2 import pool
 import os
 import logging
 from dotenv import load_dotenv
+import sqlparse
+from datetime import datetime, timedelta
+
 app = Flask(__name__)
 
-# Enable debug logging
 logging.basicConfig(level=logging.DEBUG)
-
-
 load_dotenv()
 
 DB_HOST = os.getenv('DB_HOST')
@@ -18,68 +18,86 @@ DB_NAME = os.getenv('DB_NAME')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 
-# HTML template
-html_template = """
-<!doctype html>
-<html>
-  <head><title>SQL Query Executor</title></head>
-  <body>
-    <h1>Run SQL Query</h1>
-    <form method="post">
-      <textarea name="query" rows="4" cols="60" placeholder="Enter SELECT query here">{{ query }}</textarea><br>
-      <input type="submit" value="Execute">
-    </form>
-    {% if results %}
-      <h2>Results:</h2>
-      <table border="1">
-        <tr>{% for col in results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr>
-        {% for row in results %}
-          <tr>{% for val in row.values() %}<td>{{ val }}</td>{% endfor %}</tr>
-        {% endfor %}
-      </table>
-    {% endif %}
-    {% if error %}
-      <p style="color:red;">{{ error }}</p>
-    {% endif %}
-  </body>
-</html>
-"""
+connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10,
+    host=DB_HOST,
+    port=DB_PORT,
+    dbname=DB_NAME,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    options='-c statement_timeout=5000'
+)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     results = None
+    target_results = None
+    market_results = None
     error = None
     query = ""
 
-    if request.method == 'POST':
-        query = request.form['query']
-        app.logger.debug(f"Received query: {query}")
+    # Default date range: from 7 days ago to today
+    from_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    to_date = datetime.now().strftime('%Y-%m-%d')
 
-        if not query.strip().lower().startswith('select'):
-            error = "Only SELECT queries are allowed."
-        else:
+    if request.method == 'POST':
+        if 'query' in request.form:
+            query = request.form['query']
+            parsed = sqlparse.parse(query)
+            if not parsed or parsed[0].get_type() != 'SELECT':
+                error = "Only SELECT queries are allowed."
+            else:
+                try:
+                    conn = connection_pool.getconn()
+                    cur = conn.cursor()
+                    cur.execute(query)
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = cur.fetchall()
+                    results = [dict(zip(colnames, row)) for row in rows]
+                    cur.close()
+                    connection_pool.putconn(conn)
+                except Exception as e:
+                    error = f"Database error: {str(e)}"
+
+        elif 'retrieve_targets' in request.form:
+            from_date = request.form.get('from_date', from_date)
+            to_date = request.form.get('to_date', to_date)
             try:
-                app.logger.debug(f"Attempting to connect with username: {DB_USER}, password: {DB_PASSWORD}")
-                conn = psycopg2.connect(
-                    host=DB_HOST,
-                    port=DB_PORT,
-                    dbname=DB_NAME,
-                    user=DB_USER,
-                    password=DB_PASSWORD
-                )
-                app.logger.debug("Connection successful.")
+                conn = connection_pool.getconn()
                 cur = conn.cursor()
-                cur.execute(query)
+                cur.execute("""
+                    SELECT target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, last_updated, notes
+                    FROM bf.target
+                    WHERE start_time BETWEEN %s AND %s;
+                """, (from_date, to_date))
                 colnames = [desc[0] for desc in cur.description]
                 rows = cur.fetchall()
-                results = [dict(zip(colnames, row)) for row in rows]
+                target_results = [dict(zip(colnames, row)) for row in rows]
                 cur.close()
-                conn.close()
+                connection_pool.putconn(conn)
             except Exception as e:
                 error = f"Database error: {str(e)}"
-                app.logger.error("Database connection or query failed", exc_info=True)
 
-    return render_template_string(html_template, results=results, error=error, query=query)
+        elif 'retrieve_market' in request.form:
+            market_id = request.form.get('market_id')
+            from_date = request.form.get('from_date', from_date)
+            to_date = request.form.get('to_date', to_date)
+            try:
+                conn = connection_pool.getconn()
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT "timestamp", market_id, runner_id, odds
+                    FROM bf.market_table
+                    WHERE market_id = %s AND "timestamp" BETWEEN %s AND %s;
+                """, (market_id, from_date, to_date))
+                colnames = [desc[0] for desc in cur.description]
+                rows = cur.fetchall()
+                market_results = [dict(zip(colnames, row)) for row in rows]
+                cur.close()
+                connection_pool.putconn(conn)
+            except Exception as e:
+                error = f"Database error: {str(e)}"
+
+    return render_template('index.html', results=results, target_results=target_results, market_results=market_results, error=error, query=query, from_date=from_date, to_date=to_date)
 
 if __name__ == '__main__':
     app.run(debug=True)

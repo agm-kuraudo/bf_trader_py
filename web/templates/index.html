@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <title>BF Trader Log Inspector</title>
+  <style>
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .tab-buttons button { margin-right: 10px; }
+  </style>
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      const hiddenInputs = document.querySelectorAll('input[name="active_tab"]');
+      hiddenInputs.forEach(input => input.value = tabId);
+    }
+
+    window.onload = function () {
+      const activeTab = "{{ request.form.get('active_tab', 'queryTab') }}";
+      showTab(activeTab);
+    };
+  </script>
+</head>
+<body>
+  <h1>BF Trader Log Inspector</h1>
+  <div class="tab-buttons">
+    <button onclick="showTab('queryTab')">Run SQL Query</button>
+    <button onclick="showTab('targetTab')">Retrieve Targets</button>
+    <button onclick="showTab('marketTab')">Market Table</button>
+  </div>
+
+  <!-- SQL Query Tab -->
+  <div id="queryTab" class="tab">
+    <form method="post">
+      <input type="hidden" name="active_tab" value="queryTab">
+      <textarea name="query" rows="4" cols="60" placeholder="Enter SELECT query here">{{ query }}</textarea><br>
+      <input type="submit" value="Execute">
+    </form>
+    {% if results %}
+      <h2>Query Results:</h2>
+      <table border="1">
+        <tr>{% for col in results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr>
+        {% for row in results %}
+          <tr>{% for val in row.values() %}<td>{{ val }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </table>
+    {% endif %}
+  </div>
+
+  <!-- Target Tab -->
+  <div id="targetTab" class="tab">
+    <form method="post">
+      <input type="hidden" name="active_tab" value="targetTab">
+      <label>From: <input type="date" name="from_date" value="{{ from_date }}"></label>
+      <label>To: <input type="date" name="to_date" value="{{ to_date }}"></label>
+      <input type="submit" name="retrieve_targets" value="Retrieve Targets">
+    </form>
+    {% if target_results %}
+      <h2>Target Table:</h2>
+      <table border="1">
+        <tr>{% for col in target_results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr>
+        {% for row in target_results %}
+          <tr>{% for val in row.values() %}<td>{{ val }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </table>
+    {% endif %}
+  </div>
+
+  <!-- Market Table Tab -->
+  <div id="marketTab" class="tab">
+    <form method="post">
+      <input type="hidden" name="active_tab" value="marketTab">
+      <label>Market ID: <input type="text" name="market_id" required></label><br>
+      <label>From: <input type="date" name="from_date" value="{{ from_date }}"></label>
+      <label>To: <input type="date" name="to_date" value="{{ to_date }}"></label>
+      <input type="submit" name="retrieve_market" value="Retrieve Market Data">
+    </form>
+    {% if market_results %}
+      <h2>Market Table Results:</h2>
+      <table border="1">
+        <tr>{% for col in market_results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr>
+        {% for row in market_results %}
+          <tr>{% for val in row.values() %}<td>{{ val }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </table>
+    {% endif %}
+  </div>
+
+  {% if error %}
+    <p style="color:red;">{{ error }}</p>
+  {% endif %}
+</body>
+</html>
