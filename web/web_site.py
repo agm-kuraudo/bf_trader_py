@@ -100,4 +100,4 @@ def index():
     return render_template('index.html', results=results, target_results=target_results, market_results=market_results, error=error, query=query, from_date=from_date, to_date=to_date)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+	app.run(host='0.0.0.0', port=5000, debug=True)
