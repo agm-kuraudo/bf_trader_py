@@ -1,20 +1,25 @@
 #!/bin/bash
 
-# Get the script's directory
-scriptDir=$(dirname "$(readlink -f "$0")")
+# Load variables from /etc/environment
+if [ -f /etc/environment ]; then
+    set -o allexport
+    source /etc/environment
+    set +o allexport
+else
+    echo "Error: /etc/environment file not found."
+    exit 1
+fi
 
-# Define the relative path to the folder one level up
-localFolder=$(realpath "$scriptDir/..")
+# Start the Docker container
+docker start bf_monitor_service
 
-# Define other variables
-imageName="agm-karaudo/betfair_app_01:latest"
-command="python /app/monitor_service.py"
+# Loop until the container is running
+while [[ "$(docker inspect -f '{{.State.Running}}' bf_monitor_service)" != "true" ]]; do
+   echo "Waiting for bf_monitor_service to start..."
+   sleep 1
+done
 
-# Run the Docker image, map the local folder, and execute the command
-containerId=$(docker run -d -v "${localFolder}:/app" $imageName /bin/sh -c "$command")
-
-# Wait for a few seconds to ensure the container is fully started
-sleep 5
+echo "bf_monitor_service is now running."
 
 # Tail the logs of the container
-docker logs -f $containerId
+docker logs --since 10s -f bf_monitor_service

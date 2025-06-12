@@ -20,7 +20,7 @@ class VaultException(Exception):
 class VaultReader:
     # VaultReader init has optional URL parameter if the default isn't sufficient. It will create the connection
     # to vault straight away and raise VaultException if it doesn't work
-    def __init__(self, vault_url="http://172.17.0.2:8200"):
+    def __init__(self, vault_url="http://my_vault:8200"):
         Log.log_debug("vaultReader Object initialised")
         Log.log_debug("VAULT_TOKEN environment variables is: " + os.getenv('VAULT_TOKEN'))
         try:

@@ -1,6 +1,6 @@
 import yaml
 import os
-
+from output.log import Output as Log
 class StrategyException(Exception):
     pass
 
@@ -29,7 +29,7 @@ class FromFileStrategy(DefaultStrategy):
 
             with open(full_path) as f:
                 yaml_content = yaml.safe_load(f.read())
-                print(yaml_content)
+                Log.log_info(f"Selected Strategy: {yaml_content}")
                 DefaultStrategy.EVENTS = yaml_content['EVENTS']
                 DefaultStrategy.COMPETITIONS = yaml_content['COMPETITIONS']
                 DefaultStrategy.MAX_EVENTS = yaml_content['MAX_EVENTS']

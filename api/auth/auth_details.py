@@ -79,9 +79,9 @@ class Auth:
             else:
                 json_response = response
 
-            Log.log_info(json_response)
+            Log.log_debug(json_response)
             if json_response.get("result") is not None:
-                Log.log_info(json_response["result"])
+                Log.log_debug(json_response["result"])
                 return True
             elif (json_response.get("error").get("data").get("AccountAPINGException").get("errorCode") ==
                   "INVALID_SESSION_INFORMATION"):

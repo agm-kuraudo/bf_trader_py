@@ -1,0 +1,35 @@
+[ {
+  "defaultTab" : "nodes",
+  "description" : "",
+  "executionEnabled" : true,
+  "id" : "ba6b1e9b-1682-4eff-9933-9e328c8517fe",
+  "loglevel" : "INFO",
+  "name" : "Target Service",
+  "nodeFilterEditable" : false,
+  "plugins" : {
+    "ExecutionLifecycle" : { }
+  },
+  "schedule" : {
+    "month" : "*",
+    "time" : {
+      "hour" : "10",
+      "minute" : "00",
+      "seconds" : "0"
+    },
+    "weekday" : {
+      "day" : "*"
+    },
+    "year" : "*"
+  },
+  "scheduleEnabled" : true,
+  "sequence" : {
+    "commands" : [ {
+      "autoSecureInput" : "false",
+      "passSecureInput" : "false",
+      "scriptfile" : "/usr/local/bf_trader_py/scripts/run_target_service.sh"
+    } ],
+    "keepgoing" : false,
+    "strategy" : "node-first"
+  },
+  "uuid" : "ba6b1e9b-1682-4eff-9933-9e328c8517fe"
+} ]

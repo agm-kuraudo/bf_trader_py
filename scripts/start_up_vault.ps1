@@ -11,7 +11,7 @@ Write-Output $vaultUnsealKey[1]
 Write-Output $vaultUnsealKey[2]
 
 # Define the container name or ID
-$containerName = "upbeat_lichterman"
+$containerName = "my_vault"
 
 # Start the container
 docker start $containerName

@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Build Betfair Apps (windows)" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="D:\projects\bf_trader_py\build\betfair_app_build.ps1" executablePath="C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe">
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

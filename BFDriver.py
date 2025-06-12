@@ -125,7 +125,7 @@ class BFDriver:
             if event_type.name in self.__my_strategy.EVENTS:
                 # Add to our selected events list
                 selected_event_types.append(event_type)
-                Log.log_info(event_type)
+                Log.log_debug(event_type)
 
         # if we didn't get any matched events, raise a useful error message
         if len(selected_event_types) == 0:
@@ -164,7 +164,7 @@ class BFDriver:
         )
         )
 
-        Log.log_debug(df.head())
+        #Log.log_debug("" + df.head())
 
         # selected comps is initialised as a blank list
         selected_comps = []
@@ -175,13 +175,13 @@ class BFDriver:
             if ev.name in self.__my_strategy.COMPETITIONS:
                 # append it to our selected list
                 selected_comps.append(ev)
-                Log.log_info(ev)
+                Log.log_debug(f"Event: {ev}")
         # If we didn't find any matching competitions output a useful error message
         if len(selected_comps) == 0:
             Log.log_error("No competitions found matching: {}. Possible options will be listed below".format(
                 self.__my_strategy.COMPETITIONS))
             for ev in my_comps:
-                Log.log_error(ev)
+                Log.log_debug(f"Event: {ev}")
             return 0
         # else we save the competition ids only to a list
         else:
@@ -210,7 +210,7 @@ class BFDriver:
                                  )
         )
 
-        Log.log_debug(df.info())
+        #Log.log_debug(df.info())
         # This return statement calls the "fiter_events" method also contained in this class remove events outside the
         # required timeline and those which already have an active position open. It also uses slicing to cut down the
         # events to the Maximum number supplied in the strategy
@@ -231,7 +231,7 @@ class BFDriver:
             elif (ev.open_date - datetime.now()) > timedelta(days=self.__my_strategy.MAX_DAYS_TILL_START):
                 Log.log_debug(f"Event to far away: {ev.open_date}")
             else:
-                Log.log_info(f"Event {ev.name} in range: {ev.open_date}")
+                Log.log_debug(f"Event {ev.name} in range: {ev.open_date}")
                 filtered_events.append(ev)
         # return a sorted list either newest or oldest first - depending on what is set in the strategy
         return sorted(filtered_events, key=lambda item: item.open_date, reverse=not self.__my_strategy.NEWEST_FIRST)

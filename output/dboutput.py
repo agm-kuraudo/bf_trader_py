@@ -75,7 +75,7 @@ class DBOutputConnection:
                             'UPDATE bf.betfair_object_ids SET object_id = %s, last_updated = NOW() WHERE object_type = %s AND object_name = %s',
                             (object_id, object_type, object_name)
                         )
-                        Log.log_info(f"Updated object ID for {object_type}, {object_name}")
+                        Log.log_debug(f"Updated object ID for {object_type}, {object_name}")
                         # print(
                         #     f"Updated object ID for {object_type}, {object_name}")  # Added print statement for debugging
                 else:
@@ -84,7 +84,7 @@ class DBOutputConnection:
                         'INSERT INTO bf.betfair_object_ids (object_type, object_name, object_id, last_updated) VALUES (%s, %s, %s, NOW())',
                         (object_type, object_name, object_id)
                     )
-                    Log.log_info(f"Inserted new object ID for {object_type}, {object_name}")
+                    Log.log_debug(f"Inserted new object ID for {object_type}, {object_name}")
                     # print(
                     #     f"Inserted new object ID for {object_type}, {object_name}")  # Added print statement for debugging
 
@@ -108,8 +108,8 @@ class DBOutputConnection:
                 else:
                     # Record does not exist, insert a new record
                     cursor.execute(
-                        'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, notes) VALUES (%s, %s, %s, %s, %s, %s, %s)',
-                        (target_id, event_id, market_id, runner_ids, start_time, status, notes)
+                        'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, last_updated, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s)',
+                        (target_id, event_id, market_id, runner_ids, start_time, status, 14400, notes)
                     )
                     Log.log_debug(f"Inserted new target record: {target_id}")
 
@@ -122,7 +122,7 @@ class DBOutputConnection:
             with self.get_cursor() as cursor:
                 cursor.execute(sql_query)
                 value = cursor.fetchall()
-                Log.log_info(f"Query executed: {sql_query}, Result: {value}")
+                Log.log_debug(f"Query executed: {sql_query}, Result: {value}")
                 #print(f"Query executed: {sql_query}, Result: {value}")  # Added print statement for debugging
                 return value
         except (Exception, psycopg2.DatabaseError) as error:
@@ -135,7 +135,7 @@ class DBOutputConnection:
             with self.get_cursor() as cursor:
                 query = f"DELETE FROM {table} WHERE {condition}"
                 cursor.execute(query)
-                Log.log_info(f"Executed DELETE query: {query}")
+                Log.log_debug(f"Executed DELETE query: {query}")
                 # print(f"Executed DELETE query: {query}")  # Added print statement for debugging
         except (Exception, psycopg2.DatabaseError) as error:
             Log.log_error(error)
@@ -153,7 +153,7 @@ class DBOutputConnection:
         try:
             with self.get_cursor() as cursor:
                 cursor.execute(sql_command, params)
-                Log.log_info(f"Executed SQL command: {sql_command}")
+                Log.log_debug(f"Executed SQL command: {sql_command}")
                 return True
         except (Exception, psycopg2.DatabaseError) as error:
             Log.log_error(error)
