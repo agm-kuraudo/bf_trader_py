@@ -31,9 +31,9 @@ except Exception as e:
 
 # Step 1: Authenticate and get a Session Token!
 if not BF.get_token():
-    db_connection.db_write_log("Target Service: ERROR : Ending Run : Failed to connect to VAULT.  Validate that it is running ")
-    raise bf_auth.AuthException("Failed to authenticate to vault.  Validate that it is running (and unsealed) on "
-                                "port 8200.  See error message above for exception details")
+    db_connection.db_write_log("Target Service: ERROR : Ending Run : Failed to authenticate to Betfair API")
+    raise bf_auth.AuthException("Failed to authenticate to Betfair API. Check credentials in .env file "
+                                "(BF_USERID, BF_PWD, BF_CRT_FILE, BF_KEY_FILE).")
 
 #db_connection.db_write_log("Token retrieved")
 Log.log_info("##############    Step 1 Complete", force_console_log=True)
