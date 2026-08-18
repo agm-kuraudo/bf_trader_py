@@ -6,3 +6,4 @@ charts
 /web/.env
 .venv
 .env
+.hypothesis
