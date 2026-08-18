@@ -8,7 +8,7 @@ have to run in order to work as expected.
 from datetime import datetime, timedelta
 
 import api.auth.auth_details as bf_auth
-from api.auth.vault.vault_reader import VaultReader as Vault, VaultException
+from api.auth.dotenv_loader import DotenvLoader, ConfigurationException
 from api.call import Call
 from api.http_methods import Methods
 from api.request_body import RequestBody
@@ -37,9 +37,9 @@ class BFDriver:
         self.__my_strategy = my_strategy
         Log.set_log_level(log_level)
 
-        self.__vault_obj = Vault()
+        self.__loader = DotenvLoader()
         self.__request_body_obj = RequestBody()
-        self.__auth_obj = bf_auth.Auth()
+        self.__auth_obj = bf_auth.Auth(self.__loader)
         self.__call_obj = Call(self.__auth_obj)
         self.__market_obj = Market()
         self.__event_type_obj = EventType()
@@ -49,58 +49,29 @@ class BFDriver:
 
     def get_local_db_details(self):
         try:
-            result = self.__vault_obj .read_secret("postgres")
-            host = result['data']['host']
-            port = result['data']['port']
-            db_name = result['data']['db_name']
-            db_user = result['data']['db_user']
-            db_pwd = result['data']['db_pwd']
-        except Exception as f:
-            raise VaultException("Could not load credentials from VAULT") from f
+            host = self.__loader.get_secret("DB_HOST")
+            port = self.__loader.get_secret("DB_PORT")
+            db_name = self.__loader.get_secret("DB_NAME")
+            db_user = self.__loader.get_secret("DB_USER")
+            db_pwd = self.__loader.get_secret("DB_PWD")
+        except ConfigurationException as f:
+            raise BFDriverException(f"Could not load DB credentials from .env: {f}") from f
         return {"host": host, "port": port, "db_name": db_name, "db_user": db_user, "db_pwd": db_pwd}
 
 
-    # get_token method is used to retrieve the SSO Token required to access the Betfair API.  THe last token
-    # stored in the vault will be used initially for a test call, if It's still valid we will continue with it.
-    # If its no longer valid (24 hour lifespan?) we will call the relevant authentication calls and get a new one
+    # get_token method obtains a fresh SSO Token from the Betfair API via certificate authentication.
+    # A fresh token is always obtained on each run — no cached token is used.
     def get_token(self):
-        # myAuth was created when the BFDriver was instantiated. It is an Auth object based on class defined in
-        # api/auth/auth_details.py. The get_credentials_from_vault method does not return anything, it directly enriches
-        # the Auth object with information gathered from the vault
-        self.__auth_obj.get_credentials_from_vault()
-
-        # myCall is an instance of the Call class - api/call.py. Here we are updating a variable in that class that
-        # holds the auth details with the new values picked up in last call
+        self.__auth_obj.get_credentials()
         self.__call_obj.auth = self.__auth_obj
-
-        # Here we are calling the "getAccountFunds" api on betfair via the Call object and then passing the result
-        # to the validate_betfair_token function. This will return a True/False result based on whether we got
-        # a successful response.  We will be picking up the last token used from Vault which may well have timed out
-        # depending on how long it's been since the script was run.
-        token_valid = self.__auth_obj.validate_betfair_token(
-            self.__call_obj.call(http_method=Methods.POST,
-                                 url=Urls.JSON_RPC_ACCOUNT,
-                                 request_body=self.__request_body_obj.
-                                 get_template("getAccountFunds")
-                                 )
-        )
-
-        # If the token isn't value then... Let's Authenticate again and get a fresh token
-        if token_valid is not True:
-            # call_auth function is a special request method that uses the certificate along with the request
-            # The myRequestBody variable is a RequestBody (api/request_body.py) object, We are swapping the placeholder
-            # values with the username and password (held in the Auth object).
-            self.__auth_obj.security_token = self.__call_obj.call_auth(
-                self.__request_body_obj.populate_template(
-                    "CertAuth",
-                    {"<USERID>": self.__auth_obj.bf_userid, "<PWD>": self.__auth_obj.bf_pwd},
-                    add_quotes=True,
-                )
+        self.__auth_obj.security_token = self.__call_obj.call_auth(
+            self.__request_body_obj.populate_template(
+                "CertAuth",
+                {"<USERID>": self.__auth_obj.bf_userid, "<PWD>": self.__auth_obj.bf_pwd},
+                add_quotes=True,
             )
-            # Update the myCall object with the update Auth object (which will have the right token)
-            self.__call_obj.auth = self.__auth_obj
-            # Update the vault with the new SSO token so it can be referenced on the next run
-            self.__vault_obj.update_secret(path="bf_token", key_value_dict={"bf_sso_token": self.__auth_obj.security_token})
+        )
+        self.__call_obj.auth = self.__auth_obj
         Log.log_debug("Token: {}".format(self.__auth_obj.security_token))
         return True
 
