@@ -1,80 +1,67 @@
-import os
 import traceback
 
 from requests import Response
 
 from output.log import Output as Log
-import api.auth.vault.vault_reader
+from api.auth.dotenv_loader import DotenvLoader, ConfigurationException
 
 
 class AuthException(Exception):
     pass
 
 
-'''
-Authentication Package added as per SP-36
-This class doesn't really do Everything associated with Authentication as the is the "call_auth" method in the call
-class that deals with the actual API autehtnication.  This class stores the location of the certificates and the
-AppKey (read from environment variables). It also handles (with the associated sub modules) getting information
-from the vault (get_credentials_from_vault) as well as verifying that an SSO Token is valid (validate_betfair_token)
-'''
-
-
 class Auth:
-    # Class variables
-    crt_file = os.getenv("BF_CRT_FILE")
-    key_file = os.getenv("BF_KEY_FILE")
-    app_key = os.getenv("BF_AppKey")
+    """
+    Authentication class for Betfair API access (SP-36).
 
-    # session_token = os.getenv("BF_SessionToken")
-    # Log.log_info("Auth class loaded - crt and key stuff {} {} {}".format(crt_file, key_file, app_key))
+    Stores certificate locations and the AppKey (read from .env via DotenvLoader).
+    Handles credential retrieval and SSO token validation. The actual API authentication
+    call is performed by the Call class (call_auth method).
+    """
 
-    def __init__(self):
+    def __init__(self, loader: DotenvLoader):
         """
-        Auth init call - No parameters required
+        Initialise Auth with secrets from the provided DotenvLoader.
+
+        Args:
+            loader: A DotenvLoader instance for reading secrets from .env.
+
+        Raises:
+            AuthException: If BF_AppKey, BF_CRT_FILE, or BF_KEY_FILE is missing or empty.
         """
+        self.__loader = loader
         self.__bf_userid = None
         self.__bf_pwd = None
         self.__securityToken = None
 
-        if Auth.crt_file is None or Auth.key_file is None or Auth.app_key is None:
-            raise AuthException("Environment variables no defined - check BF_CRT_FILE and BF_KEY_FILE"
-                                " and BF_AppKey exist")
+        try:
+            self.crt_file = loader.get_secret("BF_CRT_FILE")
+            self.key_file = loader.get_secret("BF_KEY_FILE")
+            self.app_key = loader.get_secret("BF_AppKey")
+        except ConfigurationException as e:
+            raise AuthException(f"Missing required variable: {e}") from e
 
         Log.log_debug("Auth object instantiated")
 
-    # @api.decorators.SimpleDecorator
-    def get_credentials_from_vault(self):
+    def get_credentials(self):
         """
-        get_credentials from vault: This method will retrieve the credentials from vault. It requires that vault
-        is running and contains the required credentials
+        Read Betfair userid and password from .env via the loader.
+
+        Raises:
+            AuthException: If BF_USERID or BF_PWD is missing or empty.
         """
         try:
-            my_vault = api.auth.vault.vault_reader.VaultReader()
-            Log.log_debug("{} created".format(my_vault))
-            result = my_vault.read_secret("bf")
-            Log.log_debug("Result: {}".format(result))
-            self.__bf_userid = result['data']['bf_userid']
-            self.__bf_pwd = result['data']['bf_pwd']
+            self.__bf_userid = self.__loader.get_secret("BF_USERID")
+            self.__bf_pwd = self.__loader.get_secret("BF_PWD")
+        except ConfigurationException as e:
+            raise AuthException(f"Missing required variable: {e}") from e
 
-            result = my_vault.read_secret("bf_token")
+        Log.log_debug("Credentials loaded from .env")
 
-            self.__securityToken = result['data']['bf_sso_token']
-            Log.log_debug("bf user {}, bf pwd {}, sso token {}"
-                          .format(self.__bf_userid, self.__bf_pwd, self.__securityToken))
-            #Although we are adding the security token directly as a field in this class, will return it as well
-            #for validating and testing purposes
-            return self.__securityToken
-        except Exception as f:
-            Log.log_error(traceback.format_tb(f.__cause__))
-            raise AuthException("Could not load credentials from VAULT") from f
-
-    # This method will make a call to the Account API and check it works OK, and we have a valid session - returns
-    # true or false
     @staticmethod
     def validate_betfair_token(response) -> bool:
         try:
-            if type(response)==Response:
+            if type(response) == Response:
                 json_response = response.json()
             else:
                 json_response = response
@@ -94,9 +81,6 @@ class Auth:
         except Exception as f:
             Log.log_error(traceback.format_tb(f.__cause__))
             raise AuthException(f"Unexpected error when validating betfair token in {response}") from f
-
-    # Defining all the getters and setters here - they don't do anything fancy at the moment, but better to have them
-    # set
 
     @property
     def bf_userid(self):
@@ -121,7 +105,3 @@ class Auth:
     @security_token.setter
     def security_token(self, value):
         self.__securityToken = value
-
-# myAuth = Auth()
-# myAuth.get_credentials_from_vault()
-# print(myAuth.bf_userid)
