@@ -92,8 +92,11 @@ class DBOutputConnection:
             Log.log_error(error)
             raise DBOutputException("Failed to write object ID to database")
 
-    def db_write_target(self, target_id, event_id, market_id, runner_ids, start_time, status, notes="None"):
+    def db_write_target(self, target_id, event_id, market_id, runner_ids, start_time, status, update_frequency=None, notes="None"):
         try:
+            if update_frequency is None:
+                update_frequency = 14400
+
             with self.get_cursor() as cursor:
                 # Check if the record exists
                 cursor.execute(
@@ -109,7 +112,7 @@ class DBOutputConnection:
                     # Record does not exist, insert a new record
                     cursor.execute(
                         'INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, last_updated, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s)',
-                        (target_id, event_id, market_id, runner_ids, start_time, status, 14400, notes)
+                        (target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, notes)
                     )
                     Log.log_debug(f"Inserted new target record: {target_id}")
 

@@ -109,6 +109,7 @@ for target in myTargets:
                                   runner_ids=runner_string,
                                   start_time=target.my_market.description['marketTime'],
                                   status='IDENTIFIED',
+                                  update_frequency=DefaultStrategy.INITIAL_UPDATE_FREQUENCY,
                                   notes=str(target.my_market.description))
 
 db_connection.db_write_log(f"Target Service: INFO : Ending run : {len(myTargets)} targets identified")

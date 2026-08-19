@@ -85,6 +85,32 @@ class MonitorService:
                 f"Monitor Service: ERROR : Ending Run : Failed to update target status: {e}")
             raise MonitorServiceException(f"Failed to update target status: {e}")
 
+    def fetch_odds_for_new_targets(self, raw_targets, processed_targets):
+        """
+        For targets transitioning IDENTIFIED -> OPEN, immediately fetch odds
+        and set update_frequency based on tier config.
+        """
+        try:
+            newly_opened = []
+            for raw, processed in zip(raw_targets, processed_targets):
+                # raw[5] is the DB status (IDENTIFIED), processed[1] is the API status (OPEN)
+                if raw[5] == 'IDENTIFIED' and processed[1] == 'OPEN':
+                    newly_opened.append(processed)
+
+            if newly_opened:
+                Log.log_info(f"##############    Fetching initial odds for {len(newly_opened)} newly-opened targets", force_console_log=True)
+                for target in newly_opened:
+                    try:
+                        self.update_runner_odds([target])
+                    except Exception as e:
+                        Log.log_warning(f"Failed to fetch initial odds for market {target[0]}: {e}")
+                        continue
+            else:
+                Log.log_info("##############    No newly-opened targets requiring initial odds fetch")
+        except Exception as e:
+            self.db_connection.db_write_log(f"Monitor Service: ERROR : Failed to fetch odds for new targets: {e}")
+            Log.log_warning(f"Failed to fetch odds for new targets: {e}")
+
     # This function is essentially deprecated as the "get_filtered_targets" now selects only open targets
     def get_open_targets(self):
         try:
@@ -172,21 +198,22 @@ class MonitorService:
                 target_time = target[6]
                 next_update_time_seconds = 0
 
+                tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
                 if target_time < now:
                     Log.log_info(f"Target {target[0]} is open")
-                    next_update_time_seconds = 5
+                    next_update_time_seconds = tiers.get('IN_PLAY', 5)
                 elif target_time < now + timedelta(hours=3):
                     Log.log_info(f"Target {target[0]} is less than 3 hours away")
-                    next_update_time_seconds = 300
+                    next_update_time_seconds = tiers.get('LESS_THAN_3H', 300)
                 elif target_time < now + timedelta(hours=6):
                     Log.log_info(f"Target {target[0]} is less than 6 hours away")
-                    next_update_time_seconds = 900
+                    next_update_time_seconds = tiers.get('LESS_THAN_6H', 900)
                 elif target_time < now + timedelta(hours=12):
                     Log.log_info(f"Target {target[0]} is less than 12 hours away")
-                    next_update_time_seconds = 3600
+                    next_update_time_seconds = tiers.get('LESS_THAN_12H', 3600)
                 else:
                     Log.log_info(f"Target {target[0]} is more than 12 hours away")
-                    next_update_time_seconds = 14400
+                    next_update_time_seconds = tiers.get('MORE_THAN_12H', 14400)
 
                 #Updating the last updated time for that target
                 sql_command = (f"UPDATE bf.target SET last_updated=NOW(), update_frequency=%s WHERE market_id=%s;")
@@ -224,8 +251,9 @@ class MonitorService:
 
             self.db_connection.db_write_log("Monitor Service: INFO: Starting run")
 
-            # Clean up stale targets whose start_time has passed by more than 24 hours
-            stale_cleanup_sql = "UPDATE bf.target SET status = 'EXPIRED' WHERE status IN ('IDENTIFIED', 'OPEN') AND start_time < NOW() - INTERVAL '24 hours';"
+            # Clean up stale targets whose start_time has passed by more than the configured threshold
+            stale_hours = DefaultStrategy.STALE_TARGET_HOURS
+            stale_cleanup_sql = f"UPDATE bf.target SET status = 'EXPIRED' WHERE status IN ('IDENTIFIED', 'OPEN') AND start_time < NOW() - INTERVAL '{stale_hours} hours';"
             self.db_connection.db_write(stale_cleanup_sql)
             Log.log_info("##############    Stale targets cleaned up", force_console_log=True)
 
@@ -242,6 +270,9 @@ class MonitorService:
 
                     # Update the status of targets (for example, CLOSE any markets that have closed!)
                     self.update_target_status(targets)
+
+                    # Fetch initial odds for targets transitioning IDENTIFIED -> OPEN
+                    self.fetch_odds_for_new_targets(raw_targets, targets)
 
                 reload_from_db = False
 
@@ -262,7 +293,7 @@ class MonitorService:
                     self.update_runner_odds(filtered_targets)
                     reload_from_db = True
 
-                if nearest_update_seconds > 900:
+                if nearest_update_seconds > DefaultStrategy.MONITOR_MAX_WAIT_SECONDS:
                     Log.log_info("##############    Next update time not within 15 minutes", force_console_log=True)
                     break
 
