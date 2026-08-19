@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# Start the first Docker container
-docker start some-postgres
+# Start PostgreSQL and pgAdmin containers
+docker start my_postgres
 
-# Wait for 5 seconds
+# Wait for PostgreSQL to be ready
 sleep 5
 
-# Start the second Docker container
-docker start quirky_germain
+docker start my_pgadmin

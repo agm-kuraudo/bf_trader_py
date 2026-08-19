@@ -1,6 +1,6 @@
 from BFDriver import BFDriver
 from api.auth.auth_details import Auth, AuthException
-from api.auth.vault.vault_reader import VaultReader, VaultException
+from api.auth.dotenv_loader import DotenvLoader, ConfigurationException
 from api.call import Call, CallException
 from api.http_methods import Methods
 from api.urls import Urls
@@ -14,6 +14,8 @@ from logic.simpleStategy import FromFileStrategy
 from output.log import Output
 import unittest
 from output.dboutput import DBOutputException, DBOutputConnection
+import tempfile
+import os
 import time
 
 class TestBetfairApp(unittest.TestCase):
@@ -24,30 +26,39 @@ class TestBetfairApp(unittest.TestCase):
 
     my_auth = None
 
-    def test_vault(self):
-
-        #With an invalid address an exception should be raised
-        with self.assertRaises(VaultException):
-            VaultReader("192.168.0.7:8888")
-
-        my_vault = VaultReader()
-        # Can we authenticate to vault?
-        self.assertTrue(my_vault.client.is_authenticated(), "Vault: cannot authenticate")
-        # Can we read a secret from the vault
-        self.assertTrue(len(str(my_vault.read_secret("bf"))) > 10, "Vault: cannot read secrets")
-
     def test_auth(self):
-        my_auth = Auth()
-        #Can we read our BF credentials from vault
-        self.assertIsNotNone(my_auth.get_credentials_from_vault(),
-                             "Auth Class cannot retrieve sso token from vault")
+        # Create a temporary .env file with dummy credentials for testing
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+            f.write("BF_USERNAME=test_user\n")
+            f.write("BF_PASSWORD=test_pass\n")
+            f.write("BF_APP_KEY=test_app_key\n")
+            f.write("BF_CERT_PATH=test_cert.pem\n")
+            f.write("BF_KEY_PATH=test_key.pem\n")
+            temp_env_path = f.name
+
+        try:
+            loader = DotenvLoader(temp_env_path)
+            # Can we read credentials from the .env file
+            self.assertEqual(loader.get_secret("BF_USERNAME"), "test_user")
+            self.assertEqual(loader.get_secret("BF_PASSWORD"), "test_pass")
+            self.assertEqual(loader.get_secret("BF_APP_KEY"), "test_app_key")
+
+            # Missing key should raise ConfigurationException
+            with self.assertRaises(ConfigurationException):
+                loader.get_secret("NON_EXISTENT_KEY")
+
+            # Non-existent .env file should raise ConfigurationException
+            with self.assertRaises(ConfigurationException):
+                DotenvLoader("/non/existent/path/.env")
+        finally:
+            os.unlink(temp_env_path)
 
         with self.assertRaises(AuthException):
             # Invalid non-json response message should cause exception
-            my_auth.validate_betfair_token("invalid_response")
+            Auth.validate_betfair_token("invalid_response")
 
         # With a valid response indicating there is an invalid session we should see False
-        self.assertFalse(my_auth.validate_betfair_token(
+        self.assertFalse(Auth.validate_betfair_token(
             {
                 'jsonrpc': '2.0',
                 'error':
@@ -157,7 +168,7 @@ class TestBetfairApp(unittest.TestCase):
             "{'marketId': '1.232498611', 'marketName': 'Match Odds', 'description': {'persistenceEnabled': True, 'bspMarket': True, 'marketTime': '2024-09-17T16:45:00.000Z', 'suspendTime': '2024-09-17T16:45:00.000Z', 'bettingType': 'ODDS', 'turnInPlayEnabled': True, 'marketType': 'MATCH_ODDS', 'regulator': 'MALTA LOTTERIES AND GAMBLING AUTHORITY', 'marketBaseRate': 5.0, 'discountAllowed': False, 'wallet': 'UK wallet', 'rules': '<!--Football - Match Odds --><br>Predict the result of this match.<br> All bets apply to Full Time according to the match officials, plus any stoppage time. Extra-time/penalty shoot-outs are not included.<br><br></b>For further information please see <a href=http://content.betfair.com/aboutus/content.asp?sWhichKey=Rules%20and%20Regulations#undefined.do style=color:0163ad; text-decoration: underline; target=_blank>Rules & Regs<br><br>\n', 'rulesHasDate': True, 'priceLadderDescription': {'type': 'CLASSIC'}}, 'totalMatched': 12303.74, 'runners': [{'selectionId': 65778, 'runnerName': 'Young Boys', 'handicap': 0.0, 'sortPriority': 1, 'metadata': {'runnerId': '65778'}}, {'selectionId': 63908, 'runnerName': 'Aston Villa', 'handicap': 0.0, 'sortPriority': 2, 'metadata': {'runnerId': '63908'}}, {'selectionId': 58805, 'runnerName': 'The Draw', 'handicap': 0.0, 'sortPriority': 3, 'metadata': {'runnerId': '58805'}}]}").name,
                          "Match Odds", "Market object created should be Match Odds")
 
-
+    # Requires .env at project root
     def test_db_connection(self):
         bf = BFDriver(FromFileStrategy(), Output.INFO)
         self.assertIsInstance(bf, BFDriver, "BFDriver object should be created")
@@ -179,6 +190,7 @@ class TestBetfairApp(unittest.TestCase):
 
         db_connection.close()
 
+    # Requires .env at project root
     def test_db_object_ids(self):
         bf = BFDriver(FromFileStrategy(), Output.ERROR)
         my_db = DBOutputConnection()

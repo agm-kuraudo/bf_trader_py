@@ -5,3 +5,5 @@ charts
 /build/run_deck_data
 /web/.env
 .venv
+.env
+.hypothesis

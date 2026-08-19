@@ -22,7 +22,7 @@ class MonitorService:
         try:
             if not self.BF.get_token():
                 self.db_connection.db_write_log("Monitor Service: ERROR : Ending Run : Failed to retrieve token")
-                raise bf_auth.AuthException("Failed to authenticate to vault. Validate that it is running (and unsealed) on port 8200.")
+                raise bf_auth.AuthException("Failed to authenticate to Betfair API. Check credentials in .env file.")
             #self.db_connection.db_write_log("Token retrieved")
             Log.log_info("##############    Login Token Retrieved")
         except Exception as e:
