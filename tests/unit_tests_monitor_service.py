@@ -1,9 +1,21 @@
+"""
+Unit tests for SP-302: Monitor Service error handling and timing configuration.
+"""
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 import unittest
 from unittest.mock import patch, MagicMock
+import pytest
+import inspect
 
 from api.call import Call
 from monitor_service import MonitorService, MonitorServiceException
+from logic.simpleStategy import DefaultStrategy, FromFileStrategy
+from output.dboutput import DBOutputConnection
 from output.log import Output as Log
+
 
 class TestMonitorService(unittest.TestCase):
     Log.LOG_FILE = False
@@ -89,6 +101,81 @@ class TestMonitorService(unittest.TestCase):
         mock_call.side_effect = Exception("API error")
         with self.assertRaises(MonitorServiceException):
             self.service.update_runner_odds(self.service.get_open_targets())
+
+
+# ─── New tests for SP-302: Monitor Service error handling and timing ────────────
+
+
+class TestConfigDefaults:
+    """Test that all timing configuration defaults are correctly set."""
+
+    def test_monitor_max_wait_seconds_default(self):
+        assert DefaultStrategy.MONITOR_MAX_WAIT_SECONDS == 900
+
+    def test_stale_target_hours_default(self):
+        assert DefaultStrategy.STALE_TARGET_HOURS == 24
+
+    def test_initial_update_frequency_default(self):
+        assert DefaultStrategy.INITIAL_UPDATE_FREQUENCY == 14400
+
+    def test_update_frequency_tiers_has_all_keys(self):
+        tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
+        assert 'IN_PLAY' in tiers
+        assert 'LESS_THAN_3H' in tiers
+        assert 'LESS_THAN_6H' in tiers
+        assert 'LESS_THAN_12H' in tiers
+        assert 'MORE_THAN_12H' in tiers
+
+    def test_update_frequency_tiers_values_are_positive_integers(self):
+        for key, value in DefaultStrategy.UPDATE_FREQUENCY_TIERS.items():
+            assert isinstance(value, int)
+            assert value > 0
+
+    def test_tiers_are_in_ascending_order(self):
+        """Higher tiers (further from event) should have higher intervals."""
+        tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
+        assert tiers['IN_PLAY'] <= tiers['LESS_THAN_3H']
+        assert tiers['LESS_THAN_3H'] <= tiers['LESS_THAN_6H']
+        assert tiers['LESS_THAN_6H'] <= tiers['LESS_THAN_12H']
+        assert tiers['LESS_THAN_12H'] <= tiers['MORE_THAN_12H']
+
+
+class TestDbWriteTargetParameter:
+    """Test that db_write_target accepts update_frequency parameter."""
+
+    def test_db_write_target_has_update_frequency_param(self):
+        sig = inspect.signature(DBOutputConnection.db_write_target)
+        assert 'update_frequency' in sig.parameters
+
+    def test_db_write_target_update_frequency_default_is_none(self):
+        sig = inspect.signature(DBOutputConnection.db_write_target)
+        param = sig.parameters['update_frequency']
+        assert param.default is None
+
+
+class TestFromFileStrategyLoadsTimingKeys:
+    """Test that FromFileStrategy loads timing keys from strategy.yaml."""
+
+    def test_from_file_strategy_loads_without_error(self):
+        """FromFileStrategy should load successfully with current strategy.yaml."""
+        strategy = FromFileStrategy()
+        # After loading, DefaultStrategy attributes should be set
+        assert DefaultStrategy.UPDATE_FREQUENCY_TIERS is not None
+        assert DefaultStrategy.INITIAL_UPDATE_FREQUENCY is not None
+        assert DefaultStrategy.STALE_TARGET_HOURS is not None
+        assert DefaultStrategy.MONITOR_MAX_WAIT_SECONDS is not None
+
+    def test_from_file_strategy_loads_tier_values(self):
+        """FromFileStrategy should load the tier values from YAML."""
+        strategy = FromFileStrategy()
+        tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
+        # These should match the values in config/strategy.yaml
+        assert tiers['IN_PLAY'] == 5
+        assert tiers['LESS_THAN_3H'] == 300
+        assert tiers['LESS_THAN_6H'] == 900
+        assert tiers['LESS_THAN_12H'] == 3600
+        assert tiers['MORE_THAN_12H'] == 14400
+
 
 if __name__ == "__main__":
     unittest.main()
