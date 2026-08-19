@@ -62,8 +62,8 @@ class Call:
             Log.log_debug("Attempting to authentication via {}".format(self.url))
             Log.log_debug("X-Application: {}".format(self.__auth.app_key))
 
-            r = requests.post(headers={"X-Application": Auth.app_key}, url=self.url, params=request_body,
-                              cert=(Auth.crt_file, Auth.key_file))
+            r = requests.post(headers={"X-Application": self.__auth.app_key}, url=self.url, params=request_body,
+                              cert=(self.__auth.crt_file, self.__auth.key_file))
             Log.log_debug("Response Message: {}".format(r.text))
             json_resp = json.loads(r.text)
 

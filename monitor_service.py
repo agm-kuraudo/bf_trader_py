@@ -50,9 +50,14 @@ class MonitorService:
                                                   ))
                 Log.log_debug(json_resp)
                 json = json_resp.json()
-                status = json["result"][0]["status"]
+                result = json.get("result")
+                if not result:
+                    Log.log_warning(f"Market {market} returned empty result - marking as EXPIRED")
+                    self.db_connection.db_write(f"UPDATE bf.target SET status='EXPIRED' WHERE market_id='{market}';")
+                    continue
+                status = result[0]["status"]
                 Log.log_debug(f"Market: {market}, Status: {status}")
-                runner_list = json["result"][0]["runners"]
+                runner_list = result[0]["runners"]
                 Log.log_debug(f"Market {market}, Runners: {len(runner_list)}")
                 runners = [runner["selectionId"] for runner in runner_list]
                 targets.append((market, status, len(runner_list), runners, target[6], target[7], target[4]))
@@ -218,6 +223,12 @@ class MonitorService:
                     raise MonitorServiceException("Monitor Service: Failed to acquire lock")
 
             self.db_connection.db_write_log("Monitor Service: INFO: Starting run")
+
+            # Clean up stale targets whose start_time has passed by more than 24 hours
+            stale_cleanup_sql = "UPDATE bf.target SET status = 'EXPIRED' WHERE status IN ('IDENTIFIED', 'OPEN') AND start_time < NOW() - INTERVAL '24 hours';"
+            self.db_connection.db_write(stale_cleanup_sql)
+            Log.log_info("##############    Stale targets cleaned up", force_console_log=True)
+
             self.authenticate_and_get_token()
 
             for i in range(15* 60):
