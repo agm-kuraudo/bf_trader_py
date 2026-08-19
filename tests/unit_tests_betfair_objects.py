@@ -55,12 +55,10 @@ class TestBetfairApp(unittest.TestCase):
 
         with self.assertRaises(AuthException):
             # Invalid non-json response message should cause exception
-            my_auth = Auth()
-            my_auth.validate_betfair_token("invalid_response")
+            Auth.validate_betfair_token("invalid_response")
 
         # With a valid response indicating there is an invalid session we should see False
-        my_auth = Auth()
-        self.assertFalse(my_auth.validate_betfair_token(
+        self.assertFalse(Auth.validate_betfair_token(
             {
                 'jsonrpc': '2.0',
                 'error':
