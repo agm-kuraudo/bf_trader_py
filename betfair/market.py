@@ -1,12 +1,11 @@
-from datetime import datetime
+from io import StringIO
 
+import pandas as pd
 from requests import Response
 
+import decorators.log_attrib
 from betfair.BetfairObject import BetfairObject, BetfairObjectException
 from output.log import Output as Log
-import pandas as pd
-from io import StringIO
-import decorators.log_attrib
 
 
 class Target:
@@ -19,7 +18,7 @@ class Target:
     def __str__(self):
         Log.log_debug(self.my_event)
         Log.log_debug(self.my_market)
-        return "Target is event: {}, market: {}".format(self.__my_event.name, self.__my_market.name)
+        return f"Target is event: {self.__my_event.name}, market: {self.__my_market.name}"
 
     def update_odds_from_json(self, json_resp):
         pass
@@ -40,7 +39,7 @@ class Target:
 class Market(BetfairObject):
     @decorators.log_attrib.dump_args
     def __init__(self, market_id=None, name=None, description=None, total_matched=None, runners=None):
-        #self.__marketTime = []
+        # self.__marketTime = []
         self.__market_time = None
         self.__runnerList = None
         if runners is None:
@@ -56,14 +55,14 @@ class Market(BetfairObject):
         if type(json) is str:
             json = json.replace("\n", "")
             json = eval(json)
-        Log.log_debug(json['marketId'])
+        Log.log_debug(json["marketId"])
         Log.log_debug(json["marketName"])
         Log.log_debug(json["runners"])
         self.__runnerList = json["runners"]
         self.__runners = []
         # Log.log_debug("Runners... {}".format(self.__runners))
         self.add_runners()
-        self.__totalMatched = json['totalMatched']
+        self.__totalMatched = json["totalMatched"]
         self.__id = json["marketId"]
         self.__name = json["marketName"]
         self.__description = json["description"]
@@ -71,8 +70,14 @@ class Market(BetfairObject):
         if not all(attr is not None for attr in [self.__totalMatched, self.__description, self.__id, self.__name]):
             raise BetfairObjectException("Market Object can't initialise as all values not returned in json")
 
-        return Market(market_id=self.__id, name=self.__name, description=self.__description,
-                      total_matched=self.__totalMatched, runners=self.__runners)
+        return Market(
+            market_id=self.__id,
+            name=self.__name,
+            description=self.__description,
+            total_matched=self.__totalMatched,
+            runners=self.__runners,
+        )
+
     @property
     def market_time(self):
         return self.__market_time
@@ -81,52 +86,59 @@ class Market(BetfairObject):
     def description(self):
         return self.__description
 
-
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
         try:
-
             if type(json) is Response:
                 json_text = json.text
             else:
                 json_text = json
 
             Log.log_debug("buildFrameFromJSON called")
-            Log.log_debug("json: {}".format(json))
+            Log.log_debug(f"json: {json}")
             df = pd.read_json(StringIO(json_text))
-            Log.log_debug("df: {}".format(df.head()))
+            Log.log_debug(f"df: {df.head()}")
 
-            compiled_df = pd.DataFrame({'MarketID': pd.Series(dtype='str'),
-                                        'MarketName': pd.Series(dtype='str'),
-                                        'Description': pd.Series(dtype='object'),
-                                        'totalMatched': pd.Series(dtype='int')})
+            compiled_df = pd.DataFrame(
+                {
+                    "MarketID": pd.Series(dtype="str"),
+                    "MarketName": pd.Series(dtype="str"),
+                    "Description": pd.Series(dtype="object"),
+                    "totalMatched": pd.Series(dtype="int"),
+                }
+            )
 
             event_df = df["result"]
-            Log.log_debug("event_df: {}".format(event_df.head()))
+            Log.log_debug(f"event_df: {event_df.head()}")
 
             event_list = []
 
-            for key, event in event_df.items():
+            for _key, event in event_df.items():
                 Log.log_debug(event)
                 event_list.append(self.build_from_json(event))
-                compiled_df.loc[len(compiled_df)] = {'MarketID': self.__id, 'MarketName': self.__name,
-                                                     'Description': self.__description, 'totalMatched': self.__totalMatched}
+                compiled_df.loc[len(compiled_df)] = {
+                    "MarketID": self.__id,
+                    "MarketName": self.__name,
+                    "Description": self.__description,
+                    "totalMatched": self.__totalMatched,
+                }
             return compiled_df, event_list
         except Exception as e:
             raise BetfairObjectException("Cannot build Market Objects from Json") from e
 
     def __str__(self):
-        return ("marketId: {}, marketName: {}, description: {}, totalMatched: {}".format(self.__id, self.__name,
-                                                                                         self.__description,
-                                                                                         self.__totalMatched))
+        return (
+            f"marketId: {self.__id}, marketName: {self.__name}, "
+            f"description: {self.__description}, totalMatched: {self.__totalMatched}"
+        )
 
     @decorators.log_attrib.dump_args
     def add_runners(self):
         try:
-            Log.log_debug("Adding runners {}".format(self.__runnerList))
+            Log.log_debug(f"Adding runners {self.__runnerList}")
             for runner_dict in self.__runnerList:
-                self.__runners.append(Runner(runner_dict['selectionId'], runner_dict['runnerName']))
-                Log.log_debug("Adding runner {}".format(self.__runners[-1]))
+                self.__runners.append(Runner(runner_dict["selectionId"], runner_dict["runnerName"]))
+                Log.log_debug(f"Adding runner {self.__runners[-1]}")
         except Exception as e:
             raise BetfairObjectException("Cannot add runners to Market Object") from e
 
@@ -154,6 +166,7 @@ class Market(BetfairObject):
     def runners(self, value):
         self.__runners = value
 
+
 class Runner:
     @decorators.log_attrib.dump_args
     def __init__(self, runner_id, name):
@@ -166,7 +179,7 @@ class Runner:
         self.__toLay = []
 
     def __str__(self):
-        return "Runner: {}, ID: {}".format(self.__name, self.__id)
+        return f"Runner: {self.__name}, ID: {self.__id}"
 
     @property
     def odds(self):
@@ -177,12 +190,12 @@ class Runner:
     def odds(self, value):
         for odds in value:
             if odds["selectionId"] == self.__id:
-                Log.log_info("Selection {} matched!".format(self.__id))
+                Log.log_info(f"Selection {self.__id} matched!")
                 self.__odds.append(odds["selectionId"])
                 self.__status = odds["status"]
                 self.__totalMatched = odds["totalMatched"]
-                self.__toBack = odds['ex']['availableToBack']
-                self.__toLay = odds['ex']['availableToLay']
+                self.__toBack = odds["ex"]["availableToBack"]
+                self.__toLay = odds["ex"]["availableToLay"]
 
     @property
     def status(self):

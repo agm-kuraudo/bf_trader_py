@@ -2,8 +2,8 @@ import traceback
 
 from requests import Response
 
+from api.auth.dotenv_loader import ConfigurationException, DotenvLoader
 from output.log import Output as Log
-from api.auth.dotenv_loader import DotenvLoader, ConfigurationException
 
 
 class AuthException(Exception):
@@ -61,7 +61,7 @@ class Auth:
     @staticmethod
     def validate_betfair_token(response) -> bool:
         try:
-            if type(response) == Response:
+            if isinstance(response, Response):
                 json_response = response.json()
             else:
                 json_response = response
@@ -70,13 +70,18 @@ class Auth:
             if json_response.get("result") is not None:
                 Log.log_debug(json_response["result"])
                 return True
-            elif (json_response.get("error").get("data").get("AccountAPINGException").get("errorCode") ==
-                  "INVALID_SESSION_INFORMATION"):
-                Log.log_warning("Session is invalid: {}"
-                                .format(json_response["error"]["data"]["AccountAPINGException"]["errorCode"]))
+            elif (
+                json_response.get("error").get("data").get("AccountAPINGException").get("errorCode")
+                == "INVALID_SESSION_INFORMATION"
+            ):
+                Log.log_warning(
+                    "Session is invalid: {}".format(
+                        json_response["error"]["data"]["AccountAPINGException"]["errorCode"]
+                    )
+                )
                 return False
             else:
-                Log.log_error("Unknown error when attempting to check session: {}".format(response.text))
+                Log.log_error(f"Unknown error when attempting to check session: {response.text}")
                 return False
         except Exception as f:
             Log.log_error(traceback.format_tb(f.__cause__))

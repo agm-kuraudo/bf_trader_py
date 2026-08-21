@@ -2,19 +2,21 @@
 Property-based tests for SP-302: Monitor Initial Odds and Configurable Timing.
 Tests the correctness properties defined in the design document.
 """
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from datetime import datetime, timedelta, timezone
-from hypothesis import given, settings, assume
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from datetime import timedelta
+
+from hypothesis import given, settings
 from hypothesis import strategies as st
-import pytest
 
 from logic.simpleStategy import DefaultStrategy
 
-
 # === Helper: Tier selection function (extracted for testability) ===
+
 
 def select_tier(tiers: dict, time_until_start: timedelta) -> int:
     """
@@ -23,21 +25,25 @@ def select_tier(tiers: dict, time_until_start: timedelta) -> int:
     """
     seconds_until_start = time_until_start.total_seconds()
     if seconds_until_start <= 0:
-        return tiers.get('IN_PLAY', 5)
+        return tiers.get("IN_PLAY", 5)
     elif seconds_until_start <= 3 * 3600:
-        return tiers.get('LESS_THAN_3H', 300)
+        return tiers.get("LESS_THAN_3H", 300)
     elif seconds_until_start <= 6 * 3600:
-        return tiers.get('LESS_THAN_6H', 900)
+        return tiers.get("LESS_THAN_6H", 900)
     elif seconds_until_start <= 12 * 3600:
-        return tiers.get('LESS_THAN_12H', 3600)
+        return tiers.get("LESS_THAN_12H", 3600)
     else:
-        return tiers.get('MORE_THAN_12H', 14400)
+        return tiers.get("MORE_THAN_12H", 14400)
 
 
 # === Property 1: Tier selection returns correct interval for any time offset ===
 
+
 class TestProperty1TierSelection:
-    """Feature: monitor-initial-odds-and-config, Property 1: Tier selection returns the correct interval for any time offset"""
+    """Feature: monitor-initial-odds-and-config.
+
+    Property 1: Tier selection returns the correct interval for any time offset.
+    """
 
     @given(
         in_play=st.integers(min_value=1, max_value=86400),
@@ -53,11 +59,11 @@ class TestProperty1TierSelection:
         **Validates: Requirements 1.4, 2.3**
         """
         tiers = {
-            'IN_PLAY': in_play,
-            'LESS_THAN_3H': lt_3h,
-            'LESS_THAN_6H': lt_6h,
-            'LESS_THAN_12H': lt_12h,
-            'MORE_THAN_12H': gt_12h,
+            "IN_PLAY": in_play,
+            "LESS_THAN_3H": lt_3h,
+            "LESS_THAN_6H": lt_6h,
+            "LESS_THAN_12H": lt_12h,
+            "MORE_THAN_12H": gt_12h,
         }
         time_until_start = timedelta(seconds=seconds_offset)
         result = select_tier(tiers, time_until_start)
@@ -90,8 +96,12 @@ class TestProperty1TierSelection:
 
 # === Property 2: Config loading preserves present values and defaults for missing ===
 
+
 class TestProperty2ConfigLoading:
-    """Feature: monitor-initial-odds-and-config, Property 2: Config loading preserves present values and applies defaults for missing keys"""
+    """Feature: monitor-initial-odds-and-config.
+
+    Property 2: Config loading preserves present values and applies defaults for missing keys.
+    """
 
     def test_default_strategy_has_all_timing_attributes(self):
         """
@@ -99,21 +109,21 @@ class TestProperty2ConfigLoading:
 
         **Validates: Requirements 2.2, 2.5, 3.3, 4.3, 5.3, 6.1, 6.2**
         """
-        assert hasattr(DefaultStrategy, 'UPDATE_FREQUENCY_TIERS')
-        assert hasattr(DefaultStrategy, 'INITIAL_UPDATE_FREQUENCY')
-        assert hasattr(DefaultStrategy, 'STALE_TARGET_HOURS')
-        assert hasattr(DefaultStrategy, 'MONITOR_MAX_WAIT_SECONDS')
+        assert hasattr(DefaultStrategy, "UPDATE_FREQUENCY_TIERS")
+        assert hasattr(DefaultStrategy, "INITIAL_UPDATE_FREQUENCY")
+        assert hasattr(DefaultStrategy, "STALE_TARGET_HOURS")
+        assert hasattr(DefaultStrategy, "MONITOR_MAX_WAIT_SECONDS")
 
         assert DefaultStrategy.INITIAL_UPDATE_FREQUENCY == 14400
         assert DefaultStrategy.STALE_TARGET_HOURS == 24
         assert DefaultStrategy.MONITOR_MAX_WAIT_SECONDS == 900
 
         tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
-        assert tiers['IN_PLAY'] == 5
-        assert tiers['LESS_THAN_3H'] == 300
-        assert tiers['LESS_THAN_6H'] == 900
-        assert tiers['LESS_THAN_12H'] == 3600
-        assert tiers['MORE_THAN_12H'] == 14400
+        assert tiers["IN_PLAY"] == 5
+        assert tiers["LESS_THAN_3H"] == 300
+        assert tiers["LESS_THAN_6H"] == 900
+        assert tiers["LESS_THAN_12H"] == 3600
+        assert tiers["MORE_THAN_12H"] == 14400
 
     @given(
         initial_freq=st.integers(min_value=1, max_value=86400),
@@ -128,15 +138,15 @@ class TestProperty2ConfigLoading:
         **Validates: Requirements 2.2, 2.5, 3.3, 4.3, 5.3, 6.1, 6.2**
         """
         yaml_content = {
-            'INITIAL_UPDATE_FREQUENCY': initial_freq,
-            'STALE_TARGET_HOURS': stale_hours,
-            'MONITOR_MAX_WAIT_SECONDS': max_wait,
+            "INITIAL_UPDATE_FREQUENCY": initial_freq,
+            "STALE_TARGET_HOURS": stale_hours,
+            "MONITOR_MAX_WAIT_SECONDS": max_wait,
         }
 
         # Simulate loading with .get() and defaults
-        loaded_initial = yaml_content.get('INITIAL_UPDATE_FREQUENCY', 14400)
-        loaded_stale = yaml_content.get('STALE_TARGET_HOURS', 24)
-        loaded_max_wait = yaml_content.get('MONITOR_MAX_WAIT_SECONDS', 900)
+        loaded_initial = yaml_content.get("INITIAL_UPDATE_FREQUENCY", 14400)
+        loaded_stale = yaml_content.get("STALE_TARGET_HOURS", 24)
+        loaded_max_wait = yaml_content.get("MONITOR_MAX_WAIT_SECONDS", 900)
 
         assert loaded_initial == initial_freq
         assert loaded_stale == stale_hours
@@ -150,10 +160,10 @@ class TestProperty2ConfigLoading:
         """
         yaml_content = {}  # Empty config
 
-        loaded_initial = yaml_content.get('INITIAL_UPDATE_FREQUENCY', 14400)
-        loaded_stale = yaml_content.get('STALE_TARGET_HOURS', 24)
-        loaded_max_wait = yaml_content.get('MONITOR_MAX_WAIT_SECONDS', 900)
-        loaded_tiers = yaml_content.get('UPDATE_FREQUENCY_TIERS', DefaultStrategy.UPDATE_FREQUENCY_TIERS)
+        loaded_initial = yaml_content.get("INITIAL_UPDATE_FREQUENCY", 14400)
+        loaded_stale = yaml_content.get("STALE_TARGET_HOURS", 24)
+        loaded_max_wait = yaml_content.get("MONITOR_MAX_WAIT_SECONDS", 900)
+        loaded_tiers = yaml_content.get("UPDATE_FREQUENCY_TIERS", DefaultStrategy.UPDATE_FREQUENCY_TIERS)
 
         assert loaded_initial == 14400
         assert loaded_stale == 24
@@ -163,12 +173,16 @@ class TestProperty2ConfigLoading:
 
 # === Property 3: Newly-opened target identification selects exactly the correct targets ===
 
+
 class TestProperty3NewlyOpenedIdentification:
-    """Feature: monitor-initial-odds-and-config, Property 3: Newly-opened target identification selects exactly the correct targets"""
+    """Feature: monitor-initial-odds-and-config.
+
+    Property 3: Newly-opened target identification selects exactly the correct targets.
+    """
 
     @given(
-        raw_statuses=st.lists(st.sampled_from(['IDENTIFIED', 'OPEN', 'CLOSED', 'EXPIRED']), min_size=1, max_size=20),
-        processed_statuses=st.lists(st.sampled_from(['OPEN', 'CLOSED', 'SUSPENDED']), min_size=1, max_size=20),
+        raw_statuses=st.lists(st.sampled_from(["IDENTIFIED", "OPEN", "CLOSED", "EXPIRED"]), min_size=1, max_size=20),
+        processed_statuses=st.lists(st.sampled_from(["OPEN", "CLOSED", "SUSPENDED"]), min_size=1, max_size=20),
     )
     @settings(max_examples=200)
     def test_newly_opened_selects_correct_targets(self, raw_statuses, processed_statuses):
@@ -183,25 +197,26 @@ class TestProperty3NewlyOpenedIdentification:
         processed_statuses = processed_statuses[:min_len]
 
         # Build mock raw_targets (status at index 5) and processed_targets (status at index 1)
-        raw_targets = [('', '', '', '', '', status, '', '', '') for status in raw_statuses]
-        processed_targets = [('market', status, 3, [1, 2, 3], 14400, None, None) for status in processed_statuses]
+        raw_targets = [("", "", "", "", "", status, "", "", "") for status in raw_statuses]
+        processed_targets = [("market", status, 3, [1, 2, 3], 14400, None, None) for status in processed_statuses]
 
         # Apply the same logic as fetch_odds_for_new_targets
         newly_opened = []
-        for raw, processed in zip(raw_targets, processed_targets):
-            if raw[5] == 'IDENTIFIED' and processed[1] == 'OPEN':
+        for raw, processed in zip(raw_targets, processed_targets, strict=False):
+            if raw[5] == "IDENTIFIED" and processed[1] == "OPEN":
                 newly_opened.append(processed)
 
         # Verify: count matches expected
         expected_count = sum(
-            1 for raw_s, proc_s in zip(raw_statuses, processed_statuses)
-            if raw_s == 'IDENTIFIED' and proc_s == 'OPEN'
+            1
+            for raw_s, proc_s in zip(raw_statuses, processed_statuses, strict=False)
+            if raw_s == "IDENTIFIED" and proc_s == "OPEN"
         )
         assert len(newly_opened) == expected_count
 
         # Verify: all selected have correct statuses
         for target in newly_opened:
-            assert target[1] == 'OPEN'
+            assert target[1] == "OPEN"
 
     def test_no_newly_opened_when_all_already_open(self):
         """
@@ -209,12 +224,13 @@ class TestProperty3NewlyOpenedIdentification:
 
         **Validates: Requirements 1.1**
         """
-        raw_targets = [('', '', '', '', '', 'OPEN', '', '', '')] * 5
-        processed_targets = [('market', 'OPEN', 3, [1], 14400, None, None)] * 5
+        raw_targets = [("", "", "", "", "", "OPEN", "", "", "")] * 5
+        processed_targets = [("market", "OPEN", 3, [1], 14400, None, None)] * 5
 
         newly_opened = [
-            proc for raw, proc in zip(raw_targets, processed_targets)
-            if raw[5] == 'IDENTIFIED' and proc[1] == 'OPEN'
+            proc
+            for raw, proc in zip(raw_targets, processed_targets, strict=False)
+            if raw[5] == "IDENTIFIED" and proc[1] == "OPEN"
         ]
         assert len(newly_opened) == 0
 
@@ -224,8 +240,5 @@ class TestProperty3NewlyOpenedIdentification:
 
         **Validates: Requirements 1.1**
         """
-        newly_opened = [
-            proc for raw, proc in zip([], [])
-            if raw[5] == 'IDENTIFIED' and proc[1] == 'OPEN'
-        ]
+        newly_opened = [proc for raw, proc in zip([], [], strict=False) if raw[5] == "IDENTIFIED" and proc[1] == "OPEN"]
         assert len(newly_opened) == 0

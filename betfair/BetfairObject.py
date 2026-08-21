@@ -6,8 +6,10 @@ from abc import ABC, abstractmethod
 # an individual object based on a supplied JSON message.  build_frame_from_json will build a dataframe and/or a list
 # of multiple objects returned in a JSON message
 
+
 class BetfairObjectException(Exception):
     pass
+
 
 class BetfairObject(ABC):
     @abstractmethod

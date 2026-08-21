@@ -2,12 +2,15 @@
 DotenvLoader — loads application secrets from a .env file.
 Replaces the VaultReader module that was previously used for secret management.
 """
+
 from pathlib import Path
+
 from dotenv import dotenv_values
 
 
 class ConfigurationException(Exception):
     """Raised when the .env file is missing or a required key is absent/empty."""
+
     pass
 
 

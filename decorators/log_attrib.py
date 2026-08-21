@@ -1,5 +1,6 @@
 import inspect
 from functools import wraps
+
 from output.log import Output as Log
 
 

@@ -1,11 +1,11 @@
 from io import StringIO
 
+import pandas as pd
 from requests import Response
 
-from betfair.BetfairObject import BetfairObject, BetfairObjectException
-import pandas as pd
-from output.log import Output as Log
 import decorators.log_attrib
+from betfair.BetfairObject import BetfairObject, BetfairObjectException
+from output.log import Output as Log
 
 
 class EventType(BetfairObject):
@@ -20,10 +20,9 @@ class EventType(BetfairObject):
 
     @decorators.log_attrib.dump_args
     def build_frame_from_json(self, json):
-
         try:
             Log.log_debug("buildFrameFromJSON called")
-            Log.log_debug("json: {}".format(json))
+            Log.log_debug(f"json: {json}")
 
             if type(json) is Response:
                 json_text = json.text
@@ -31,22 +30,29 @@ class EventType(BetfairObject):
                 json_text = json
 
             df = pd.read_json(StringIO(json_text))
-            Log.log_debug("df: {}".format(df.head()))
+            Log.log_debug(f"df: {df.head()}")
 
-            compiled_df = pd.DataFrame({'EventID': pd.Series(dtype='str'),
-                                        'EventName': pd.Series(dtype='str'),
-                                        'marketCount': pd.Series(dtype='int')})
+            compiled_df = pd.DataFrame(
+                {
+                    "EventID": pd.Series(dtype="str"),
+                    "EventName": pd.Series(dtype="str"),
+                    "marketCount": pd.Series(dtype="int"),
+                }
+            )
 
             event_df = df["result"]
-            Log.log_debug("event_df: {}".format(event_df.head()))
+            Log.log_debug(f"event_df: {event_df.head()}")
 
             event_list = []
 
-            for key, event in event_df.items():
+            for _key, event in event_df.items():
                 Log.log_debug(event)
                 event_list.append(self.build_from_json(event))
-                compiled_df.loc[len(compiled_df)] = {'EventID': self.__id, 'EventName': self.__name,
-                                                     'marketCount': self.__marketCount}
+                compiled_df.loc[len(compiled_df)] = {
+                    "EventID": self.__id,
+                    "EventName": self.__name,
+                    "marketCount": self.__marketCount,
+                }
             return compiled_df, event_list
         except Exception as e:
             raise BetfairObjectException(f"Failed to build data frame from JSON {json}") from e
@@ -55,18 +61,18 @@ class EventType(BetfairObject):
     def build_from_json(self, json):
         if type(json) is str:
             json = eval(json)
-        self.__marketCount = json.get('marketCount')
-        self.__id = json.get("eventType").get('id')
-        self.__name = json.get("eventType").get('name')
+        self.__marketCount = json.get("marketCount")
+        self.__id = json.get("eventType").get("id")
+        self.__name = json.get("eventType").get("name")
         if not all(attr is not None for attr in [self.__marketCount, self.__id, self.__name]):
             raise BetfairObjectException("Event Type Object can't initialise as all values not returned in json")
-        Log.log_debug(json['marketCount'])
-        Log.log_debug(json["eventType"]['id'])
-        Log.log_debug(json["eventType"]['name'])
+        Log.log_debug(json["marketCount"])
+        Log.log_debug(json["eventType"]["id"])
+        Log.log_debug(json["eventType"]["name"])
         return EventType(event_type_id=self.__id, name=self.__name, market_count=self.__marketCount)
 
     def __str__(self):
-        return "Market: {}, ID: {}, Market Count: {}".format(self.__name, self.__id, self.__marketCount)
+        return f"Market: {self.__name}, ID: {self.__id}, Market Count: {self.__marketCount}"
 
     @property
     def id(self):
@@ -80,7 +86,7 @@ class EventType(BetfairObject):
     def market_count(self):
         return self.__marketCount
 
-    '''
+    """
             self.__id = id
         self.__name = name
-        self.__marketCount = marketCount'''
+        self.__marketCount = marketCount"""

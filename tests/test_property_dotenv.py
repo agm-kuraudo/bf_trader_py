@@ -4,24 +4,33 @@ Uses Hypothesis to verify correctness properties across random inputs.
 
 Validates: Requirements 2.3, 2.4, 3.3, 3.4, 5.2
 """
-import tempfile
+
 import os
-from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from api.auth.dotenv_loader import DotenvLoader, ConfigurationException
 from api.auth.auth_details import Auth, AuthException
+from api.auth.dotenv_loader import ConfigurationException, DotenvLoader
 from BFDriver import BFDriver, BFDriverException
 from logic.simpleStategy import FromFileStrategy
 from output.log import Output
 
-
-REQUIRED_KEYS = ["BF_AppKey", "BF_CRT_FILE", "BF_KEY_FILE", "BF_USERID", "BF_PWD",
-                 "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PWD"]
+REQUIRED_KEYS = [
+    "BF_AppKey",
+    "BF_CRT_FILE",
+    "BF_KEY_FILE",
+    "BF_USERID",
+    "BF_PWD",
+    "DB_HOST",
+    "DB_PORT",
+    "DB_NAME",
+    "DB_USER",
+    "DB_PWD",
+]
 
 AUTH_KEYS = ["BF_AppKey", "BF_CRT_FILE", "BF_KEY_FILE", "BF_USERID", "BF_PWD"]
 
@@ -104,13 +113,10 @@ class TestProperty2:
     @given(
         key=st.from_regex(r"[A-Z][A-Z0-9_]{0,20}", fullmatch=True),
         value=st.text(
-            alphabet=st.characters(
-                whitelist_categories=("L", "N", "P", "S"),
-                blacklist_characters="\n\r\x00#='\""
-            ),
+            alphabet=st.characters(whitelist_categories=("L", "N", "P", "S"), blacklist_characters="\n\r\x00#='\""),
             min_size=1,
-            max_size=50
-        ).filter(lambda v: v.isascii())
+            max_size=50,
+        ).filter(lambda v: v.isascii()),
     )
     @settings(max_examples=100)
     def test_present_key_returns_value(self, key, value):
