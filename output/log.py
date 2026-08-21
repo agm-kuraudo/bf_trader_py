@@ -1,6 +1,7 @@
 import datetime
 import os
 
+
 class Output:
     DEBUG = 1
     INFO = 2
@@ -11,12 +12,12 @@ class Output:
     LOG_FILE = True
 
     SELECTED_LOG_LEVEL = 1  # Defaults to debug - can be changed by calling "set_log_level"
-    full_path = os.path.join(os.path.dirname(__file__), "../log/runlog" + datetime.datetime.now().
-                             strftime("%y%m%d") + ".log")
+    full_path = os.path.join(
+        os.path.dirname(__file__), "../log/runlog" + datetime.datetime.now().strftime("%y%m%d") + ".log"
+    )
 
     def __init__(self):
         pass
-
 
     @classmethod
     def set_log_level(cls, log_level):
@@ -57,6 +58,5 @@ class Output:
     @classmethod
     def file_output(cls, output_string):
         # stream = open(cls.full_path, mode='x', encoding="UTF-8")
-        stream = open(cls.full_path, mode='a+', encoding="UTF-8")
+        stream = open(cls.full_path, mode="a+", encoding="UTF-8")
         stream.write(str(datetime.datetime.now()) + " " + output_string + "\n")
-

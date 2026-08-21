@@ -8,7 +8,7 @@ have to run in order to work as expected.
 from datetime import datetime, timedelta
 
 import api.auth.auth_details as bf_auth
-from api.auth.dotenv_loader import DotenvLoader, ConfigurationException
+from api.auth.dotenv_loader import ConfigurationException, DotenvLoader
 from api.call import Call
 from api.http_methods import Methods
 from api.request_body import RequestBody
@@ -18,17 +18,17 @@ from betfair.event import Event
 from betfair.eventType import EventType
 from betfair.market import Market, Target
 from betfair.position import Position
-from logic.simpleStategy import DefaultStrategy, FromFileStrategy
-from output.dboutput import DBOutputConnection
+from logic.simpleStategy import DefaultStrategy
 from output.log import Output as Log
+
 
 class BFDriverException(Exception):
     pass
 
-class BFDriver:
 
+class BFDriver:
     # Class requires a defined strategy and log level
-    def __init__(self, my_strategy:DefaultStrategy, log_level:int):
+    def __init__(self, my_strategy: DefaultStrategy, log_level: int):
         # When initialised the BFDriver class creates a lot of variables that can be used throughout all the methods
         # these act basically as Global variables for the program
         self.__targets_list = None
@@ -58,7 +58,6 @@ class BFDriver:
             raise BFDriverException(f"Could not load DB credentials from .env: {f}") from f
         return {"host": host, "port": port, "db_name": db_name, "db_user": db_user, "db_pwd": db_pwd}
 
-
     # get_token method obtains a fresh SSO Token from the Betfair API via certificate authentication.
     # A fresh token is always obtained on each run — no cached token is used.
     def get_token(self):
@@ -72,20 +71,23 @@ class BFDriver:
             )
         )
         self.__call_obj.auth = self.__auth_obj
-        Log.log_debug("Token: {}".format(self.__auth_obj.security_token))
+        Log.log_debug(f"Token: {self.__auth_obj.security_token}")
         return True
 
     # get_event_types method will return a list of all events that Betfair supports and will filter it out
     # against the event types specified in our strategies and return the correct IDs only for those in a list
     # Event types include things like "Soccer" and "Horse Racing"
     def get_event_types(self) -> list[EventType]:
-
         # This code calls the build_frame_from_json method in betfair/eventType.py and returns a dataframe and list of
         # Event type objects based on the JSON returned from the "listEventTypes" api call.
         # The dataframe element isn't really used much but have left it in case it's useful in the future.
         df, event_type_list = self.__event_type_obj.build_frame_from_json(
-            self.__call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                 request_body=self.__request_body_obj.get_template("listEventTypes")))
+            self.__call_obj.call(
+                http_method=Methods.POST,
+                url=Urls.JSON_RPC_BET,
+                request_body=self.__request_body_obj.get_template("listEventTypes"),
+            )
+        )
 
         # Create a new list which is going to hold the events that match our filter
         selected_event_types = []
@@ -101,8 +103,8 @@ class BFDriver:
         # if we didn't get any matched events, raise a useful error message
         if len(selected_event_types) == 0:
             Log.log_error(
-                "No event types found matching: {}. Possible options will be listed below".format(
-                    self.__my_strategy.EVENTS))
+                f"No event types found matching: {self.__my_strategy.EVENTS}. Possible options will be listed below"
+            )
             for event_type in event_type_list:
                 Log.log_error(event_type)
             return 0
@@ -120,22 +122,19 @@ class BFDriver:
     # selected event ids. For example Soccer has the Premier League, Championship etc.  It then filters based
     # on competitions specified in our strategy and gets only the desired ids.
     def get_competition_ids(self) -> list[Competition]:
-
         # This calls the build_frame_from_json method on the competition object - betfair/competitions.py. It
         # returns a dataframe and a list of Competition objects
-        df, my_comps = (self.__competition_obj.build_frame_from_json(
-            self.__call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                 request_body=self.__request_body_obj.populate_template("listCompetitions",
-                                                                                    {
-                                                                                   "<list_of_event_ids>":
-                                                                                       self.__my_event_types
-                                                                               }
-                                                                                    )
-                                 )
-        )
+        df, my_comps = self.__competition_obj.build_frame_from_json(
+            self.__call_obj.call(
+                http_method=Methods.POST,
+                url=Urls.JSON_RPC_BET,
+                request_body=self.__request_body_obj.populate_template(
+                    "listCompetitions", {"<list_of_event_ids>": self.__my_event_types}
+                ),
+            )
         )
 
-        #Log.log_debug("" + df.head())
+        # Log.log_debug("" + df.head())
 
         # selected comps is initialised as a blank list
         selected_comps = []
@@ -149,8 +148,9 @@ class BFDriver:
                 Log.log_debug(f"Event: {ev}")
         # If we didn't find any matching competitions output a useful error message
         if len(selected_comps) == 0:
-            Log.log_error("No competitions found matching: {}. Possible options will be listed below".format(
-                self.__my_strategy.COMPETITIONS))
+            Log.log_error(
+                f"No competitions found matching: {self.__my_strategy.COMPETITIONS}. Possible options will be listed below"  # noqa: E501
+            )
             for ev in my_comps:
                 Log.log_debug(f"Event: {ev}")
             return 0
@@ -169,23 +169,25 @@ class BFDriver:
         # build_frame_from_json called on betfair/event.py object which returns all possible events based on the
         # supplied filters
         df, my_event_list = self.__event_obj.build_frame_from_json(
-            self.__call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                 request_body=self.__request_body_obj.populate_template(
-                                 "listEvents",
-                                 {
-                                     "<list_of_event_ids>": self.__my_event_types,
-                                     "<list_of_competition_ids>": self.__my_competitions,
-                                    "<list_of_market_types>": self.__my_strategy.MARKET_TYPEs
-                                 }
-                             )
-                                 )
+            self.__call_obj.call(
+                http_method=Methods.POST,
+                url=Urls.JSON_RPC_BET,
+                request_body=self.__request_body_obj.populate_template(
+                    "listEvents",
+                    {
+                        "<list_of_event_ids>": self.__my_event_types,
+                        "<list_of_competition_ids>": self.__my_competitions,
+                        "<list_of_market_types>": self.__my_strategy.MARKET_TYPEs,
+                    },
+                ),
+            )
         )
 
-        #Log.log_debug(df.info())
+        # Log.log_debug(df.info())
         # This return statement calls the "fiter_events" method also contained in this class remove events outside the
         # required timeline and those which already have an active position open. It also uses slicing to cut down the
         # events to the Maximum number supplied in the strategy
-        return self.filter_events(my_event_list)[:self.__my_strategy.MAX_EVENTS]
+        return self.filter_events(my_event_list)[: self.__my_strategy.MAX_EVENTS]
 
     # filter_events method is supplied a full list of events that match the basic filter and returns a list of
     # events that are within the supplied timeline (MIN and MAX days until start) and do not already have a position
@@ -221,17 +223,23 @@ class BFDriver:
         for event in my_events:
             # Create a market object based on calling the "marketCatalogue" api with just the individual event id
             df, market = self.__market_obj.build_frame_from_json(
-                self.__call_obj.call(http_method=Methods.POST, url=Urls.JSON_RPC_BET,
-                                     request_body=self.__request_body_obj.populate_template(
-                                     "marketCatalogue",
-                                     {"<list_of_event_ids>": [event.id],
-                                      "<list_of_market_types>": self.__my_strategy.MARKET_TYPEs})))
+                self.__call_obj.call(
+                    http_method=Methods.POST,
+                    url=Urls.JSON_RPC_BET,
+                    request_body=self.__request_body_obj.populate_template(
+                        "marketCatalogue",
+                        {"<list_of_event_ids>": [event.id], "<list_of_market_types>": self.__my_strategy.MARKET_TYPEs},
+                    ),
+                )
+            )
             # add the market extracted to the list of market ids
             markets_list.append(market[0])
             # append a new Target object to the list with the relevant event and Market.
             self.__targets_list.append(Target(event, market[0]))
 
-            Log.log_debug(datetime.strptime(self.__market_obj.description['marketTime'], '%Y-%m-%dT%H:%M:%S.%fZ') - datetime.now())
+            Log.log_debug(
+                datetime.strptime(self.__market_obj.description["marketTime"], "%Y-%m-%dT%H:%M:%S.%fZ") - datetime.now()
+            )
             # The market object contains "runners" e.g. Spurs, Draw, Arsenal, just outputting them to log here
             for runner in self.__market_obj.runners:
                 Log.log_debug(runner)

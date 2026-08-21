@@ -5,9 +5,8 @@ from requests import Response
 
 import decorators.log_attrib
 from api.http_methods import Methods
-from output.log import Output as Log
 from api.urls import Urls
-from api.auth.auth_details import Auth
+from output.log import Output as Log
 
 
 class CallException(Exception):
@@ -40,10 +39,12 @@ class Call:
         """
         try:
             self.url = url
-            Log.log_debug("Making request to {}".format(url))
-            Log.log_debug("headers: {}, RequestBody: {}".format(self.__headers, request_body))
+            Log.log_debug(f"Making request to {url}")
+            Log.log_debug(f"headers: {self.__headers}, RequestBody: {request_body}")
 
-            r = requests.request(method=str(http_method).replace("Methods.", ""), headers=self.__headers, url=self.url, json=request_body)
+            r = requests.request(
+                method=str(http_method).replace("Methods.", ""), headers=self.__headers, url=self.url, json=request_body
+            )
             Log.log_debug(r.text)
             return r
         except Exception as e:
@@ -59,19 +60,23 @@ class Call:
         """
         try:
             self.url = Urls.CERT_LOGIN
-            Log.log_debug("Attempting to authentication via {}".format(self.url))
-            Log.log_debug("X-Application: {}".format(self.__auth.app_key))
+            Log.log_debug(f"Attempting to authentication via {self.url}")
+            Log.log_debug(f"X-Application: {self.__auth.app_key}")
 
-            r = requests.post(headers={"X-Application": self.__auth.app_key}, url=self.url, params=request_body,
-                              cert=(self.__auth.crt_file, self.__auth.key_file))
-            Log.log_debug("Response Message: {}".format(r.text))
+            r = requests.post(
+                headers={"X-Application": self.__auth.app_key},
+                url=self.url,
+                params=request_body,
+                cert=(self.__auth.crt_file, self.__auth.key_file),
+            )
+            Log.log_debug(f"Response Message: {r.text}")
             json_resp = json.loads(r.text)
 
-            if json_resp['loginStatus'] != 'SUCCESS':
+            if json_resp["loginStatus"] != "SUCCESS":
                 raise Exception("Login unsuccessful! \n" + r.text)
             else:
-                self.__headers.update({"X-Authentication": json_resp['sessionToken']})
-                return json_resp['sessionToken']
+                self.__headers.update({"X-Authentication": json_resp["sessionToken"]})
+                return json_resp["sessionToken"]
 
         except Exception as a:
             raise CallException("Failed to authenticate!") from a

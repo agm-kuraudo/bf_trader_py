@@ -4,4 +4,5 @@ This module handles authentication to betfair using details loaded from a .env f
 Author: agm-karoudo
 Date: 2023-05-15
 """
-import api
+
+import api  # noqa: F401

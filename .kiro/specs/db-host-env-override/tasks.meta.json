@@ -1,0 +1,68 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Update `.env` — set DB_HOST to Docker container name": [
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130549514
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130560057
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130622035
+      }
+    ],
+    "2. Update `.env.example` — set DB_HOST and add documentation": [
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130549664
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130560858
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130622833
+      }
+    ],
+    "3. Add Windows hosts file entry (MANUAL step)": [
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130549734
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130559262
+      }
+    ],
+    "4. Verify connectivity": [
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130549845
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130626946
+      },
+      {
+        "executionId": "5e44c211-6c40-4dc9-aa36-03c659f713c2",
+        "chatSessionId": "sess_4e73bf76-14e9-4225-b291-301f1fbf05fd",
+        "timestamp": 1787130766644
+      }
+    ]
+  }
+}

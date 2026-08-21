@@ -1,1 +1,1 @@
-import api.auth
+import api.auth  # noqa: F401
