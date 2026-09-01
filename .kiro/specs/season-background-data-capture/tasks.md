@@ -117,7 +117,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Set Betfair credentials and `DB_HOST=my_postgres`, `DB_PORT`, `DB_NAME=bf_trader`, `DB_USER`, `DB_PWD`
     - _Requirements: 7.5_
 
-  - [ ] 7.2 Add post-deploy verification to `deploy.sh`
+  - [x] 7.2 Add post-deploy verification to `deploy.sh`
     - After `up -d --build`, confirm within **300 seconds** that a Monitor cycle runs current code and persists an odds row to `bf_trader`
     - Absence of the Vault startup failure confirms current code is running (satisfies 7.4)
     - _Requirements: 7.4, 7.6_
@@ -138,7 +138,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
   - Ensure all tests pass and the post-deploy verification succeeds, ask the user if questions arise.
 
 - [ ] 9. Retire Vault — ONLY after a Vault-free run is confirmed (Req 8)
-  - [ ] 9.1 **[OPERATIONAL]** Remove the `my_keyvault` container
+  - [x] 9.1 **[OPERATIONAL]** Remove the `my_keyvault` container
     - Precondition: task 7/8 confirmed current code running with no Vault dependency (E9 guard)
     - Stop and remove `my_keyvault` so no container of that name remains on the host
     - Do NOT touch the ~608 exited containers, dangling image `d91da2e69804`, or `rundeck-image-01` (owned by SP-294)

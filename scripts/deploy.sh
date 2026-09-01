@@ -161,19 +161,20 @@ build_and_recreate() {
     log "build + recreate OK."
 }
 
-# --- Step 4: post-deploy verification ----------------------------------------
-# TODO(Task 7.2): Full 300s verification that a Monitor cycle runs current code
-# and persists an odds row to bf_trader is COMPLETED UNDER TASK 7.2. This
-# function is scaffolded here so step ordering and exit semantics are in place;
-# Task 7.2 fills in the concrete freshness/persistence assertion.
+# --- Step 4: post-deploy verification (Task 7.2, Req 7.4/7.6) ----------------
+# Step 3 (docker compose up -d --build) recreates the capture container and
+# starts a Monitor cycle. This step confirms, within 300s, that a fresh
+# successful Monitor cycle completed on CURRENT code (proving the old Vault
+# startup failure is gone, Req 7.4) and reports whether fresh odds were
+# persisted (Req 7.6). A successful cycle that writes no odds is still a pass
+# when no targets are due (see verify_deploy.py for the rationale).
 verify_post_deploy() {
-    log "Step 4/4: post-deploy verification"
-    log "NOTE: full 300s Monitor-cycle persistence check is completed under Task 7.2."
-    # Placeholder: intentionally a no-op success so the pipeline structure is
-    # exercised. Task 7.2 will replace the body with a real check (e.g. run a
-    # one-shot capture cycle and confirm a fresh row lands in bf.market_table
-    # within 300s), and will `exit "${EXIT_VERIFY_FAILED}"` on failure.
-    return 0
+    log "Step 4/4: post-deploy verification (up to 300s for a Monitor cycle to complete)"
+    if ! VERIFY_TIMEOUT_S=300 "${PYTHON}" "${REPO_DIR}/scripts/verify_deploy.py"; then
+        err "post-deploy verification failed — current code did not complete a Monitor cycle (Req 7.6)."
+        exit "${EXIT_VERIFY_FAILED}"
+    fi
+    log "post-deploy verification OK."
 }
 
 main() {
