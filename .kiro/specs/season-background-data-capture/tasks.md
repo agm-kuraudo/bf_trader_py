@@ -106,8 +106,8 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Assert deploy aborts BEFORE recreation when `.env` validation fails
     - _Requirements: 7.8_
 
-- [ ] 6. Point the retained Rundeck capture job at the rebuilt container (Req 3)
-  - [ ] 6.1 **[OPERATIONAL]** Update the Rundeck capture job to run the compose-managed container
+- [x] 6. Point the retained Rundeck capture job at the rebuilt container (Req 3)
+  - [x] 6.1 **[OPERATIONAL]** Update the Rundeck capture job to run the compose-managed container
     - Replace the `docker start bf_monitor_service` step with invoking `scripts/deploy.sh` / `docker compose run` against the rebuilt current-code container
     - Keep the existing schedule/cadence unchanged; verify the job fires and starts capture within 60s of the scheduled time
     - _Requirements: 3.1, 3.2, 3.5_
@@ -144,7 +144,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Do NOT touch the ~608 exited containers, dangling image `d91da2e69804`, or `rundeck-image-01` (owned by SP-294)
     - _Requirements: 8.1, 8.2, 8.5_
 
-  - [ ] 9.2 **[OPERATIONAL]** Disable and delete the "Unlock the Vault" Rundeck job
+  - [x] 9.2 **[OPERATIONAL]** Disable and delete the "Unlock the Vault" Rundeck job
     - Remove the job so it no longer appears in the schedule and no longer invokes `start_up_vault.sh`
     - _Requirements: 8.3_
 
