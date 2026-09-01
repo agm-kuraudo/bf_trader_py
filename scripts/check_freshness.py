@@ -28,14 +28,27 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import psycopg2
 
 from api.auth.dotenv_loader import ConfigurationException, DotenvLoader
-from logic.deploy_checks import freshness, validate_env
+from logic.deploy_checks import expected_freshness_threshold, freshness, validate_env
 from output.log import Output as Log
 
 REQUIRED_DB_KEYS = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PWD"]
 CONNECT_TIMEOUT_S = 10
 
-# Freshness threshold: 15 minutes (Req 5.3). Matches the max capture cadence.
-THRESHOLD_S = 15 * 60
+# Cadence-aware freshness (refines the literal 15-min figure in Req 5.1/5.3):
+# the stall threshold is derived from the TIGHTEST active capture cadence rather
+# than a fixed 15 minutes, because targets far from kick-off legitimately update
+# only every ~4 hours (MORE_THAN_12H tier = 14400s). A flat 15-min threshold
+# fired constant false stalls when nothing was near kick-off. See the design
+# doc "Freshness threshold decision".
+#
+# GRACE_S is added on top of the tightest cadence to allow for scheduling jitter
+# and run duration. DEFAULT_THRESHOLD_S is a fallback if target frequencies are
+# present but invalid. When there are NO active targets, no staleness alert is
+# raised (nothing should be landing).
+GRACE_S = 5 * 60          # 5 minutes of slack over the expected cadence
+DEFAULT_THRESHOLD_S = 15 * 60
+# Target statuses that mean "capture should be actively polling this target".
+ACTIVE_TARGET_STATUSES = ("OPEN", "IDENTIFIED")
 
 # The data source this check covers (named in alerts, Req 5.3).
 DATA_SOURCE = "bf.market_table"
@@ -76,15 +89,22 @@ def _save_last_successful_check(when: datetime, state_path: str = STATE_FILE) ->
 
 
 def check_freshness(env_path: str = None, now: datetime = None,
-                    threshold_s: float = THRESHOLD_S, state_path: str = STATE_FILE) -> dict:
+                    threshold_s: float = None, state_path: str = STATE_FILE) -> dict:
     """Check whether captured odds are fresh; raise alerts on stall/unreachable.
+
+    The stall threshold is CADENCE-AWARE (refines the literal 15-min figure in
+    Req 5.1/5.3): unless an explicit ``threshold_s`` is supplied (mainly for
+    tests), it is derived from the tightest ``update_frequency`` among active
+    targets plus ``GRACE_S``. When no targets are active, no staleness alert is
+    raised (nothing should be landing).
 
     Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5
 
     Args:
         env_path: Optional explicit .env path (mainly for tests).
         now: Current time (timezone-aware). Defaults to datetime.now(UTC).
-        threshold_s: Freshness threshold in seconds (default 900 = 15 min).
+        threshold_s: Explicit freshness threshold in seconds. When None (default)
+            the threshold is derived from the active capture cadence.
         state_path: Path to the last-successful-check state file.
 
     Returns:
@@ -110,6 +130,9 @@ def check_freshness(env_path: str = None, now: datetime = None,
         "alert": None,
         "data_source": DATA_SOURCE,
         "last_successful_check": None,
+        "threshold_s": None,
+        "active_targets": None,
+        "idle": False,
         "error": None,
     }
 
@@ -155,6 +178,14 @@ def check_freshness(env_path: str = None, now: datetime = None,
         with conn.cursor() as cursor:
             cursor.execute('SELECT MAX("timestamp") FROM bf.market_table')
             last_record_ts = cursor.fetchone()[0]
+            # Active targets' cadence drives the expected freshness (Req 5.1/5.3
+            # refinement): the tightest update_frequency is the soonest a new
+            # odds record should be expected.
+            cursor.execute(
+                "SELECT update_frequency FROM bf.target WHERE status = ANY(%s)",
+                (list(ACTIVE_TARGET_STATUSES),),
+            )
+            active_frequencies = [row[0] for row in cursor.fetchall() if row[0] is not None]
     except (Exception, psycopg2.DatabaseError) as error:
         Log.log_error(error)
         result["error"] = f"Freshness query failed: {error}"
@@ -166,21 +197,48 @@ def check_freshness(env_path: str = None, now: datetime = None,
     # We reached and queried the store successfully -> record this check.
     _save_last_successful_check(now, state_path)
 
-    # Pure freshness decision (Property 1).
-    decision = freshness(now, last_record_ts, threshold_s)
+    # Derive the cadence-aware threshold unless one was explicitly supplied.
+    effective_threshold = threshold_s
+    if effective_threshold is None:
+        effective_threshold = expected_freshness_threshold(
+            active_frequencies, grace_s=GRACE_S, default_s=DEFAULT_THRESHOLD_S
+        )
+
+    result["threshold_s"] = effective_threshold
+    result["active_targets"] = len(active_frequencies)
+
+    # No active targets -> nothing SHOULD be landing, so no staleness/empty alert
+    # (idle is not a stall). Still report the elapsed time for visibility.
+    if effective_threshold is None:
+        if last_record_ts is not None:
+            result["elapsed_s"] = (now - last_record_ts).total_seconds()
+        result["last_record_ts"] = last_record_ts.isoformat() if last_record_ts is not None else None
+        result["stalled"] = False
+        result["alert"] = None
+        result["idle"] = True
+        return result
+
+    result["idle"] = False
+
+    # Pure freshness decision (Property 1) against the cadence-aware threshold.
+    decision = freshness(now, last_record_ts, effective_threshold)
     result["last_record_ts"] = last_record_ts.isoformat() if last_record_ts is not None else None
     result["elapsed_s"] = decision["elapsed_s"]
     result["stalled"] = decision["stalled"]
 
     if last_record_ts is None:
-        # No records at all (Req 5.5).
-        result["alert"] = f"STALL ({DATA_SOURCE}): no captured odds present in the data store."
+        # Active targets exist but no odds have ever landed (Req 5.5).
+        result["alert"] = (
+            f"STALL ({DATA_SOURCE}): no captured odds present despite "
+            f"{len(active_frequencies)} active target(s)."
+        )
     elif decision["stalled"]:
-        # Elapsed exceeds threshold (Req 5.3).
+        # Elapsed exceeds the expected-cadence threshold (Req 5.3).
         mins = decision["elapsed_s"] / 60.0
         result["alert"] = (
             f"STALL ({DATA_SOURCE}): last odds record was {decision['elapsed_s']:.0f}s "
-            f"({mins:.1f} min) ago, exceeding the {threshold_s / 60:.0f}-min threshold."
+            f"({mins:.1f} min) ago, exceeding the expected-cadence threshold of "
+            f"{effective_threshold / 60:.0f} min (tightest active cadence + grace)."
         )
     # else: fresh -> alert stays None.
 
@@ -201,6 +259,9 @@ def main() -> int:
     print(f"  last_record_ts        : {result['last_record_ts']}")
     print(f"  elapsed_s             : {result['elapsed_s']}")
     print(f"  stalled               : {result['stalled']}")
+    print(f"  threshold_s           : {result['threshold_s']}")
+    print(f"  active_targets        : {result['active_targets']}")
+    print(f"  idle                  : {result['idle']}")
     print(f"  last_successful_check : {result['last_successful_check']}")
     print(f"  alert                 : {result['alert']}")
     print(f"  error                 : {result['error']}")
@@ -208,7 +269,13 @@ def main() -> int:
     if result["alert"]:
         print(result["alert"], file=sys.stderr)
         return 1
-    print(f"Fresh: last odds record {result['elapsed_s']:.0f}s ago (within threshold).")
+    if result.get("idle"):
+        print("Idle: no active targets, so no odds are expected right now (not a stall).")
+        return 0
+    if result["elapsed_s"] is not None:
+        print(f"Fresh: last odds record {result['elapsed_s']:.0f}s ago (within the expected-cadence threshold).")
+    else:
+        print("Fresh: within the expected-cadence threshold.")
     return 0
 
 

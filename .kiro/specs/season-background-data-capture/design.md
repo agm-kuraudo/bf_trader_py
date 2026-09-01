@@ -172,6 +172,35 @@ Rationale and mechanism:
   in-container `log/runlogYYMMDD.log` is ephemeral under `--rm` and is treated as
   best-effort debug output only).
 
+## Freshness Threshold Decision (Req 5.1/5.3 refinement)
+
+**Decision (2026-09-01): cadence-aware freshness threshold, not a flat 15 minutes.**
+
+Req 5.1/5.3 state a 15-minute threshold, but the capture cadence is tiered by
+time-to-event (IN_PLAY 5s ... MORE_THAN_12H 14400s). When the nearest match is
+days away, targets legitimately update only every ~4 hours, so a flat 15-minute
+threshold fires a false STALL every 15 minutes for days (observed live on
+2026-09-01: a normal 63-minute gap was flagged as a stall). That is alert
+fatigue, which would make the check worthless.
+
+The threshold is therefore derived from the TIGHTEST `update_frequency` among
+active (`OPEN`/`IDENTIFIED`) targets, plus a grace margin (`GRACE_S`, 5 min) for
+scheduling jitter and run duration (`logic.deploy_checks.expected_freshness_threshold`).
+This keeps the check:
+
+- **Sharp near kick-off:** an in-play target (5s cadence) still trips within a
+  few minutes -- a genuine in-play stall is caught fast.
+- **Quiet when idle:** with only far-out targets (4h cadence), only a >4h gap
+  alerts. With NO active targets, nothing should be landing, so no staleness
+  alert is raised at all (reported as `idle`), and the empty-store alert (Req
+  5.5) is likewise scoped to when active targets exist.
+
+The 15-minute figure is retained as the Rundeck job *cadence* (how often the
+check runs, Req 5.1) and as `DEFAULT_THRESHOLD_S` fallback; it is the *stall
+threshold* that becomes cadence-aware. An explicit `threshold_s` can still be
+passed (used by tests). This is a deliberate refinement of the literal Req
+5.1/5.3 wording, agreed with the operator.
+
 ## Data Models
 
 The database schema is **unchanged** by this feature. The data model below documents the four required capture tables (from `build/sql/create_database.sql`) that Req 1.4 requires to be confirmed present. These are the enumerated "required capture tables".

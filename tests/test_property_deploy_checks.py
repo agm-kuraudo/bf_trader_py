@@ -16,7 +16,7 @@ from datetime import UTC, datetime, timedelta
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from logic.deploy_checks import freshness, missing_tables, validate_env
+from logic.deploy_checks import expected_freshness_threshold, freshness, missing_tables, validate_env
 
 # === Property 1: Freshness stall decision is exact and elapsed time is non-negative ===
 
@@ -192,3 +192,43 @@ class TestProperty3MissingTables:
         required = {"bf.target", "bf.market_table", "bf.log_file", "bf.betfair_object_ids"}
         present = {"bf.target", "bf.market_table", "bf.log_file"}
         assert missing_tables(present, required) == {"bf.betfair_object_ids"}
+
+
+# === Property 1b: Cadence-aware freshness threshold (SP-328 refinement) ===
+
+
+class TestExpectedFreshnessThreshold:
+    """expected_freshness_threshold derives the stall threshold from the tightest
+    active cadence + grace, or None when there are no active targets."""
+
+    # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative
+    @given(
+        freqs=st.lists(st.integers(min_value=1, max_value=100000), min_size=1, max_size=10),
+        grace=st.integers(min_value=0, max_value=3600),
+        default=st.integers(min_value=1, max_value=100000),
+    )
+    @settings(max_examples=200)
+    def test_threshold_is_tightest_cadence_plus_grace(self, freqs, grace, default):
+        """With active targets, threshold == min(valid freq) + grace."""
+        result = expected_freshness_threshold(freqs, grace_s=grace, default_s=default)
+        assert result == min(freqs) + grace
+
+    def test_no_active_targets_returns_none(self):
+        # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative
+        assert expected_freshness_threshold([], grace_s=300, default_s=900) is None
+
+    def test_invalid_frequencies_fall_back_to_default(self):
+        # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative
+        # Non-positive / None values are ignored; if none are valid, use default+grace.
+        assert expected_freshness_threshold([0, -5, None], grace_s=300, default_s=900) == 1200
+
+    @given(
+        freqs=st.lists(st.integers(min_value=1, max_value=100000), min_size=1, max_size=10),
+        grace=st.integers(min_value=0, max_value=3600),
+    )
+    @settings(max_examples=100)
+    def test_threshold_never_below_tightest_cadence(self, freqs, grace):
+        """The threshold is always >= the tightest cadence (never alerts before
+        an update could even be due)."""
+        result = expected_freshness_threshold(freqs, grace_s=grace, default_s=900)
+        assert result >= min(freqs)

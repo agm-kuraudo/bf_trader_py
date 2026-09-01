@@ -98,6 +98,52 @@ def freshness(
     return {"elapsed_s": elapsed_s, "stalled": elapsed_s > threshold_s}
 
 
+def expected_freshness_threshold(
+    update_frequencies: list,
+    grace_s: float,
+    default_s: float,
+) -> float | None:
+    """Derive the freshness stall threshold from the active capture cadence.
+
+    The capture cadence is tiered by time-to-event (IN_PLAY 5s ... MORE_THAN_12H
+    14400s), so a fixed threshold cannot fit every situation: when the nearest
+    match is days away, targets legitimately update only every ~4 hours, and a
+    flat 15-minute threshold would fire constant false stalls. This function
+    instead derives the threshold from the TIGHTEST active cadence -- the
+    minimum ``update_frequency`` among currently-due targets -- plus a grace
+    margin for scheduling jitter and run duration. The tightest cadence is used
+    because that is the soonest a new odds record should be expected: if the
+    fastest-updating target has not landed within its interval (+ grace), that
+    is a genuine stall.
+
+    When there are no active targets (``update_frequencies`` is empty), there is
+    nothing that SHOULD be landing, so there is no meaningful stall: the function
+    returns ``None`` to signal "do not raise a staleness alert".
+
+    This refines the literal 15-minute figure in Req 5.1/5.3 into a
+    cadence-aware threshold (design decision recorded in the design doc), so the
+    check stays sharp near kick-off and quiet when everything is hours out.
+
+    Args:
+        update_frequencies: ``update_frequency`` (seconds) of each currently
+            active/due target. Empty when no targets are due.
+        grace_s: Extra seconds added on top of the tightest cadence to allow for
+            scheduling jitter and run duration.
+        default_s: Fallback threshold (seconds) if every provided frequency is
+            non-positive/invalid but the list is non-empty.
+
+    Returns:
+        The threshold in seconds (tightest positive cadence + ``grace_s``), or
+        ``None`` when there are no active targets (no staleness alert should be
+        raised).
+    """
+    valid = [f for f in update_frequencies if isinstance(f, (int, float)) and f > 0]
+    if not update_frequencies:
+        return None
+    if not valid:
+        return default_s + grace_s
+    return min(valid) + grace_s
+
 # Ordered deploy steps for the SP-328 build/deploy pipeline (scripts/deploy.sh).
 # The container is only ever replaced by the ``build_recreate`` step, so a
 # failure at or before that step leaves the last known-good container running.
