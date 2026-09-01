@@ -1,0 +1,43 @@
+# SP-328 season-background-data-capture: rebuild-not-repair deploy config.
+#
+# Single capture service, built from current repository code (Vault already
+# removed in favour of api.auth.dotenv_loader.DotenvLoader). This file stores
+# the container's network, environment, and name configuration in version
+# control so the deploy is repeatable (Req 7.2, 7.3).
+#
+# There is deliberately NO Vault service, host, or network anywhere in this
+# file (Req 8.4). Secrets come from the host .env via DotenvLoader.
+#
+# Usage:
+#   docker compose up -d --build
+#       Rebuild the image from current code and recreate the container.
+#   docker compose run --rm bf_capture python monitor_service.py
+#       Run a single one-shot capture cycle (batch job) and clean up.
+
+services:
+  bf_capture:
+    build:
+      # Build context is the repo root so the dockerfile's `COPY . /app` picks
+      # up the whole project.
+      context: .
+      dockerfile: build/betfair_app.dockerfile
+    # Fixed container name kept as the existing named container so the retained
+    # Rundeck job and scripts (e.g. run_monitor_service.sh) keep working
+    # without change during the rebuild-not-repair cut-over.
+    container_name: bf_monitor_service
+    # Secrets and DB connection details come from the host .env (Req 7.5).
+    env_file:
+      - .env
+    # Capture is a per-schedule batch job: it runs one cycle then exits, so we
+    # must NOT auto-restart it (that would loop it continuously). Rundeck is the
+    # scheduler (Req 3).
+    restart: "no"
+    # Default command runs one monitor (capture) cycle.
+    command: python monitor_service.py
+
+networks:
+  # Attach to the EXISTING user-defined network that my_postgres already runs
+  # on. `external: true` means compose will NOT try to create or manage it.
+  default:
+    name: my_trading_network
+    external: true

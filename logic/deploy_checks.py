@@ -96,3 +96,67 @@ def freshness(
 
     elapsed_s = (now - last_record_ts).total_seconds()
     return {"elapsed_s": elapsed_s, "stalled": elapsed_s > threshold_s}
+
+
+# Ordered deploy steps for the SP-328 build/deploy pipeline (scripts/deploy.sh).
+# The container is only ever replaced by the ``build_recreate`` step, so a
+# failure at or before that step leaves the last known-good container running.
+DEPLOY_STEPS = ("sync", "validate_env", "build_recreate", "verify")
+
+
+def deploy_outcome(steps_results: list) -> dict:
+    """Decide the deploy outcome from an ordered list of step results.
+
+    Models the orchestration in ``scripts/deploy.sh``: the deploy runs the
+    steps in the fixed order ``sync -> validate_env -> build_recreate ->
+    verify``. Steps run one at a time; as soon as a step fails, no later step
+    runs (short-circuit). The running capture container is only ever replaced
+    by the ``build_recreate`` step, so the container is considered *changed*
+    only when ``build_recreate`` both ran and succeeded. Any failure at or
+    before ``build_recreate`` therefore leaves the last known-good container
+    unchanged.
+
+    This is the pure decision logic behind Property 5 (deploy atomicity); it
+    contains no I/O so it can be property-tested deterministically.
+
+    Validates: Requirements 7.7, 7.8, 7.9
+
+    Args:
+        steps_results: Ordered list of booleans, one per attempted step, in
+            ``DEPLOY_STEPS`` order. ``True`` means the step succeeded, ``False``
+            means it failed. The list may be shorter than ``DEPLOY_STEPS`` (only
+            the steps that were actually attempted are included); it must not be
+            longer, and no step after a failed step should be present.
+
+    Returns:
+        A dict with keys:
+            ``failed_step``: name of the first failed step, or ``None`` when
+                every attempted step succeeded.
+            ``ran_steps``: list of step names that were attempted, in order.
+            ``container_changed``: ``True`` only when ``build_recreate`` ran and
+                succeeded; ``False`` otherwise (so any failure at or before
+                ``build_recreate`` leaves the container unchanged).
+            ``success``: ``True`` when all four steps ran and succeeded.
+    """
+    ran_steps: list[str] = []
+    failed_step: str | None = None
+    build_recreate_succeeded = False
+
+    # strict=False: steps_results may be shorter than DEPLOY_STEPS when the
+    # deploy short-circuited on an early failure (only attempted steps included).
+    for name, succeeded in zip(DEPLOY_STEPS, steps_results, strict=False):
+        ran_steps.append(name)
+        if not succeeded:
+            failed_step = name
+            break
+        if name == "build_recreate":
+            build_recreate_succeeded = True
+
+    success = failed_step is None and len(ran_steps) == len(DEPLOY_STEPS)
+
+    return {
+        "failed_step": failed_step,
+        "ran_steps": ran_steps,
+        "container_changed": build_recreate_succeeded,
+        "success": success,
+    }
