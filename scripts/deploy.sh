@@ -29,8 +29,44 @@ readonly EXIT_VERIFY_FAILED=14
 # --- Paths -------------------------------------------------------------------
 # Resolve the repo root as the parent of this script's directory, so the
 # script works regardless of the caller's working directory.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+#
+# Resolution order (first that yields a valid git repo wins):
+#   1. $REPO_DIR env override (lets Rundeck / callers pin it explicitly)
+#   2. parent of this script's directory (works when invoked by path)
+#   3. compiled-in default deploy location on the Pi
+#
+# Guard rationale: when the script is fed to bash via stdin (e.g. an inline
+# Rundeck script step, or `cat deploy.sh | bash`), BASH_SOURCE is empty so
+# `dirname` yields "." and, from cwd "/", REPO_DIR resolved to "/". Step 1 then
+# ran `git pull` in "/" and aborted (exit 11). We now verify the resolved dir
+# is actually a git repo and fall back before failing.
+DEFAULT_REPO_DIR="/usr/local/bf_trader_py"
+
+if [ -n "${REPO_DIR:-}" ]; then
+    # Explicit override supplied by the caller.
+    REPO_DIR="$(cd "${REPO_DIR}" 2>/dev/null && pwd)" || REPO_DIR=""
+else
+    SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+    if [ -n "${SCRIPT_PATH}" ]; then
+        SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
+        REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+    else
+        REPO_DIR=""
+    fi
+fi
+
+# If resolution failed or didn't land on a git repo, fall back to the default.
+if [ -z "${REPO_DIR}" ] || [ ! -d "${REPO_DIR}/.git" ]; then
+    REPO_DIR="${DEFAULT_REPO_DIR}"
+fi
+
+# Final guard: refuse to run if we still don't have a git repo, naming the path
+# so the misconfiguration is obvious (rather than git-pulling the wrong dir).
+if [ ! -d "${REPO_DIR}/.git" ]; then
+    echo "[deploy][ERROR] could not locate the repo (no .git at '${REPO_DIR}'). Set REPO_DIR or invoke the script by absolute path." >&2
+    exit 11
+fi
+
 ENV_FILE="${REPO_DIR}/.env"
 
 # Prefer the project virtualenv python, fall back to python3.
