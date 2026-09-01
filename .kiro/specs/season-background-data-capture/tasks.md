@@ -113,7 +113,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - _Requirements: 3.1, 3.2, 3.5_
 
 - [ ] 7. Run the first Vault-free capture deploy and verify persistence (Req 7.6)
-  - [ ] 7.1 **[OPERATIONAL]** Populate `.env` on the Pi from the current template
+  - [x] 7.1 **[OPERATIONAL]** Populate `.env` on the Pi from the current template
     - Set Betfair credentials and `DB_HOST=my_postgres`, `DB_PORT`, `DB_NAME=bf_trader`, `DB_USER`, `DB_PWD`
     - _Requirements: 7.5_
 
