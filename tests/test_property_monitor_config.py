@@ -13,28 +13,7 @@ from datetime import timedelta
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from logic.simpleStategy import DefaultStrategy
-
-# === Helper: Tier selection function (extracted for testability) ===
-
-
-def select_tier(tiers: dict, time_until_start: timedelta) -> int:
-    """
-    Given a tier config dict and a timedelta until event start,
-    return the correct polling interval in seconds.
-    """
-    seconds_until_start = time_until_start.total_seconds()
-    if seconds_until_start <= 0:
-        return tiers.get("IN_PLAY", 5)
-    elif seconds_until_start <= 3 * 3600:
-        return tiers.get("LESS_THAN_3H", 300)
-    elif seconds_until_start <= 6 * 3600:
-        return tiers.get("LESS_THAN_6H", 900)
-    elif seconds_until_start <= 12 * 3600:
-        return tiers.get("LESS_THAN_12H", 3600)
-    else:
-        return tiers.get("MORE_THAN_12H", 14400)
-
+from logic.simpleStategy import DefaultStrategy, select_tier
 
 # === Property 1: Tier selection returns correct interval for any time offset ===
 
@@ -242,3 +221,49 @@ class TestProperty3NewlyOpenedIdentification:
         """
         newly_opened = [proc for raw, proc in zip([], [], strict=False) if raw[5] == "IDENTIFIED" and proc[1] == "OPEN"]
         assert len(newly_opened) == 0
+
+
+# === Property 4: Cadence tier selection is total and monotonic ===
+
+
+class TestProperty4CadenceTierSelection:
+    """Feature: season-background-data-capture.
+
+    Property 4: Cadence tier selection is total and monotonic.
+    """
+
+    # Feature: season-background-data-capture, Property 4: Cadence tier selection is total and monotonic
+    @given(
+        offset_a=st.integers(min_value=-172800, max_value=172800),
+        offset_b=st.integers(min_value=-172800, max_value=172800),
+    )
+    @settings(max_examples=200)
+    def test_select_tier_is_total_and_monotonic(self, offset_a, offset_b):
+        """
+        TOTAL: select_tier returns a defined integer interval for any time offset
+        (negative/in-play, zero, and large positive) without raising or returning None.
+
+        MONOTONIC: for two times t1 <= t2, the interval selected for t1 is <= the
+        interval selected for t2 - as an event gets closer the interval never gets
+        longer. Uses the default tiers so the tier ordering holds.
+
+        **Validates: Requirements 2.2**
+        """
+        tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
+
+        # Sort the two offsets so t1 <= t2 (in seconds-to-start).
+        t1_seconds, t2_seconds = sorted((offset_a, offset_b))
+        t1 = timedelta(seconds=t1_seconds)
+        t2 = timedelta(seconds=t2_seconds)
+
+        interval_t1 = select_tier(tiers, t1)
+        interval_t2 = select_tier(tiers, t2)
+
+        # TOTAL: both results are defined integers.
+        assert interval_t1 is not None
+        assert interval_t2 is not None
+        assert isinstance(interval_t1, int)
+        assert isinstance(interval_t2, int)
+
+        # MONOTONIC: a smaller time-to-event never yields a longer interval.
+        assert interval_t1 <= interval_t2

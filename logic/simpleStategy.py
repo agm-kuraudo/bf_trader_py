@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 import yaml
 
@@ -7,6 +8,40 @@ from output.log import Output as Log
 
 class StrategyException(Exception):
     pass
+
+
+def select_tier(tiers: dict | None, time_until_start: timedelta) -> int:
+    """Select the polling interval (seconds) for a target given its time to event start.
+
+    Cadence tier selection for background odds capture (Req 2.2). Given a tier config
+    dict mapping tier names to intervals in seconds and a timedelta until event start,
+    return the correct polling interval.
+
+    The function is:
+      - TOTAL: it returns a defined interval for any ``time_until_start`` value,
+        including negative (in-play) values.
+      - MONOTONIC: given the default tier ordering (IN_PLAY <= LESS_THAN_3H <=
+        LESS_THAN_6H <= LESS_THAN_12H <= MORE_THAN_12H), a larger time-to-event never
+        yields a shorter interval, so two callers picking a tier for the same
+        time-to-event always get the same interval.
+
+    If ``tiers`` is None, the defaults from ``DefaultStrategy.UPDATE_FREQUENCY_TIERS``
+    are used. Missing individual keys fall back to the documented per-tier defaults.
+    """
+    if tiers is None:
+        tiers = DefaultStrategy.UPDATE_FREQUENCY_TIERS
+
+    seconds_until_start = time_until_start.total_seconds()
+    if seconds_until_start <= 0:
+        return tiers.get("IN_PLAY", 5)
+    elif seconds_until_start <= 3 * 3600:
+        return tiers.get("LESS_THAN_3H", 300)
+    elif seconds_until_start <= 6 * 3600:
+        return tiers.get("LESS_THAN_6H", 900)
+    elif seconds_until_start <= 12 * 3600:
+        return tiers.get("LESS_THAN_12H", 3600)
+    else:
+        return tiers.get("MORE_THAN_12H", 14400)
 
 
 class DefaultStrategy:
