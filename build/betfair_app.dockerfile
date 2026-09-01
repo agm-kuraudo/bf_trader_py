@@ -1,4 +1,4 @@
----FROM python:3.12
+FROM python:3.12
 
 # COPY paths are relative to the build context, which is the repo root (see
 # docker-compose.yml `context: .`). requirements.txt lives under build/, so it

@@ -144,6 +144,34 @@ The following pure functions carry the logic that the correctness properties tar
 - `missing_tables(present: set, required: set) -> set` — set difference for schema readiness.
 - `freshness(now, last_record_ts, threshold_s) -> {elapsed_s, stalled: bool}` — elapsed-time and stall decision.
 
+## Visibility and Failure Detection Decision (Req 4.5)
+
+**Decision (2026-09-01): Logs only -- Rundeck run history plus `bf.log_file`.** No
+new notification platform is introduced, in line with the epic's simplest-reliable-option stance.
+
+Rationale and mechanism:
+
+- **Durable run record (Req 4.1, 4.2):** each capture run writes start, end, and
+  outcome to `bf.log_file` in Postgres with a server `NOW()` timestamp --
+  `"Monitor Service: INFO: Starting run"`, `"... Ending run successfully"`, and,
+  on failure, `"... ERROR : Ending run with failure : <reason>"` written by the
+  top-level handler before the non-zero exit. This is the single durable,
+  queryable record and is retained for the life of the database (>= 30 days, Req 4.6).
+- **Operator-facing failure/missed-run visibility (Req 4.3, 4.4):** Rundeck's
+  per-run history captures each run's stdout and exit status. A non-zero exit
+  (Req 3.4) surfaces in the Rundeck run log without inspecting internal state.
+  A missed/never-started run is caught by the freshness check (Req 5): stale
+  data raises a stall alert even if a run never fired.
+- **Single documented location (Req 4.6):** the Rundeck job history (per-run
+  logs + status) is the primary operator location; `bf.log_file` is the durable
+  backing store. Both are documented in the Confluence runbook (Req 6).
+- **Not chosen:** a push-notification platform (email/webhook) -- deferred as
+  over-engineering for now; the freshness stall alert + Rundeck history cover
+  detection. Persisting the container file log to a host volume was also not
+  required, since `bf.log_file` already provides the durable record (the
+  in-container `log/runlogYYMMDD.log` is ephemeral under `--rm` and is treated as
+  best-effort debug output only).
+
 ## Data Models
 
 The database schema is **unchanged** by this feature. The data model below documents the four required capture tables (from `build/sql/create_database.sql`) that Req 1.4 requires to be confirmed present. These are the enumerated "required capture tables".

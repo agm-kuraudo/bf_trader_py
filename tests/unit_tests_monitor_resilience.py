@@ -1,4 +1,4 @@
-﻿"""Unit tests for Monitor Service resilience behaviours (SP-328 Tasks 7.4, 7.5).
+"""Unit tests for Monitor Service resilience behaviours (SP-328 Tasks 7.4, 7.5).
 
 Targets the CURRENT monitor_service.py (not the older, partially-stale tests in
 unit_tests_monitor_service.py). No live DB needed: the DB connection and the
@@ -28,7 +28,7 @@ from output.log import Output as Log
 Log.LOG_FILE = False
 
 
-# ─── Task 7.4: per-target persist-and-continue (E3) ─────────────────────────
+# --- Task 7.4: per-target persist-and-continue (E3) -------------------------
 
 
 class TestPersistAndContinue:
@@ -88,7 +88,7 @@ class TestPersistAndContinue:
         svc.update_runner_odds.assert_not_called()
 
 
-# ─── Task 7.5: single-instance lock (E4) ────────────────────────────────────
+# --- Task 7.5: single-instance lock (E4) ------------------------------------
 
 
 class TestSingleInstanceLock:
@@ -157,3 +157,64 @@ class TestSingleInstanceLock:
         assert start_logged is True
         # A balanced lock must not have triggered the retry sleep.
         assert mock_sleep.called is False
+
+# --- Task 11.1: failure outcome recorded to the durable run log (Req 4.1/4.2/3.4) -
+
+
+class TestRunFailureLogging:
+    """A failed run records its failure outcome+reason to bf.log_file, and the
+    exception still propagates. Records a failure 'Ending run' so a crash after
+    'Starting run' does not permanently unbalance the single-instance lock."""
+
+    @patch("monitor_service.time.sleep", return_value=None)
+    @patch("monitor_service.BFDriver")
+    def test_failure_writes_failure_record_and_reraises(self, mock_driver, mock_sleep):
+        svc = MonitorService()
+        db = MagicMock()
+        db.db_read.return_value = [(5, 5)]  # balanced lock -> proceed past it
+        # Make authentication blow up AFTER the connection is open and after
+        # "Starting run" is written, so we hit the top-level except with a live
+        # db_connection.
+        mock_driver.return_value.get_token.side_effect = Exception("boom")
+
+        with patch("monitor_service.DBOutputConnection", return_value=db):
+            with pytest.raises(MonitorServiceException):
+                svc.run()
+
+        # A failure 'Ending run' record was written to the durable run log.
+        failure_logged = any(
+            "ERROR : Ending run with failure" in str(call.args[0])
+            for call in db.db_write_log.call_args_list
+            if call.args
+        )
+        assert failure_logged is True
+
+        # And the balancing invariant holds: for this run, a start was logged and
+        # a matching failure-end was logged (so the lock is not left unbalanced).
+        start_logged = any(
+            "Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args
+        )
+        assert start_logged is True
+
+    @patch("monitor_service.time.sleep", return_value=None)
+    @patch("monitor_service.BFDriver")
+    def test_failure_logging_never_masks_original_error(self, mock_driver, mock_sleep):
+        """If writing the failure record ITSELF fails, the original exception
+        still propagates (failure-logging is best-effort)."""
+        svc = MonitorService()
+        db = MagicMock()
+        db.db_read.return_value = [(5, 5)]
+        mock_driver.return_value.get_token.side_effect = Exception("boom")
+
+        # First db_write_log ("Starting run") ok; the failure-record write raises.
+        def write_log_side_effect(msg):
+            if "Ending run with failure" in msg:
+                raise Exception("db down during error handling")
+
+        db.db_write_log.side_effect = write_log_side_effect
+
+        with patch("monitor_service.DBOutputConnection", return_value=db):
+            with pytest.raises(MonitorServiceException) as exc:
+                svc.run()
+        # Original failure reason preserved.
+        assert "boom" in str(exc.value)

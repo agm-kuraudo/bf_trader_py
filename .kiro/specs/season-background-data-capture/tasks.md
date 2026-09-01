@@ -171,7 +171,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - _Requirements: 5.1_
 
 - [ ] 11. Wire visibility and failure detection (Req 4)
-  - [ ] 11.1 Ensure capture writes run-log entries with start/end timestamps and outcome
+  - [x] 11.1 Ensure capture writes run-log entries with start/end timestamps and outcome
     - Record run start timestamp, completion timestamp, and outcome (success/failure) to the chosen log location (files/journal per the design decision) and `bf.log_file`
     - On failure, record the failure outcome and reason within 60 seconds
     - _Requirements: 4.1, 4.2, 3.4_
