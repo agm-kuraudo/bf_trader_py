@@ -87,7 +87,7 @@ validate_env_file() {
 
     local missing
     if ! missing="$(
-        REQUIRED_KEYS="${REQUIRED_KEYS[*]}" ENV_FILE="${ENV_FILE}" "${PYTHON}" - <<'PY'
+        REQUIRED_KEYS_STR="${REQUIRED_KEYS[*]}" ENV_FILE="${ENV_FILE}" "${PYTHON}" - <<'PY'
 import os
 import sys
 
@@ -95,7 +95,7 @@ from dotenv import dotenv_values
 
 from logic.deploy_checks import validate_env
 
-required = os.environ["REQUIRED_KEYS"].split()
+required = os.environ["REQUIRED_KEYS_STR"].split()
 values = dotenv_values(os.environ["ENV_FILE"])
 missing = validate_env(values, required)
 if missing:

@@ -57,15 +57,15 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
 - [x] 2. Checkpoint - Ensure all pure-logic tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 3. Restore Pi -> GitHub code sync (foundational for deploy)
-  - [ ] 3.1 **[OPERATIONAL]** Restore Pi -> GitHub SSH access and move the Pi onto `master`
+- [x] 3. Restore Pi -> GitHub code sync (foundational for deploy)
+  - [x] 3.1 **[OPERATIONAL]** Restore Pi -> GitHub SSH access and move the Pi onto `master`
     - Regenerate/repair the SSH deploy key on the Pi and register the public key with the `agm-kuraudo/bf_trader_py` GitHub repo
     - Verify `ssh -T git@github.com` authenticates from the Pi
     - Switch the Pi's local clone from `bf_trader_4` to `master` and `git pull` current code (Vault-free, dotenv loader present)
     - _Requirements: 7.1_
 
-- [ ] 4. Confirm the data store is running, reachable, and schema-ready (Req 1)
-  - [ ] 4.1 Implement `scripts/verify_db.py`
+- [x] 4. Confirm the data store is running, reachable, and schema-ready (Req 1)
+  - [x] 4.1 Implement `scripts/verify_db.py`
     - Read DB connection details from `.env` via `DotenvLoader`
     - Open a connection with a **10-second** timeout; treat as unreachable on timeout
     - Use `validate_env` to detect missing/empty required DB keys and surface which are missing
@@ -74,21 +74,21 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Return contract: `{ reachable, missing_config, missing_tables, created_tables, error }`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.7_
 
-  - [ ] 4.2 Write integration tests for `verify_db` (require `my_postgres`)
+  - [x] 4.2 Write integration tests for `verify_db` (require `my_postgres`)
     - Connect within the 10-second timeout; confirm the four required tables
     - Assert only absent tables are created; run twice to prove existing tables/data are untouched
     - Assert unreachable-store and missing-config paths surface the correct errors
     - _Requirements: 1.2, 1.4, 1.5, 1.7_
 
-- [ ] 5. Restore the repeatable build/deploy pipeline (Req 7)
-  - [ ] 5.1 Add `docker-compose.yml` at repo root
+- [x] 5. Restore the repeatable build/deploy pipeline (Req 7)
+  - [x] 5.1 Add `docker-compose.yml` at repo root
     - Single `bf_capture` service built from `build/betfair_app.dockerfile`
     - Attach to the external `my_trading_network`; read `.env`; fixed container name
     - Store network/env/name config in version control (no Vault service/host/network)
     - Support `docker compose up -d --build` and `docker compose run --rm bf_capture python monitor_service.py`
     - _Requirements: 7.2, 7.3, 8.4_
 
-  - [ ] 5.2 Implement `scripts/deploy.sh` deploy orchestration
+  - [x] 5.2 Implement `scripts/deploy.sh` deploy orchestration
     - Ordered steps: code sync -> validate `.env` (via `validate_env`) -> `docker compose up -d --build` -> post-deploy verification
     - On code-sync failure: abort, leave running container unchanged, distinct non-zero exit (E6)
     - On missing/empty `.env` value: abort BEFORE container recreation, name the missing value (E1)
@@ -96,13 +96,13 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Authored for Linux/ARM (the Pi is the sole capture host); note in-file that no `.ps1` sibling is provided because the work PC is not the capture host
     - _Requirements: 7.1, 7.2, 7.4, 7.5, 7.7, 7.8, 7.9_
 
-  - [ ] 5.3 Write property test for deploy atomicity
+  - [x] 5.3 Write property test for deploy atomicity
     - **Property 5: Deploy is atomic — a failed step leaves the running container unchanged**
     - Tag: `# Feature: season-background-data-capture, Property 5: ...`
     - Inject staged failures at each step against a recorded container id/state; assert unchanged identity/running state and a non-zero result identifying the failed step
     - **Validates: Requirements 7.7, 7.8, 7.9**
 
-  - [ ] 5.4 Write unit test for deploy abort ordering
+  - [x] 5.4 Write unit test for deploy abort ordering
     - Assert deploy aborts BEFORE recreation when `.env` validation fails
     - _Requirements: 7.8_
 
