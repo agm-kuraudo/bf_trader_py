@@ -170,13 +170,13 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Schedule `check_freshness.py` at a fixed interval no greater than 15 minutes
     - _Requirements: 5.1_
 
-- [ ] 11. Wire visibility and failure detection (Req 4)
+- [x] 11. Wire visibility and failure detection (Req 4)
   - [x] 11.1 Ensure capture writes run-log entries with start/end timestamps and outcome
     - Record run start timestamp, completion timestamp, and outcome (success/failure) to the chosen log location (files/journal per the design decision) and `bf.log_file`
     - On failure, record the failure outcome and reason within 60 seconds
     - _Requirements: 4.1, 4.2, 3.4_
 
-  - [ ] 11.2 **[OPERATIONAL]** Confirm operator-detectable failure/missed-run indication
+  - [x] 11.2 **[OPERATIONAL]** Confirm operator-detectable failure/missed-run indication
     - Verify failed or missed runs are detectable via Rundeck run logs / the chosen notification mechanism without inspecting internal state, retained for at least 30 days from a single documented location
     - _Requirements: 4.3, 4.4, 4.6_
 
@@ -188,7 +188,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Link the note from the SP-328 ticket before it is transitioned to Done
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 13. Final checkpoint - Ensure all tests pass and capture is verified stable
+- [x] 13. Final checkpoint - Ensure all tests pass and capture is verified stable
   - Ensure all tests pass, confirm freshness checks and run logs are visible, ask the user if questions arise.
 
 ## Notes
