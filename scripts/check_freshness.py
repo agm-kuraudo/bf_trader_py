@@ -45,7 +45,7 @@ CONNECT_TIMEOUT_S = 10
 # and run duration. DEFAULT_THRESHOLD_S is a fallback if target frequencies are
 # present but invalid. When there are NO active targets, no staleness alert is
 # raised (nothing should be landing).
-GRACE_S = 5 * 60          # 5 minutes of slack over the expected cadence
+GRACE_S = 5 * 60  # 5 minutes of slack over the expected cadence
 DEFAULT_THRESHOLD_S = 15 * 60
 # Target statuses that mean "capture should be actively polling this target".
 ACTIVE_TARGET_STATUSES = ("OPEN", "IDENTIFIED")
@@ -88,8 +88,9 @@ def _save_last_successful_check(when: datetime, state_path: str = STATE_FILE) ->
         Log.log_warning(f"Could not persist freshness state: {error}")
 
 
-def check_freshness(env_path: str = None, now: datetime = None,
-                    threshold_s: float = None, state_path: str = STATE_FILE) -> dict:
+def check_freshness(
+    env_path: str = None, now: datetime = None, threshold_s: float = None, state_path: str = STATE_FILE
+) -> dict:
     """Check whether captured odds are fresh; raise alerts on stall/unreachable.
 
     The stall threshold is CADENCE-AWARE (refines the literal 15-min figure in
@@ -169,8 +170,7 @@ def check_freshness(env_path: str = None, now: datetime = None,
         result["last_successful_check"] = last_ok
         result["error"] = f"Data store unreachable within {CONNECT_TIMEOUT_S}s: {error}"
         result["alert"] = (
-            f"UNREACHABLE ({DATA_SOURCE}): store not reachable; "
-            f"last successful check: {last_ok or 'never'}"
+            f"UNREACHABLE ({DATA_SOURCE}): store not reachable; " f"last successful check: {last_ok or 'never'}"
         )
         return result
 
@@ -229,8 +229,7 @@ def check_freshness(env_path: str = None, now: datetime = None,
     if last_record_ts is None:
         # Active targets exist but no odds have ever landed (Req 5.5).
         result["alert"] = (
-            f"STALL ({DATA_SOURCE}): no captured odds present despite "
-            f"{len(active_frequencies)} active target(s)."
+            f"STALL ({DATA_SOURCE}): no captured odds present despite " f"{len(active_frequencies)} active target(s)."
         )
     elif decision["stalled"]:
         # Elapsed exceeds the expected-cadence threshold (Req 5.3).

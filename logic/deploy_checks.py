@@ -137,12 +137,13 @@ def expected_freshness_threshold(
         ``None`` when there are no active targets (no staleness alert should be
         raised).
     """
-    valid = [f for f in update_frequencies if isinstance(f, (int, float)) and f > 0]
+    valid = [f for f in update_frequencies if isinstance(f, int | float) and f > 0]
     if not update_frequencies:
         return None
     if not valid:
         return default_s + grace_s
     return min(valid) + grace_s
+
 
 # Ordered deploy steps for the SP-328 build/deploy pipeline (scripts/deploy.sh).
 # The container is only ever replaced by the ``build_recreate`` step, so a

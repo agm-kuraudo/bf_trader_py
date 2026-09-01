@@ -1,4 +1,4 @@
-﻿"""Unit tests for scripts/verify_deploy.py decision logic (SP-328, Task 7.3 support).
+"""Unit tests for scripts/verify_deploy.py decision logic (SP-328, Task 7.3 support).
 
 These do NOT require a live DB: verify_deploy is exercised with a fake psycopg2
 connection and injected sleep/now, so the poll/decision behaviour is tested
@@ -62,9 +62,17 @@ class _FakeConn:
 
 
 def _patch(monkeypatch, conn):
-    monkeypatch.setattr(vd, "_read_db_config", lambda env_path=None: {
-        "DB_HOST": "h", "DB_PORT": "5432", "DB_NAME": "bf_trader", "DB_USER": "u", "DB_PWD": "p",
-    })
+    monkeypatch.setattr(
+        vd,
+        "_read_db_config",
+        lambda env_path=None: {
+            "DB_HOST": "h",
+            "DB_PORT": "5432",
+            "DB_NAME": "bf_trader",
+            "DB_USER": "u",
+            "DB_PWD": "p",
+        },
+    )
     monkeypatch.setattr(vd, "_connect", lambda config: conn)
 
 
@@ -73,8 +81,7 @@ def test_successful_cycle_with_odds(monkeypatch):
     conn = _FakeConn(run_counts=[10, 11], odds_counts=[100, 103])
     _patch(monkeypatch, conn)
     ticks = iter([0.0, 1.0, 2.0])
-    result = vd.verify_deploy(timeout_s=300, poll_interval_s=1,
-                              sleep=lambda s: None, now=lambda: next(ticks))
+    result = vd.verify_deploy(timeout_s=300, poll_interval_s=1, sleep=lambda s: None, now=lambda: next(ticks))
     assert result["verified"] is True
     assert result["odds_persisted"] is True
     assert result["new_successful_runs"] == 1
@@ -88,8 +95,7 @@ def test_successful_cycle_without_odds_is_still_pass(monkeypatch):
     conn = _FakeConn(run_counts=[10, 11], odds_counts=[100, 100])
     _patch(monkeypatch, conn)
     ticks = iter([0.0, 1.0, 2.0])
-    result = vd.verify_deploy(timeout_s=300, poll_interval_s=1,
-                              sleep=lambda s: None, now=lambda: next(ticks))
+    result = vd.verify_deploy(timeout_s=300, poll_interval_s=1, sleep=lambda s: None, now=lambda: next(ticks))
     assert result["verified"] is True
     assert result["odds_persisted"] is False
     assert result["new_successful_runs"] == 1
@@ -103,8 +109,7 @@ def test_no_successful_cycle_times_out(monkeypatch):
     _patch(monkeypatch, conn)
     # now() advances past the deadline after one poll.
     ticks = iter([0.0, 0.0, 301.0])
-    result = vd.verify_deploy(timeout_s=300, poll_interval_s=1,
-                              sleep=lambda s: None, now=lambda: next(ticks))
+    result = vd.verify_deploy(timeout_s=300, poll_interval_s=1, sleep=lambda s: None, now=lambda: next(ticks))
     assert result["verified"] is False
     assert result["new_successful_runs"] == 0
     assert result["error"] is not None
@@ -112,12 +117,22 @@ def test_no_successful_cycle_times_out(monkeypatch):
 
 
 def test_missing_db_config_errors_without_connecting(monkeypatch):
-    monkeypatch.setattr(vd, "_read_db_config", lambda env_path=None: {
-        "DB_HOST": "", "DB_PORT": "5432", "DB_NAME": "bf_trader", "DB_USER": "u", "DB_PWD": "p",
-    })
+    monkeypatch.setattr(
+        vd,
+        "_read_db_config",
+        lambda env_path=None: {
+            "DB_HOST": "",
+            "DB_PORT": "5432",
+            "DB_NAME": "bf_trader",
+            "DB_USER": "u",
+            "DB_PWD": "p",
+        },
+    )
+
     # _connect must NOT be called; make it explode if it is.
     def _boom(config):
         raise AssertionError("should not connect when config is missing")
+
     monkeypatch.setattr(vd, "_connect", _boom)
     result = vd.verify_deploy()
     assert result["verified"] is False

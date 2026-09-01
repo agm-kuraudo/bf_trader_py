@@ -80,9 +80,9 @@ class TestCheckFreshnessIntegration:
         if latest is None:
             pytest.skip("No odds records present; covered by the empty-store test")
         # now = latest + 1 minute, threshold 15 min -> fresh.
-        result = check_freshness(now=latest + timedelta(minutes=1),
-                                 threshold_s=15 * 60,
-                                 state_path=self._state_file(tmp_path))
+        result = check_freshness(
+            now=latest + timedelta(minutes=1), threshold_s=15 * 60, state_path=self._state_file(tmp_path)
+        )
         assert result["reachable"] is True
         assert result["stalled"] is False
         assert result["alert"] is None
@@ -93,9 +93,9 @@ class TestCheckFreshnessIntegration:
         latest = _max_ts()
         if latest is None:
             pytest.skip("No odds records present; covered by the empty-store test")
-        result = check_freshness(now=latest + timedelta(hours=1),
-                                 threshold_s=15 * 60,
-                                 state_path=self._state_file(tmp_path))
+        result = check_freshness(
+            now=latest + timedelta(hours=1), threshold_s=15 * 60, state_path=self._state_file(tmp_path)
+        )
         assert result["reachable"] is True
         assert result["stalled"] is True
         assert result["alert"] is not None
@@ -130,11 +130,13 @@ class TestCheckFreshnessIntegration:
         state = self._state_file(tmp_path)
         prior = datetime(2026, 9, 1, 12, 0, tzinfo=UTC)
         import json
+
         with open(state, "w", encoding="utf-8") as fh:
             json.dump({"last_successful_check": prior.isoformat()}, fh)
 
         # Build a temp .env whose DB_HOST is unroutable.
         from api.auth.dotenv_loader import DotenvLoader
+
         loader = DotenvLoader()
         env_lines = [
             "DB_HOST=10.255.255.1",  # unroutable -> connect timeout

@@ -76,13 +76,17 @@ def _successful_run_count(cursor) -> int:
 
 
 def _odds_row_count(cursor) -> int:
-    cursor.execute('SELECT COUNT(*) FROM bf.market_table')
+    cursor.execute("SELECT COUNT(*) FROM bf.market_table")
     return cursor.fetchone()[0]
 
 
-def verify_deploy(env_path: str = None, timeout_s: int = DEFAULT_TIMEOUT_S,
-                  poll_interval_s: int = POLL_INTERVAL_S, sleep=time.sleep,
-                  now=time.monotonic) -> dict:
+def verify_deploy(
+    env_path: str = None,
+    timeout_s: int = DEFAULT_TIMEOUT_S,
+    poll_interval_s: int = POLL_INTERVAL_S,
+    sleep=time.sleep,
+    now=time.monotonic,
+) -> dict:
     """Confirm a fresh Monitor cycle ran current code (and report odds persisted).
 
     Validates: Requirements 7.4, 7.6

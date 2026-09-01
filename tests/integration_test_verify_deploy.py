@@ -1,4 +1,4 @@
-﻿"""Integration test for post-deploy Monitor-cycle verification (SP-328, Task 7.3).
+"""Integration test for post-deploy Monitor-cycle verification (SP-328, Task 7.3).
 
 REQUIRES a running my_postgres reachable with the .env credentials (repo
 convention: DB-dependent tests SKIP cleanly rather than fail when no store is
@@ -103,8 +103,8 @@ class TestVerifyDeployIntegration:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    'SELECT COUNT(*) FROM bf.log_file '
-                    'WHERE message ILIKE %s AND "timestamp" > NOW() - INTERVAL \'1 day\'',
+                    "SELECT COUNT(*) FROM bf.log_file "
+                    "WHERE message ILIKE %s AND \"timestamp\" > NOW() - INTERVAL '1 day'",
                     ("%vault%",),
                 )
                 recent_vault_refs = cur.fetchone()[0]

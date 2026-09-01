@@ -344,9 +344,7 @@ class MonitorService:
             Log.log_error(f"Failed to update targets: {e}")
             try:
                 if self.db_connection is not None:
-                    self.db_connection.db_write_log(
-                        f"Monitor Service: ERROR : Ending run with failure : {e}"
-                    )
+                    self.db_connection.db_write_log(f"Monitor Service: ERROR : Ending run with failure : {e}")
             except Exception as log_error:
                 # Never let failure-logging mask the original exception.
                 Log.log_error(f"Also failed to record run failure to bf.log_file: {log_error}")

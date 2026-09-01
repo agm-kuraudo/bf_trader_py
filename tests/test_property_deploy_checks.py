@@ -201,7 +201,7 @@ class TestExpectedFreshnessThreshold:
     """expected_freshness_threshold derives the stall threshold from the tightest
     active cadence + grace, or None when there are no active targets."""
 
-    # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative
+    # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative  # noqa: E501
     @given(
         freqs=st.lists(st.integers(min_value=1, max_value=100000), min_size=1, max_size=10),
         grace=st.integers(min_value=0, max_value=3600),
@@ -214,11 +214,11 @@ class TestExpectedFreshnessThreshold:
         assert result == min(freqs) + grace
 
     def test_no_active_targets_returns_none(self):
-        # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative
+        # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative  # noqa: E501
         assert expected_freshness_threshold([], grace_s=300, default_s=900) is None
 
     def test_invalid_frequencies_fall_back_to_default(self):
-        # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative
+        # Feature: season-background-data-capture, Property 1: Freshness stall decision is exact and elapsed time is non-negative  # noqa: E501
         # Non-positive / None values are ignored; if none are valid, use default+grace.
         assert expected_freshness_threshold([0, -5, None], grace_s=300, default_s=900) == 1200
 

@@ -61,9 +61,17 @@ class _FakeConn:
 
 
 def _patch_ok_config(monkeypatch):
-    monkeypatch.setattr(cf, "_read_db_config", lambda env_path=None: {
-        "DB_HOST": "h", "DB_PORT": "5432", "DB_NAME": "bf_trader", "DB_USER": "u", "DB_PWD": "p",
-    })
+    monkeypatch.setattr(
+        cf,
+        "_read_db_config",
+        lambda env_path=None: {
+            "DB_HOST": "h",
+            "DB_PORT": "5432",
+            "DB_NAME": "bf_trader",
+            "DB_USER": "u",
+            "DB_PWD": "p",
+        },
+    )
 
 
 def _patch_conn(monkeypatch, max_ts, frequencies):
@@ -129,8 +137,7 @@ def test_empty_store_with_active_targets_raises_stall(monkeypatch, tmp_path):
     """MAX(timestamp) NULL but active targets exist -> stall (Req 5.5)."""
     _patch_ok_config(monkeypatch)
     _patch_conn(monkeypatch, None, frequencies=[300])
-    result = cf.check_freshness(now=datetime(2026, 9, 1, tzinfo=UTC),
-                                state_path=str(tmp_path / "s.json"))
+    result = cf.check_freshness(now=datetime(2026, 9, 1, tzinfo=UTC), state_path=str(tmp_path / "s.json"))
     assert result["reachable"] is True
     assert result["last_record_ts"] is None
     assert result["stalled"] is True
@@ -143,18 +150,29 @@ def test_explicit_threshold_still_honoured(monkeypatch, tmp_path):
     latest = datetime(2026, 9, 1, 12, 0, tzinfo=UTC)
     _patch_conn(monkeypatch, latest, frequencies=[14400])
     # Explicit tight threshold -> a 60-min gap IS a stall despite the 4h cadence.
-    result = cf.check_freshness(now=datetime(2026, 9, 1, 13, 0, tzinfo=UTC),
-                                threshold_s=15 * 60, state_path=str(tmp_path / "s.json"))
+    result = cf.check_freshness(
+        now=datetime(2026, 9, 1, 13, 0, tzinfo=UTC), threshold_s=15 * 60, state_path=str(tmp_path / "s.json")
+    )
     assert result["threshold_s"] == 15 * 60
     assert result["stalled"] is True
 
 
 def test_missing_config_raises_alert_without_connecting(monkeypatch, tmp_path):
-    monkeypatch.setattr(cf, "_read_db_config", lambda env_path=None: {
-        "DB_HOST": "", "DB_PORT": "5432", "DB_NAME": "bf_trader", "DB_USER": "u", "DB_PWD": "p",
-    })
+    monkeypatch.setattr(
+        cf,
+        "_read_db_config",
+        lambda env_path=None: {
+            "DB_HOST": "",
+            "DB_PORT": "5432",
+            "DB_NAME": "bf_trader",
+            "DB_USER": "u",
+            "DB_PWD": "p",
+        },
+    )
+
     def _boom(**kw):
         raise AssertionError("should not connect when config is missing")
+
     monkeypatch.setattr(cf.psycopg2, "connect", _boom)
     result = cf.check_freshness(state_path=str(tmp_path / "s.json"))
     assert result["reachable"] is False

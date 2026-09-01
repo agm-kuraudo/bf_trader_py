@@ -124,11 +124,7 @@ class TestSingleInstanceLock:
         assert mock_sleep.called
         # "Starting run" must NOT have been written (we never acquired the lock),
         # i.e. no start log among the db_write_log calls.
-        start_logged = any(
-            "Starting run" in str(call.args[0])
-            for call in db.db_write_log.call_args_list
-            if call.args
-        )
+        start_logged = any("Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args)
         assert start_logged is False
 
     @patch("monitor_service.time.sleep", return_value=None)
@@ -149,14 +145,11 @@ class TestSingleInstanceLock:
             with pytest.raises(MonitorServiceException):
                 svc.run()
 
-        start_logged = any(
-            "Starting run" in str(call.args[0])
-            for call in db.db_write_log.call_args_list
-            if call.args
-        )
+        start_logged = any("Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args)
         assert start_logged is True
         # A balanced lock must not have triggered the retry sleep.
         assert mock_sleep.called is False
+
 
 # --- Task 11.1: failure outcome recorded to the durable run log (Req 4.1/4.2/3.4) -
 
@@ -191,9 +184,7 @@ class TestRunFailureLogging:
 
         # And the balancing invariant holds: for this run, a start was logged and
         # a matching failure-end was logged (so the lock is not left unbalanced).
-        start_logged = any(
-            "Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args
-        )
+        start_logged = any("Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args)
         assert start_logged is True
 
     @patch("monitor_service.time.sleep", return_value=None)

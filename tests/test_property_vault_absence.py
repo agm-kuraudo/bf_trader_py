@@ -53,18 +53,18 @@ IN_SCOPE_ARTIFACTS = [
 # the agreed Req 8.4 interpretation). Applied case-insensitively, and only to
 # ACTIVE (non-comment) lines - see _active_lines.
 VAULT_WIRING_PATTERNS = [
-    r"^\s*my_vault\s*:",                       # compose service/network key
-    r"^\s*my_keyvault\s*:",                    # compose service/network key
+    r"^\s*my_vault\s*:",  # compose service/network key
+    r"^\s*my_keyvault\s*:",  # compose service/network key
     r"image\s*:\s*[\"']?[\w./-]*vault[\w./-]*",  # vault docker image
-    r"VAULT_ADDR\s*=",                          # vault endpoint env
-    r"VAULT_TOKEN\s*=",                         # vault token env
-    r"VAULT_HOST\s*=",                          # vault host env
-    r"\w*_HOST\s*=\s*[\"']?my_?keyvault",       # any *_HOST pointing at vault
-    r"\w*_HOST\s*=\s*[\"']?my_vault",           # any *_HOST pointing at vault
-    r"^\s*import\s+vault\b",                    # importing the retired client
-    r"^\s*from\s+vault\b",                      # importing the retired client
-    r"=\s*VaultReader\s*\(",                    # instantiating the retired client
-    r"=\s*Vault\s*\(",                          # instantiating the retired client
+    r"VAULT_ADDR\s*=",  # vault endpoint env
+    r"VAULT_TOKEN\s*=",  # vault token env
+    r"VAULT_HOST\s*=",  # vault host env
+    r"\w*_HOST\s*=\s*[\"']?my_?keyvault",  # any *_HOST pointing at vault
+    r"\w*_HOST\s*=\s*[\"']?my_vault",  # any *_HOST pointing at vault
+    r"^\s*import\s+vault\b",  # importing the retired client
+    r"^\s*from\s+vault\b",  # importing the retired client
+    r"=\s*VaultReader\s*\(",  # instantiating the retired client
+    r"=\s*Vault\s*\(",  # instantiating the retired client
 ]
 
 
@@ -134,11 +134,6 @@ class TestProperty6VaultWiringAbsent:
         path = os.path.join(REPO_ROOT, "docker-compose.yml")
         if not os.path.isfile(path):
             pytest.skip("docker-compose.yml not present")
-        active_lines = [
-            line for line in _read(path).splitlines()
-            if not line.lstrip().startswith("#")
-        ]
+        active_lines = [line for line in _read(path).splitlines() if not line.lstrip().startswith("#")]
         active = "\n".join(active_lines).lower()
-        assert "vault" not in active, (
-            "docker-compose.yml has a Vault reference on an active (non-comment) line."
-        )
+        assert "vault" not in active, "docker-compose.yml has a Vault reference on an active (non-comment) line."
