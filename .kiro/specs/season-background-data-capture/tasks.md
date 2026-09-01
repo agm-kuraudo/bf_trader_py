@@ -155,13 +155,13 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - **Validates: Requirements 8.4**
 
 - [ ] 10. Add recurring data-freshness verification (Req 5)
-  - [ ] 10.1 Implement `scripts/check_freshness.py`
+  - [x] 10.1 Implement `scripts/check_freshness.py`
     - Query `MAX("timestamp")` from `bf.market_table` via `DBOutputConnection`
     - Report the most recent record timestamp and elapsed seconds using the `freshness` pure function
     - Raise a stall alert when elapsed exceeds the 15-minute threshold, when the store is unreachable (retain last successful check timestamp), or when no records exist; identify the affected data source
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-  - [ ] 10.2 Write integration tests for `check_freshness` (require `my_postgres`)
+  - [x] 10.2 Write integration tests for `check_freshness` (require `my_postgres`)
     - Against a store with recent records, without recent records, with no records, and an unreachable store
     - Assert correct reporting and alert raising for each case
     - _Requirements: 5.2, 5.3, 5.4, 5.5_
