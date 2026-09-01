@@ -1,0 +1,108 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create `validate_env` and `missing_tables` pure functions": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272565926
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272977895
+      }
+    ],
+    "1.2 Formalise `select_tier` in the logic layer": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272567066
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272978861
+      }
+    ],
+    "1.3 Create `freshness` pure function": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272567869
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272979862
+      }
+    ],
+    "1.4 Write property test for `freshness`": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272986361
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273158420
+      }
+    ],
+    "1.5 Write property test for `validate_env`": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272988633
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273159366
+      }
+    ],
+    "1.6 Write property test for `missing_tables`": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272988874
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273160332
+      }
+    ],
+    "1.7 Write property test for `select_tier`": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788272989490
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273161140
+      }
+    ],
+    "1. Extract and formalise pure logic functions for testability": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273161283
+      }
+    ],
+    "2. Checkpoint - Ensure all pure-logic tests pass": [
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273166347
+      },
+      {
+        "executionId": "19677b7e-49e2-4408-84ae-8d2de4c981c6",
+        "chatSessionId": "sess_36f2e2a5-3374-4381-8c5e-9a2635a16a5e",
+        "timestamp": 1788273204965
+      }
+    ]
+  }
+}

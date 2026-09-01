@@ -335,7 +335,19 @@ class MonitorService:
             Log.log_info("Monitor Service: INFO: Ending run successfully", force_console_log=True)
 
         except Exception as e:
+            # Record the failure OUTCOME and REASON to the durable run log
+            # (bf.log_file) so a failed run is visible with a timestamp without
+            # inspecting internal state (Req 4.1, 4.2, 3.4). This also writes an
+            # "Ending run" marker for a run that already logged "Starting run",
+            # so a crash does not leave the single-instance lock permanently
+            # unbalanced (mitigates the SP-330 poisoned-lock failure mode).
             Log.log_error(f"Failed to update targets: {e}")
+            try:
+                if self.db_connection is not None:
+                    self.db_connection.db_write_log(f"Monitor Service: ERROR : Ending run with failure : {e}")
+            except Exception as log_error:
+                # Never let failure-logging mask the original exception.
+                Log.log_error(f"Also failed to record run failure to bf.log_file: {log_error}")
             raise MonitorServiceException(f"Failed to update targets: {e}") from e
 
 
