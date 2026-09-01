@@ -154,7 +154,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Scan the in-scope artifact set (`design.md`, `docker-compose.yml`, `.env` template, deploy/verify scripts, Rundeck job definitions) for `my_vault` / `my_keyvault` / Vault wiring; assert none present
     - **Validates: Requirements 8.4**
 
-- [ ] 10. Add recurring data-freshness verification (Req 5)
+- [x] 10. Add recurring data-freshness verification (Req 5)
   - [x] 10.1 Implement `scripts/check_freshness.py`
     - Query `MAX("timestamp")` from `bf.market_table` via `DBOutputConnection`
     - Report the most recent record timestamp and elapsed seconds using the `freshness` pure function
@@ -166,7 +166,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Assert correct reporting and alert raising for each case
     - _Requirements: 5.2, 5.3, 5.4, 5.5_
 
-  - [ ] 10.3 **[OPERATIONAL]** Add a Rundeck freshness-check job
+  - [x] 10.3 **[OPERATIONAL]** Add a Rundeck freshness-check job
     - Schedule `check_freshness.py` at a fixed interval no greater than 15 minutes
     - _Requirements: 5.1_
 
@@ -180,8 +180,8 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Verify failed or missed runs are detectable via Rundeck run logs / the chosen notification mechanism without inspecting internal state, retained for at least 30 days from a single documented location
     - _Requirements: 4.3, 4.4, 4.6_
 
-- [ ] 12. Documentation (Req 6)
-  - [ ] 12.1 **[OPERATIONAL]** Write and link the Confluence check/restart note
+- [x] 12. Documentation (Req 6)
+  - [x] 12.1 **[OPERATIONAL]** Write and link the Confluence check/restart note
     - In the Side Projects space, document a status-check procedure distinguishing "running" from "not running"
     - Document an ordered restart procedure followed by a post-restart verification that re-runs the status check and confirms "running"
     - Direct the operator to the restart procedure when the status check returns "not running"
