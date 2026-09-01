@@ -137,7 +137,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
 - [x] 8. Checkpoint - Confirm capture is running current code and persisting odds
   - Ensure all tests pass and the post-deploy verification succeeds, ask the user if questions arise.
 
-- [ ] 9. Retire Vault — ONLY after a Vault-free run is confirmed (Req 8)
+- [x] 9. Retire Vault — ONLY after a Vault-free run is confirmed (Req 8)
   - [x] 9.1 **[OPERATIONAL]** Remove the `my_keyvault` container
     - Precondition: task 7/8 confirmed current code running with no Vault dependency (E9 guard)
     - Stop and remove `my_keyvault` so no container of that name remains on the host
@@ -148,7 +148,7 @@ The plan reuses existing components (`target_service`, `monitor_service`, `Doten
     - Remove the job so it no longer appears in the schedule and no longer invokes `start_up_vault.sh`
     - _Requirements: 8.3_
 
-  - [ ] 9.3 Write property test for Vault-absence across artifacts
+  - [x] 9.3 Write property test for Vault-absence across artifacts
     - **Property 6: No design or configuration artifact references Vault**
     - Tag: `# Feature: season-background-data-capture, Property 6: ...`
     - Scan the in-scope artifact set (`design.md`, `docker-compose.yml`, `.env` template, deploy/verify scripts, Rundeck job definitions) for `my_vault` / `my_keyvault` / Vault wiring; assert none present

@@ -2,7 +2,7 @@
 #
 # SP-328 season-background-data-capture: repeatable rebuild-not-repair deploy.
 #
-# Authored for Linux/ARM — the Raspberry Pi 500 is the sole capture host
+# Authored for Linux/ARM --- the Raspberry Pi 500 is the sole capture host
 # (Req 2.4). There is deliberately NO .ps1 sibling: the Windows work PC powers
 # off daily and is explicitly not the capture host, so a PowerShell deploy
 # script would have no host to run against (documented design decision).
@@ -103,7 +103,7 @@ err() {
 sync_code() {
     log "Step 1/4: syncing current code (git pull) in ${REPO_DIR}"
     if ! git -C "${REPO_DIR}" pull --ff-only; then
-        err "code sync failed — leaving the running container unchanged (Req 7.7)."
+        err "code sync failed --- leaving the running container unchanged (Req 7.7)."
         exit "${EXIT_SYNC_FAILED}"
     fi
     log "code sync OK."
@@ -117,7 +117,7 @@ validate_env_file() {
     log "Step 2/4: validating required .env keys"
 
     if [ ! -f "${ENV_FILE}" ]; then
-        err ".env not found at ${ENV_FILE} — aborting before container recreation (Req 7.8)."
+        err ".env not found at ${ENV_FILE} --- aborting before container recreation (Req 7.8)."
         exit "${EXIT_ENV_INVALID}"
     fi
 
@@ -155,7 +155,7 @@ PY
 build_and_recreate() {
     log "Step 3/4: building image and recreating container (docker compose up -d --build)"
     if ! docker compose --project-directory "${REPO_DIR}" up -d --build; then
-        err "image build or container recreation failed — last known-good container retained (Req 7.9)."
+        err "image build or container recreation failed --- last known-good container retained (Req 7.9)."
         exit "${EXIT_BUILD_FAILED}"
     fi
     log "build + recreate OK."
@@ -171,7 +171,7 @@ build_and_recreate() {
 verify_post_deploy() {
     log "Step 4/4: post-deploy verification (up to 300s for a Monitor cycle to complete)"
     if ! VERIFY_TIMEOUT_S=300 "${PYTHON}" "${REPO_DIR}/scripts/verify_deploy.py"; then
-        err "post-deploy verification failed � current code did not complete a Monitor cycle (Req 7.6)."
+        err "post-deploy verification failed - current code did not complete a Monitor cycle (Req 7.6)."
         exit "${EXIT_VERIFY_FAILED}"
     fi
     log "post-deploy verification OK."

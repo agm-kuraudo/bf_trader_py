@@ -1,4 +1,4 @@
-﻿"""Post-deploy verification for the Betfair capture deploy (SP-328, Req 7.4/7.6).
+---"""Post-deploy verification for the Betfair capture deploy (SP-328, Req 7.4/7.6).
 
 Confirms that, after ``docker compose up -d --build`` has recreated the capture
 container from current code, a Monitor Service cycle actually runs that current
