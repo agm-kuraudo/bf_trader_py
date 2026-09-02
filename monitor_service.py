@@ -260,23 +260,6 @@ class MonitorService:
             self.db_connection = DBOutputConnection()
             self.db_connection.open_connection(db_details_string)
 
-            # Logic to make sure only 1 instance can run at a time
-            for i in range(5):
-                start_count, finish_count = self.db_connection.db_read(
-                    "SELECT SUM(CASE WHEN message = 'Monitor Service: INFO: Starting run' THEN 1 ELSE 0 END) AS starting_run_count,  SUM(CASE WHEN message = 'Monitor Service: INFO: Ending run successfully' THEN 1 ELSE 0 END) AS ending_run_count FROM bf.log_file;"  # noqa: E501
-                )[0]
-
-                if start_count != finish_count:
-                    Log.log_warning(
-                        "Monitor Service: Appears to be already running. Will retry every 60 seconds for 5 minutes"
-                    )
-                    time.sleep(60)
-                else:
-                    break
-
-                if i == 4:
-                    raise MonitorServiceException("Monitor Service: Failed to acquire lock")
-
             self.db_connection.db_write_log("Monitor Service: INFO: Starting run")
 
             # Clean up stale targets whose start_time has passed by more than the configured threshold

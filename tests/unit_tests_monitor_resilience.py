@@ -88,66 +88,59 @@ class TestPersistAndContinue:
         svc.update_runner_odds.assert_not_called()
 
 
-# --- Task 7.5: single-instance lock (E4) ------------------------------------
+# --- SP-330 Task 3.2: no single-instance lock (E4 retired) ------------------
 
 
-class TestSingleInstanceLock:
-    """The lock treats unequal start/finish counts as 'a run is in progress'.
+class TestNoSingleInstanceLock:
+    """SP-330 Task 3.2 - fix-property test (runs against FIXED code).
 
-    We drive run() with a mocked DB whose log-count query reports unequal
-    start/finish, and patch sleep so the retry loop is instant. The second
-    invocation must be skipped (never reach capture) and raise Failed to
-    acquire lock after exhausting retries.
+    Property 1: Expected Behavior - orphaned lock residue no longer blocks a run.
+
+    This is the inversion of the Task 1 exploration test
+    (TestBugConditionLockPoisoning): the same bug-condition input
+    (isBugCondition(X) = (NOT another_instance_alive) AND has_orphaned_lock_residue,
+    scoped to the Pi counterexample db_read -> [(231, 230)]) that USED to be
+    blocked must now proceed past where the count-based lock used to sit.
+
+    After the fix the lock query is gone, so run() flows directly from
+    open_connection(...) to the 'Starting run' marker. We make BFDriver.get_token()
+    return False so authenticate_and_get_token() raises AFTER 'Starting run' is
+    written but BEFORE the capture loop / get_targets() - reaching the marker
+    without running the full capture cycle, and making the residue value
+    irrelevant to reaching the marker.
+
+    Validates: Requirements 2.1, 2.2, 2.3
     """
-
-    def _service_with_locked_db(self):
-        svc = MonitorService()
-        db = MagicMock()
-        # get_local_db_details + open_connection are called before the lock check.
-        # The lock query returns [(start_count, finish_count)] with start != finish.
-        db.db_read.return_value = [(231, 230)]
-        svc.db_connection = db
-        return svc, db
 
     @patch("monitor_service.time.sleep", return_value=None)
     @patch("monitor_service.BFDriver")
-    def test_second_invocation_is_skipped_and_recorded(self, mock_driver, mock_sleep):
-        svc, db = self._service_with_locked_db()
-        # Ensure the DB connection created inside run() is our mock.
+    def test_orphaned_residue_no_longer_blocks_run(self, mock_driver, mock_sleep):
+        svc = MonitorService()
+        db = MagicMock()
+        # Same orphaned residue as the Pi counterexample: 231 starts vs 230 ends,
+        # no live instance. After the fix the lock query is gone, so this value
+        # is never read for gating; it is retained to mirror the bug condition.
+        db.db_read.return_value = [(231, 230)]
+        svc.db_connection = db
+
+        # get_token() returns False -> authenticate_and_get_token() raises AFTER
+        # 'Starting run' is written but BEFORE the capture loop.
+        mock_driver.return_value.get_token.return_value = False
+
         with patch("monitor_service.DBOutputConnection", return_value=db):
             with pytest.raises(MonitorServiceException) as exc:
                 svc.run()
 
-        # It gave up with the lock error rather than proceeding to capture.
-        assert "Failed to acquire lock" in str(exc.value)
-        # It retried (slept) rather than running immediately -> concurrency avoided.
-        assert mock_sleep.called
-        # "Starting run" must NOT have been written (we never acquired the lock),
-        # i.e. no start log among the db_write_log calls.
-        start_logged = any("Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args)
-        assert start_logged is False
+        logged_messages = [str(call.args[0]) for call in db.db_write_log.call_args_list if call.args]
 
-    @patch("monitor_service.time.sleep", return_value=None)
-    @patch("monitor_service.BFDriver")
-    def test_balanced_lock_allows_the_run_to_proceed_past_the_lock(self, mock_driver, mock_sleep):
-        """When start == finish, the lock is free: run() proceeds past the lock
-        (it will then do other work which we don't assert here)."""
-        svc = MonitorService()
-        db = MagicMock()
-        db.db_read.return_value = [(231, 231)]  # balanced -> lock free
-        # Make authenticate step fail fast so we don't exercise the whole cycle;
-        # we only care that it got PAST the lock (i.e. wrote "Starting run").
-        svc.db_connection = db
-        with patch("monitor_service.DBOutputConnection", return_value=db):
-            # get_token returns False -> authenticate raises, but only AFTER the
-            # lock is acquired and "Starting run" is logged.
-            mock_driver.return_value.get_token.return_value = False
-            with pytest.raises(MonitorServiceException):
-                svc.run()
-
-        start_logged = any("Starting run" in str(call.args[0]) for call in db.db_write_log.call_args_list if call.args)
-        assert start_logged is True
-        # A balanced lock must not have triggered the retry sleep.
+        # 2.1: 'Starting run' WAS written - the run got past where the lock used
+        # to sit despite the orphaned residue.
+        assert any("Monitor Service: INFO: Starting run" in msg for msg in logged_messages)
+        # 2.2: the run did NOT abort on the poisoned lock - it failed later on
+        # auth, so the message must NOT contain 'Failed to acquire lock'.
+        assert "Failed to acquire lock" not in str(exc.value)
+        # 2.3: no lock retry sleep, and the capture loop (which also sleeps) is
+        # never reached because auth failed fast -> time.sleep was NOT called.
         assert mock_sleep.called is False
 
 
@@ -209,3 +202,72 @@ class TestRunFailureLogging:
                 svc.run()
         # Original failure reason preserved.
         assert "boom" in str(exc.value)
+
+
+# --- SP-330 Task 2: preservation baseline - audit markers on success --------
+
+
+class TestAuditMarkersOnSuccess:
+    """SP-330 Task 2 - preservation baseline (runs against UNFIXED code).
+
+    Property 2: Preservation - the audit log markers are unchanged.
+
+    A run that reaches success writes BOTH 'Monitor Service: INFO: Starting run'
+    at the start and 'Monitor Service: INFO: Ending run successfully' on
+    successful completion (Req 3.1). These markers are retained for
+    auditing/observability; the fix (Task 3) removes only the count-based gating
+    that read the start/end counts, not the log lines themselves.
+
+    After the Task 3.1 fix the count-based lock is gone, so run() no longer
+    issues the lock query. The only db_read in the success path is now
+    get_targets(); seeding it with an empty target list means there are no
+    targets to update and the capture cycle completes immediately, reaching
+    success cleanly. (Before the fix this test seeded a leading balanced
+    count (5, 5) to satisfy the old gating; that read no longer happens.)
+
+    Validates: Requirements 3.1, 3.2, 3.3
+    """
+
+    @patch("monitor_service.time.sleep", return_value=None)
+    @patch("monitor_service.BFDriver")
+    def test_success_writes_both_audit_markers(self, mock_driver, mock_sleep):
+        svc = MonitorService()
+        db = MagicMock()
+        # After the fix the only db_read is get_targets() -> empty list, so there
+        # are no targets to update and the capture cycle completes immediately.
+        db.db_read.return_value = []
+        svc.db_connection = db
+
+        # Authentication succeeds so the run proceeds into (an empty) capture.
+        mock_driver.return_value.get_token.return_value = True
+
+        with patch("monitor_service.DBOutputConnection", return_value=db):
+            # No exception: an empty capture cycle reaches success cleanly.
+            svc.run()
+
+        logged_messages = [str(call.args[0]) for call in db.db_write_log.call_args_list if call.args]
+
+        # Req 3.1: the start marker is written.
+        assert any("Monitor Service: INFO: Starting run" in msg for msg in logged_messages)
+        # Req 3.1: the success end marker is written.
+        assert any("Monitor Service: INFO: Ending run successfully" in msg for msg in logged_messages)
+        # A clean success wrote no failure marker.
+        assert not any("Ending run with failure" in msg for msg in logged_messages)
+
+
+# --- SP-330 Task 1: bug condition exploration test (retired after the fix) --
+#
+# The Task 1 exploration test (TestBugConditionLockPoisoning ->
+# test_orphaned_residue_blocks_run_on_unfixed_code) asserted the OLD, unfixed
+# behaviour: that orphaned residue db_read -> [(231, 230)] raised
+# 'Failed to acquire lock', slept on the retry loop, and did NOT write
+# 'Starting run'. That behaviour no longer exists after the Task 3.1 fix
+# (the count-based lock was removed from MonitorService.run()).
+#
+# Per the bug-condition methodology, that exploration assertion has been
+# INVERTED into the fix-property assertion, which now lives in
+# TestNoSingleInstanceLock.test_orphaned_residue_no_longer_blocks_run above:
+# the same [(231, 230)] input now proves the bug is fixed (run proceeds,
+# writes 'Starting run', never raises 'Failed to acquire lock', never sleeps).
+# The exploration class is therefore removed rather than left asserting the
+# removed behaviour.
