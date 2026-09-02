@@ -1,0 +1,120 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test (BEFORE the fix)": {
+      "status": "passed",
+      "failingExample": "Bug reproduced on unfixed code. Counterexample: db_read -> [(231, 230)] (231 'Starting run' rows vs 230 'Ending run successfully' rows), no live Monitor instance. run() enters the count-based retry loop, calls time.sleep (retry loop ran), never writes \"Monitor Service: INFO: Starting run\", and raises MonitorServiceException(\"Monitor Service: Failed to acquire lock\"). This confirms the poisoning failure mode (Requirements 1.1, 1.2, 1.3).",
+      "lastRunTimestamp": 1788340907596
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test (BEFORE the fix)": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340822582
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340832537
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340925547
+      }
+    ],
+    "2. Write / confirm preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340823321
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340929397
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341009066
+      }
+    ],
+    "3.1 Delete the count-lock block from `run()`": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340823437
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341012885
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341073309
+      }
+    ],
+    "3.2 Replace `TestSingleInstanceLock` with `TestNoSingleInstanceLock`": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340823546
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341077754
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341233402
+      }
+    ],
+    "3.3 Confirm preservation tests still pass unchanged": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340823693
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341238314
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341285887
+      }
+    ],
+    "4. Checkpoint - Run the full resilience suite and confirm green": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788340823769
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341289851
+      },
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341428588
+      }
+    ],
+    "3. Fix: remove the count-based single-instance lock from `MonitorService.run()`": [
+      {
+        "executionId": "ef003213-53fb-4ed7-839a-5b5855736d12",
+        "chatSessionId": "sess_140a2138-4711-4fcf-897c-45ec404b694b",
+        "timestamp": 1788341285996
+      }
+    ]
+  }
+}
