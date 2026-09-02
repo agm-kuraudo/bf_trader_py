@@ -40,8 +40,11 @@ class TestDBOutputConnection(unittest.TestCase):
 
         # Check if the insert query was executed
         mock_cursor.execute.assert_any_call("SELECT target_id FROM bf.target WHERE target_id = %s", ("test_target_id",))
+        # SP-302 added update_frequency and last_updated columns. The INSERT now
+        # writes 9 columns (last_updated uses NOW()), so 8 params are bound and
+        # update_frequency defaults to 14400 when not supplied.
         mock_cursor.execute.assert_any_call(
-            "INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, notes) VALUES (%s, %s, %s, %s, %s, %s, %s)",  # noqa: E501
+            "INSERT INTO bf.target (target_id, event_id, market_id, runner_ids, start_time, status, update_frequency, last_updated, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), %s)",  # noqa: E501
             (
                 "test_target_id",
                 "test_event_id",
@@ -49,6 +52,7 @@ class TestDBOutputConnection(unittest.TestCase):
                 "12|12",
                 "2025-02-13 00:00:00",
                 "unit_test",
+                14400,
                 "str(target.my_market.description)",
             ),
         )
