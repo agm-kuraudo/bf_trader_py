@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import inspect
 import unittest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from api.call import Call
@@ -29,17 +30,26 @@ class TestMonitorService(unittest.TestCase):
     def test_authenticate_and_get_token_success(self, mock_get_token):
         mock_get_token.return_value = True
         self.service.authenticate_and_get_token()
-        self.service.db_connection.db_write_log.assert_called_with("Token retrieved")
+        # Success path no longer writes a log line to the database; it only logs
+        # to the info log. Assert no failure log was written.
+        self.service.db_connection.db_write_log.assert_not_called()
 
     @patch("monitor_service.BFDriver.get_token")
     def test_authenticate_and_get_token_failure(self, mock_get_token):
         mock_get_token.return_value = False
         with self.assertRaises(MonitorServiceException):
             self.service.authenticate_and_get_token()
-        self.service.db_connection.db_write_log.assert_called_with("Failed to retrieve token")
+        self.service.db_connection.db_write_log.assert_called_with(
+            "Monitor Service: ERROR : Ending Run : Failed to retrieve token"
+        )
 
     def test_get_targets_success(self):
-        self.service.db_connection.db_read.return_value = [(1, 2, 3, "2025-03-10 12:00:00", "IDENTIFIED")]
+        # get_targets now selects 9 columns:
+        # target_id, event_id, market_id, runner_ids, start_time, status,
+        # update_frequency, last_updated, notes
+        self.service.db_connection.db_read.return_value = [
+            (1, 2, 3, "1-2|3-4", "2025-03-10 12:00:00", "IDENTIFIED", 14400, "2025-03-10 11:00:00", "notes")
+        ]
         targets = self.service.get_targets()
         self.assertEqual(len(targets), 1)
         self.service.db_connection.db_write_log.assert_not_called()
@@ -50,22 +60,28 @@ class TestMonitorService(unittest.TestCase):
             self.service.get_targets()
 
     @patch.object(Call, "call")
-    def test_update_odds_for_targets_success(self, mock_call):
-        self.service.db_connection.db_read.return_value = [(1, 2, 3, "2025-03-10 12:00:00", "IDENTIFIED")]
+    def test_process_targets_success(self, mock_call):
+        # update_odds_for_targets was renamed to process_targets. It reads the
+        # market id from column [2] and calls the Betfair API per market.
+        self.service.db_connection.db_read.return_value = [
+            (1, 2, 3, "1-2|3-4", "2025-03-10 12:00:00", "IDENTIFIED", 14400, "2025-03-10 11:00:00", "notes")
+        ]
         mock_call.return_value.json.return_value = {
             "result": [{"status": "OPEN", "runners": [{"selectionId": 1}, {"selectionId": 2}]}]
         }
-        targets = self.service.update_odds_for_targets(self.service.get_targets())
+        targets = self.service.process_targets(self.service.get_targets())
         self.assertEqual(len(targets), 1)
         self.assertEqual(targets[0][1], "OPEN")
         self.assertEqual(targets[0][2], 2)
 
     @patch.object(Call, "call")
-    def test_update_odds_for_targets_failure(self, mock_call):
-        self.service.db_connection.db_read.return_value = [(1, 2, 3, "2025-03-10 12:00:00", "IDENTIFIED")]
+    def test_process_targets_failure(self, mock_call):
+        self.service.db_connection.db_read.return_value = [
+            (1, 2, 3, "1-2|3-4", "2025-03-10 12:00:00", "IDENTIFIED", 14400, "2025-03-10 11:00:00", "notes")
+        ]
         mock_call.side_effect = Exception("API error")
         with self.assertRaises(MonitorServiceException):
-            self.service.update_odds_for_targets(self.service.get_targets())
+            self.service.process_targets(self.service.get_targets())
 
     def test_update_target_status_success(self):
         targets = [(3, "OPEN", 2, [1, 2])]
@@ -92,19 +108,24 @@ class TestMonitorService(unittest.TestCase):
 
     @patch.object(Call, "call")
     def test_update_runner_odds_success(self, mock_call):
-        self.service.db_connection.db_read.return_value = [(1, 2, 3, "1-2|3-4", "2025-03-10 12:00:00", "OPEN", "notes")]
+        # update_runner_odds now consumes "processed" targets (as produced by
+        # process_targets), not raw open-target rows. It iterates target[3] as a
+        # list of selection ids and uses target[6] as the event start datetime.
+        event_time = datetime.now(UTC) + timedelta(hours=1)
+        processed_target = (3, "OPEN", 2, [1, 2], 14400, "2025-03-10 11:00:00", event_time)
         mock_call.return_value.json.return_value = {
             "result": [{"status": "OPEN", "runners": [{"ex": {"availableToBack": [{"price": 1.5, "size": 100}]}}]}]
         }
-        self.service.update_runner_odds(self.service.get_open_targets())
+        self.service.update_runner_odds([processed_target])
         self.service.db_connection.db_write.assert_called()
 
     @patch.object(Call, "call")
     def test_update_runner_odds_failure(self, mock_call):
-        self.service.db_connection.db_read.return_value = [(1, 2, 3, "1-2|3-4", "2025-03-10 12:00:00", "OPEN", "notes")]
+        event_time = datetime.now(UTC) + timedelta(hours=1)
+        processed_target = (3, "OPEN", 2, [1, 2], 14400, "2025-03-10 11:00:00", event_time)
         mock_call.side_effect = Exception("API error")
         with self.assertRaises(MonitorServiceException):
-            self.service.update_runner_odds(self.service.get_open_targets())
+            self.service.update_runner_odds([processed_target])
 
 
 # ─── New tests for SP-302: Monitor Service error handling and timing ────────────
