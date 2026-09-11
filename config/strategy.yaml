@@ -23,3 +23,10 @@ UPDATE_FREQUENCY_TIERS:
 INITIAL_UPDATE_FREQUENCY: 14400
 STALE_TARGET_HOURS: 24
 MONITOR_MAX_WAIT_SECONDS: 900
+# 6-hour (21600s) wall-clock safety backstop for a single in-play run (SP-343).
+MONITOR_HARD_CAP_SECONDS: 21600
+# Pre-kickoff lead window (1200s = 20 min): an OPEN target within this many
+# seconds of kickoff is polled at the 5s IN_PLAY cadence. MUST exceed the
+# ~15-min Rundeck re-trigger interval plus margin so a run is always alive at 5s
+# before any kickoff (SP-343).
+MONITOR_LEAD_WINDOW_SECONDS: 1200
