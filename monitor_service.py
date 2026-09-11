@@ -6,7 +6,7 @@ import api.auth.auth_details as bf_auth
 from api.http_methods import Methods
 from api.urls import Urls
 from BFDriver import BFDriver
-from logic.simpleStategy import DefaultStrategy, FromFileStrategy
+from logic.simpleStategy import DefaultStrategy, FromFileStrategy, LoopState, decide_next_action
 from output.dboutput import DBOutputConnection
 from output.log import Output as Log
 
@@ -262,6 +262,15 @@ class MonitorService:
 
             self.db_connection.db_write_log("Monitor Service: INFO: Starting run")
 
+            # Single-instance guard (SP-343, Req 1.4/2.6). Acquire the session-scoped
+            # advisory lock BEFORE stale-target cleanup / authenticate so a second
+            # concurrent Rundeck-triggered `run --rm` container does nothing. The lock
+            # is session-scoped so it auto-releases on connection close / container death.
+            if not self.db_connection.try_acquire_run_lock():
+                Log.log_info("Monitor Service: INFO: Another run active, exiting as no-op", force_console_log=True)
+                self.db_connection.close()
+                return
+
             # Clean up stale targets whose start_time has passed by more than the configured threshold
             stale_hours = DefaultStrategy.STALE_TARGET_HOURS
             stale_cleanup_sql = f"UPDATE bf.target SET status = 'EXPIRED' WHERE status IN ('IDENTIFIED', 'OPEN') AND start_time < NOW() - INTERVAL '{stale_hours} hours';"  # noqa: E501
@@ -270,7 +279,16 @@ class MonitorService:
 
             self.authenticate_and_get_token()
 
-            for _i in range(15 * 60):
+            # SP-343 adaptive run-loop lifecycle. The old fixed range(15*60) budget and
+            # the two premature bail-outs (empty filtered_targets / nearest > MAX_WAIT)
+            # are replaced by a while loop bounded only by the 6-hour hard cap enforced
+            # inside decide_next_action. run_start uses a monotonic clock so the cap is
+            # immune to wall-clock adjustments.
+            run_start = time.monotonic()
+            lead_window = timedelta(seconds=DefaultStrategy.MONITOR_LEAD_WINDOW_SECONDS)
+            in_play_interval = DefaultStrategy.UPDATE_FREQUENCY_TIERS.get("IN_PLAY", 5)
+
+            while True:
                 if reload_from_db:
                     # Get all of our raw target data from the database
                     raw_targets = self.get_targets()
@@ -286,33 +304,68 @@ class MonitorService:
 
                 reload_from_db = False
 
-                # Start the timer
-                # start_time = time.time()
+                now = datetime.now(UTC)
 
-                # Filter only for targets that need to be updated
+                # Active-or-imminent = OPEN and within the lead window (in-play OR <= 20 min
+                # to kickoff). Processed-target tuple shape (see process_targets):
+                #   (market, status, num_runners, runners, update_frequency, last_updated, event_start_time)
+                # so status is at [1] and the event start time at [6].
+                active_or_imminent = [
+                    t for t in targets if t[1] == "OPEN" and t[6] is not None and t[6] <= now + lead_window
+                ]
+
+                # Targets already due per their (coarse) stored update_frequency.
                 filtered_targets, nearest_update_seconds = self.get_filtered_targets(targets)
 
+                # Due-ness reconciliation (BUG A'): get_filtered_targets marks a lead-window
+                # pre-match target due only every ~300s. While game-on we force the IN_PLAY
+                # cadence by ALSO treating any active-or-imminent target as due when >=
+                # in_play_interval seconds have elapsed since its last_updated ([5]). This
+                # drives the 5s cadence without changing select_tier or the stored
+                # update_frequency (Change 3a). last_updated may be None for a freshly-opened
+                # target that has not yet been persisted; treat that as due.
+                inplay_due = []
+                for t in active_or_imminent:
+                    last_updated = t[5]
+                    if last_updated is None:
+                        inplay_due.append(t)
+                    elif (now - last_updated).total_seconds() >= in_play_interval:
+                        inplay_due.append(t)
+
+                # Union by market_id ([0]) preserving the processed-target tuple shape that
+                # update_runner_odds expects.
+                poll_by_market = {t[0]: t for t in filtered_targets}
+                for t in inplay_due:
+                    poll_by_market.setdefault(t[0], t)
+                poll_targets = list(poll_by_market.values())
+
                 Log.log_info(
-                    f"##############    Filtered Targets Count : {len(filtered_targets)}. Nearest Update Time: {nearest_update_seconds}"  # noqa: E501
+                    f"##############    Poll Targets Count : {len(poll_targets)}. Active/imminent: {len(active_or_imminent)}. Nearest Update Time: {nearest_update_seconds}"  # noqa: E501
                 )
 
-                if len(filtered_targets) == 0:
-                    Log.log_info("##############    No targets to update")
+                state = LoopState(
+                    has_due_target=len(poll_targets) > 0,
+                    has_active_or_imminent=len(active_or_imminent) > 0,
+                    nearest_update_seconds=nearest_update_seconds,
+                    in_play_interval=in_play_interval,
+                )
+                action, sleep_seconds = decide_next_action(state, time.monotonic() - run_start)
+
+                if action == "exit":
+                    Log.log_info("##############    No game on / cap reached - ending run", force_console_log=True)
                     break
-                else:
+                elif action == "poll":
                     Log.log_info("##############    Updating Targets", force_console_log=True)
                     # Updating odds for targets
-                    self.update_runner_odds(filtered_targets)
+                    self.update_runner_odds(poll_targets)
                     reload_from_db = True
+                else:  # "sleep"
+                    time.sleep(sleep_seconds)
 
-                if nearest_update_seconds > DefaultStrategy.MONITOR_MAX_WAIT_SECONDS:
-                    Log.log_info("##############    Next update time not within 15 minutes", force_console_log=True)
-                    break
-
-                # # Wait for the remaining time (to 1 second)
-                # elapsed_time = time.time() - start_time
-                # remaining_time = max(0.0, 1.0 - elapsed_time)
-                time.sleep(max(0.1, nearest_update_seconds - 1))
+            # Normal exit: release the single-instance advisory lock before closing.
+            # On crash we do NOT release explicitly (the except block below runs and
+            # session-close auto-releases the session-scoped lock).
+            self.db_connection.release_run_lock()
 
             self.db_connection.db_write_log("Monitor Service: INFO: Ending run successfully")
             Log.log_info("Monitor Service: INFO: Ending run successfully", force_console_log=True)

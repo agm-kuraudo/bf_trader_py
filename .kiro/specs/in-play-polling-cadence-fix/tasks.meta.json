@@ -1,0 +1,165 @@
+{
+  "pbtResults": {
+    "1. Write bug-condition exploration property test": {
+      "status": "passed",
+      "failingExample": "Bug CONFIRMED. All 3 SP-343 bug-condition tests fail on unfixed code as expected.\n\nHypothesis falsifying example (test_in_play_or_lead_window_cadence_collapses_to_rundeck_interval):\n  start_time_offset_seconds=0, stored_update_frequency=300, match_duration_seconds=600\n  -> exit_reason='empty_filtered_targets_break', num_updates=0\n  AssertionError: Run exited prematurely (empty_filtered_targets_break) for an in-play/lead-window target instead of staying alive at ~5s.\n\nConcrete counterexamples:\n- test_in_play_nothing_due_example: in-play target (kicked off 10 min ago), just updated so nothing due this instant -> current loop hits empty_filtered_targets_break, num_updates=0 (expected many at ~5s).\n- test_pre_kickoff_lead_window_dropout_example: OPEN target ~8 min pre-kickoff, coarse stored update_frequency=300 -> nothing due for ~300s -> empty_filtered_targets_break before kickoff, num_updates=0 (opening minutes lost).\n\nConfirms root-cause hypothesis: the current run-loop's empty-filtered_targets break exits the run when nothing is due at the exact instant, collapsing in-play/lead-window cadence to the ~900s Rundeck re-trigger interval instead of ~5s.",
+      "lastRunTimestamp": 1789144429428
+    },
+    "6. Fix-Checking property test + confirm Task 1 now passes": {
+      "status": "passed",
+      "lastRunTimestamp": 1789145013040
+    }
+  },
+  "executionHistory": {
+    "1. Write bug-condition exploration property test": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144262767
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144271592
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144453627
+      }
+    ],
+    "2. Extract the pure loop-decision function `decide_next_action`": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144262943
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144458140
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144587451
+      }
+    ],
+    "3. Add config constants for the hard cap and lead window": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263025
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144459547
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144588463
+      }
+    ],
+    "4. Add Postgres session-scoped advisory-lock helpers": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263145
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144460310
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144589650
+      }
+    ],
+    "5. Rewrite `monitor_service.py::run()` to use the decision function and lock": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263217
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144594001
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144805255
+      }
+    ],
+    "6. Fix-Checking property test + confirm Task 1 now passes": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263279
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144813002
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789145079798
+      }
+    ],
+    "7. Preservation property test + logging preservation": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263350
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144812108
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789145080761
+      }
+    ],
+    "8. Single-instance advisory-lock integration test": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263448
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144811166
+      },
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789145081930
+      }
+    ],
+    "9. Deploy and verify on the Pi (Definition of Done)": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263513
+      }
+    ],
+    "10. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "3cf09824-f55b-45c1-92aa-096aaba89355",
+        "chatSessionId": "sess_3213ed03-5e8c-4690-97c3-e32dcdfb8214",
+        "timestamp": 1789144263617
+      }
+    ]
+  }
+}
