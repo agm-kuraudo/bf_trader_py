@@ -113,9 +113,8 @@ _bad_lay_ladder = st.builds(
     back=_valid_ladder,
     lay=st.one_of(_bad_ladder_list, st.integers(), st.text(max_size=5), st.none()),
 )
-_bad_ladder_dict = (
-    st.one_of(_bad_back_ladder, _bad_lay_ladder).map(_repr_or_none).filter(lambda r: r is not None)
-)
+_bad_ladder_dict = st.one_of(_bad_back_ladder, _bad_lay_ladder).map(_repr_or_none).filter(lambda r: r is not None)
+
 
 def _unparseable(s: str) -> bool:
     """True iff ast.literal_eval(s) fails (so s is a genuine garbage string)."""
@@ -210,9 +209,7 @@ class TestProperty2ParserRejectsMalformed:
 
 # A finite float: no NaN/inf, so repr(x) -> literal_eval(repr(x)) is exact.
 _finite_price_size = st.floats(allow_nan=False, allow_infinity=False)
-_price_size_entry = st.fixed_dictionaries(
-    {"price": _finite_price_size, "size": _finite_price_size}
-)
+_price_size_entry = st.fixed_dictionaries({"price": _finite_price_size, "size": _finite_price_size})
 _price_size_ladder = st.lists(_price_size_entry, max_size=5)
 
 
@@ -311,6 +308,7 @@ class TestProperty1ParserRoundTrip:
             parsed = parse_odds(stored)
             assert parsed is not None, f"expected valid parse for {stored!r}"
             assert serialize_odds(parsed) == stored, f"round-trip failed for {stored!r}"
+
 
 # --- Property 4: Coverage passes only within tolerance and gap limits --------
 #
@@ -425,9 +423,7 @@ class TestProperty4Coverage:
         thresholds=_p4_thresholds(),
     )
     @settings(max_examples=300)
-    def test_coverage_pass_iff_within_tolerance_and_gap_limits(
-        self, actual_count, expected_count, offsets, thresholds
-    ):
+    def test_coverage_pass_iff_within_tolerance_and_gap_limits(self, actual_count, expected_count, offsets, thresholds):
         """
         For any actual count, Expected_Sample_Count, in-window row-timestamp
         sequence and calibrated thresholds, coverage_result passes if and only
@@ -441,13 +437,9 @@ class TestProperty4Coverage:
         """
         row_timestamps = [_P4_START + timedelta(seconds=o) for o in offsets]
 
-        result = coverage_result(
-            actual_count, expected_count, row_timestamps, _P4_START, thresholds
-        )
+        result = coverage_result(actual_count, expected_count, row_timestamps, _P4_START, thresholds)
 
-        expected_passed, expected_gap = _p4_oracle(
-            actual_count, expected_count, row_timestamps, _P4_START, thresholds
-        )
+        expected_passed, expected_gap = _p4_oracle(actual_count, expected_count, row_timestamps, _P4_START, thresholds)
 
         # The pass/fail biconditional matches the three conditions.
         assert result["passed"] == expected_passed
@@ -605,21 +597,15 @@ def _p5_scenarios(draw):
 
     first_runner = runner_ids[0]
     for _ in range(n_priced_extra):
-        rows.append(
-            (first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_PRICED_ODDS)
-        )
+        rows.append((first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_PRICED_ODDS))
         ts_counter += 1
     for _ in range(n_empty_extra):
-        rows.append(
-            (first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_EMPTY_ODDS)
-        )
+        rows.append((first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_EMPTY_ODDS))
         ts_counter += 1
 
     # --- Toggle: inject an unparseable Odds_Value (parse sub-check fails). ---
     if inject_unparseable:
-        rows.append(
-            (first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_UNPARSEABLE_ODDS)
-        )
+        rows.append((first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_UNPARSEABLE_ODDS))
         ts_counter += 1
 
     # --- Toggle: force the both-empty proportion to exceed the threshold. ---
@@ -631,15 +617,11 @@ def _p5_scenarios(draw):
         # Add empties until strictly above threshold (bounded to avoid runaway).
         for _ in range(12):
             parseable = [o for (_, _, o) in rows if o != _P5_UNPARSEABLE_ODDS]
-            empties = sum(
-                1 for o in parseable if not has_any_price(parse_odds_safe(o))
-            )
+            empties = sum(1 for o in parseable if not has_any_price(parse_odds_safe(o)))
             prop = empties / len(parseable) if parseable else 0.0
             if prop > null_price_threshold:
                 break
-            rows.append(
-                (first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_EMPTY_ODDS)
-            )
+            rows.append((first_runner, _P5_BASE_TS + timedelta(seconds=ts_counter), _P5_EMPTY_ODDS))
             ts_counter += 1
 
     # --- Toggle: create an out-of-order timestamp for the first runner. ---
@@ -743,13 +725,7 @@ def _p5_oracle(kwargs):
             seen.add(key)
     dedup_passed = duplicates == 0
 
-    expected_passed = (
-        parse_passed
-        and null_price_passed
-        and runner_count_passed
-        and ordering_passed
-        and dedup_passed
-    )
+    expected_passed = parse_passed and null_price_passed and runner_count_passed and ordering_passed and dedup_passed
     return expected_passed, {
         "parse": parse_passed,
         "null_price": null_price_passed,
@@ -898,6 +874,7 @@ class TestProperty5Consistency:
         assert bad_declared["passed"] is False
         assert bad_declared["runner_count"]["passed"] is False
 
+
 # --- Property 6: Useful requires both resolution and lifecycle span ----------
 #
 # useful_result(row_count, earliest_ts, latest_ts, start_time, settlement_ts,
@@ -1020,9 +997,7 @@ class TestProperty6Useful:
         thresholds=_p6_thresholds(),
     )
     @settings(max_examples=300)
-    def test_useful_pass_iff_resolution_and_lifecycle_span(
-        self, row_count, timestamps, thresholds
-    ):
+    def test_useful_pass_iff_resolution_and_lifecycle_span(self, row_count, timestamps, thresholds):
         """
         For any row count and earliest/latest timestamps relative to start_time
         and settlement, useful_result passes if and only if the row count is at
@@ -1034,18 +1009,14 @@ class TestProperty6Useful:
         """
         earliest_ts, latest_ts = timestamps
 
-        result = useful_result(
-            row_count, earliest_ts, latest_ts, _P6_START, _P6_SETTLEMENT, thresholds
-        )
+        result = useful_result(row_count, earliest_ts, latest_ts, _P6_START, _P6_SETTLEMENT, thresholds)
 
         (
             expected_passed,
             resolution_ok,
             prematch_present,
             settlement_present,
-        ) = _p6_oracle(
-            row_count, earliest_ts, latest_ts, _P6_START, _P6_SETTLEMENT, thresholds
-        )
+        ) = _p6_oracle(row_count, earliest_ts, latest_ts, _P6_START, _P6_SETTLEMENT, thresholds)
 
         # The pass/fail biconditional matches the three design conditions.
         assert result["passed"] == expected_passed
@@ -1100,17 +1071,13 @@ class TestProperty6Useful:
         # 3) Missing pre-match window: earliest row is before the 3h window opens
         #    (Req 5.2/5.3).
         too_early = _P6_START - timedelta(hours=5)  # outside the 3h window
-        no_prematch = useful_result(
-            250, too_early, settled_row, _P6_START, _P6_SETTLEMENT, thresholds
-        )
+        no_prematch = useful_result(250, too_early, settled_row, _P6_START, _P6_SETTLEMENT, thresholds)
         assert no_prematch["passed"] is False
         assert "pre-match window" in no_prematch["reason"]
 
         # 4) Missing settlement: latest row is before settlement (Req 5.2/5.3).
         before_settle = _P6_SETTLEMENT - timedelta(minutes=10)
-        no_settle = useful_result(
-            250, prematch_row, before_settle, _P6_START, _P6_SETTLEMENT, thresholds
-        )
+        no_settle = useful_result(250, prematch_row, before_settle, _P6_START, _P6_SETTLEMENT, thresholds)
         assert no_settle["passed"] is False
         assert "settlement" in no_settle["reason"]
 
@@ -1119,6 +1086,7 @@ class TestProperty6Useful:
         assert no_rows["passed"] is False
         assert "pre-match window" in no_rows["reason"]
         assert "settlement" in no_rows["reason"]
+
 
 # --- Property 7: Aggregate outcome is pass only when all dimensions pass -----
 #
@@ -1228,9 +1196,7 @@ class TestProperty7Aggregation:
         useful=_p7_dimension(),
     )
     @settings(max_examples=300)
-    def test_aggregate_pass_iff_all_dimensions_pass(
-        self, present, coverage, consistency, useful
-    ):
+    def test_aggregate_pass_iff_all_dimensions_pass(self, present, coverage, consistency, useful):
         """
         For any four dimension outcomes drawn from {PASS, FAIL, NOT_EVALUATED},
         aggregate_match sets overall = PASS if and only if all four dimensions
@@ -1264,9 +1230,7 @@ class TestProperty7Aggregation:
 
         # Independent oracle for the overall roll-up: PASS iff every dimension
         # is PASS, else FAIL (Req 6.2, 6.3, 6.5).
-        expected_overall = (
-            _P7_PASS if all(k == _P7_PASS for k in kinds.values()) else _P7_FAIL
-        )
+        expected_overall = _P7_PASS if all(k == _P7_PASS for k in kinds.values()) else _P7_FAIL
         assert result.overall == expected_overall
 
         # Per-dimension mapping and reason/evidence carry-through (Req 6.1, 6.4,
@@ -1283,9 +1247,7 @@ class TestProperty7Aggregation:
             else:
                 # A FAIL / NOT_EVALUATED dimension carries a reason and its
                 # recorded evidence.
-                assert outcome.reason, (
-                    f"{name} ({kind}) must carry a reason"
-                )
+                assert outcome.reason, f"{name} ({kind}) must carry a reason"
                 assert outcome.evidence == expected_evidence
 
     # Feature: post-event-data-quality-verification, Property 7: Aggregate outcome is pass only when all dimensions pass  # noqa: E501
@@ -1302,9 +1264,7 @@ class TestProperty7Aggregation:
         }
 
         # 1) All four dimensions pass -> overall PASS, no reasons.
-        all_pass = aggregate_match(
-            _P7_TARGET_ID, _P7_MARKET_ID, passing, passing, passing, passing
-        )
+        all_pass = aggregate_match(_P7_TARGET_ID, _P7_MARKET_ID, passing, passing, passing, passing)
         assert all_pass.overall == "PASS"
         for name in ("present", "coverage", "consistency", "useful"):
             outcome = getattr(all_pass, name)
@@ -1314,9 +1274,7 @@ class TestProperty7Aggregation:
 
         # 2) One failing dimension -> overall FAIL; the failing dimension carries
         #    its reason + evidence, the others still PASS (Req 6.2, 6.4).
-        one_fail = aggregate_match(
-            _P7_TARGET_ID, _P7_MARKET_ID, failing, passing, passing, passing
-        )
+        one_fail = aggregate_match(_P7_TARGET_ID, _P7_MARKET_ID, failing, passing, passing, passing)
         assert one_fail.overall == "FAIL"
         assert one_fail.present.outcome == "FAIL"
         assert one_fail.present.reason
@@ -1325,9 +1283,7 @@ class TestProperty7Aggregation:
 
         # 3) A NOT_EVALUATED dimension (None) forces overall FAIL and is recorded
         #    as NOT_EVALUATED with a reason (Req 6.5).
-        one_not_eval = aggregate_match(
-            _P7_TARGET_ID, _P7_MARKET_ID, passing, None, passing, passing
-        )
+        one_not_eval = aggregate_match(_P7_TARGET_ID, _P7_MARKET_ID, passing, None, passing, passing)
         assert one_not_eval.overall == "FAIL"
         assert one_not_eval.coverage.outcome == "NOT_EVALUATED"
         assert one_not_eval.coverage.reason

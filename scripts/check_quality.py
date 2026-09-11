@@ -622,9 +622,7 @@ def check_quality(env_path: str = None, now=None, look_back_hours=None, threshol
                 last_error = error
                 Log.log_warning(f"Data store connection attempt failed: {error}")
         if conn is None:
-            result["error"] = (
-                f"Data store unreachable after {CONNECT_ATTEMPTS} attempts: {last_error}"
-            )
+            result["error"] = f"Data store unreachable after {CONNECT_ATTEMPTS} attempts: {last_error}"
             Log.log_error(result["error"])
             return result
 

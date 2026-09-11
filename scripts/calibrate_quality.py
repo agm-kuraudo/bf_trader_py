@@ -238,9 +238,7 @@ def calibrate_quality(
         psycopg2.DatabaseError / Exception: When the Data_Store is unreachable.
     """
     if fmt not in VALID_FORMATS:
-        raise ValueError(
-            f"Unsupported format '{fmt}'; expected one of {', '.join(VALID_FORMATS)}"
-        )
+        raise ValueError(f"Unsupported format '{fmt}'; expected one of {', '.join(VALID_FORMATS)}")
     if now is None:
         now = datetime.now(UTC)
     if thresholds is None:
@@ -257,9 +255,7 @@ def calibrate_quality(
     config = _read_db_config(env_path)
     missing = validate_env(config, REQUIRED_DB_KEYS)
     if missing:
-        raise ConfigurationException(
-            "Missing required DB connection details in .env: " + ", ".join(missing)
-        )
+        raise ConfigurationException("Missing required DB connection details in .env: " + ", ".join(missing))
 
     run_started = datetime.now(UTC)
     run_id = str(uuid.uuid4())

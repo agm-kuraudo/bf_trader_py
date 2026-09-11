@@ -84,7 +84,7 @@ def _table_present(cursor, table_name: str) -> bool:
 
 
 def _count_rows(cursor, table_name: str) -> int:
-    cursor.execute(f'SELECT COUNT(*) FROM {RESULTS_SCHEMA}.{table_name}')
+    cursor.execute(f"SELECT COUNT(*) FROM {RESULTS_SCHEMA}.{table_name}")
     return cursor.fetchone()[0]
 
 
@@ -237,11 +237,7 @@ class TestCheckQualityIntegration:
         try:
             with conn.cursor() as cur:
                 run_before = _count_rows(cur, RUN_TABLE) if _table_present(cur, RUN_TABLE) else 0
-                match_before = (
-                    _count_rows(cur, MATCH_RESULT_TABLE)
-                    if _table_present(cur, MATCH_RESULT_TABLE)
-                    else 0
-                )
+                match_before = _count_rows(cur, MATCH_RESULT_TABLE) if _table_present(cur, MATCH_RESULT_TABLE) else 0
         finally:
             conn.close()
 
@@ -275,11 +271,7 @@ class TestCheckQualityIntegration:
         try:
             with conn.cursor() as cur:
                 run_after = _count_rows(cur, RUN_TABLE) if _table_present(cur, RUN_TABLE) else 0
-                match_after = (
-                    _count_rows(cur, MATCH_RESULT_TABLE)
-                    if _table_present(cur, MATCH_RESULT_TABLE)
-                    else 0
-                )
+                match_after = _count_rows(cur, MATCH_RESULT_TABLE) if _table_present(cur, MATCH_RESULT_TABLE) else 0
         finally:
             conn.close()
 

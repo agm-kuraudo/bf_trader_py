@@ -462,9 +462,7 @@ def coverage_result(
     inplay_timestamps = [ts for ts in row_timestamps if ts >= start_time]
     inplay_empty = len(inplay_timestamps) == 0
     if inplay_empty and count_check_passes:
-        reasons.append(
-            "in-play period has no rows while the pre-match count check passes"
-        )
+        reasons.append("in-play period has no rows while the pre-match count check passes")
 
     # --- Largest-gap detection, excluding benign out-of-window gaps (Req 3.5) ---
     prematch_window_start = start_time - timedelta(seconds=thresholds.prematch_window_s)
@@ -483,9 +481,7 @@ def coverage_result(
         if gap_start >= start_time:
             limit = thresholds.max_gap_s.get("IN_PLAY", 0)
         else:
-            prematch_limits = [
-                v for k, v in thresholds.max_gap_s.items() if k != "IN_PLAY"
-            ]
+            prematch_limits = [v for k, v in thresholds.max_gap_s.items() if k != "IN_PLAY"]
             limit = min(prematch_limits) if prematch_limits else 0
         if limit and gap_s > limit:
             largest_gap_bounds = (gap_start, gap_end)
@@ -538,9 +534,7 @@ def present_result(market_id: str | None, row_count: int) -> dict:
         ``evidence`` always carries ``market_id`` and ``row_count`` plus a
         ``market_id_absent`` flag.
     """
-    market_id_absent = market_id is None or (
-        isinstance(market_id, str) and market_id.strip() == ""
-    )
+    market_id_absent = market_id is None or (isinstance(market_id, str) and market_id.strip() == "")
     evidence = {
         "market_id": market_id,
         "row_count": row_count,
@@ -645,13 +639,9 @@ def consistency_result(
     # --- Null-price proportion (Req 4.3) ---
     # Evaluated over parseable rows only: an unparseable value has no ladder to
     # inspect and is already accounted for by the parse sub-check.
-    both_empty_count = sum(
-        1 for parsed in parsed_values if not has_any_price(parsed)
-    )
+    both_empty_count = sum(1 for parsed in parsed_values if not has_any_price(parsed))
     parseable_total = len(parsed_values)
-    null_price_proportion = (
-        both_empty_count / parseable_total if parseable_total else 0.0
-    )
+    null_price_proportion = both_empty_count / parseable_total if parseable_total else 0.0
     null_price_passed = null_price_proportion <= null_price_threshold
     if not null_price_passed:
         reasons.append(
@@ -672,10 +662,7 @@ def consistency_result(
     if declared_runner_ids is None:
         runner_count_passed = False
         declared_runner_count: int | None = None
-        reasons.append(
-            "declared runner_ids absent or unparseable (declared runner count "
-            "unavailable)"
-        )
+        reasons.append("declared runner_ids absent or unparseable (declared runner count " "unavailable)")
     else:
         declared_runner_count = len(declared_runner_ids)
         runner_count_passed = distinct_runner_count == declared_runner_count
@@ -700,10 +687,7 @@ def consistency_result(
         last_ts_by_runner[runner_id] = timestamp
     ordering_passed = ordering_violations == 0
     if not ordering_passed:
-        reasons.append(
-            f"{ordering_violations} out-of-order timestamp(s) in storage order "
-            f"for one or more runners"
-        )
+        reasons.append(f"{ordering_violations} out-of-order timestamp(s) in storage order " f"for one or more runners")
     ordering_check = {
         "passed": ordering_passed,
         "violations": ordering_violations,
@@ -719,18 +703,10 @@ def consistency_result(
             seen.add(key)
     dedup_passed = duplicate_count == 0
     if not dedup_passed:
-        reasons.append(
-            f"{duplicate_count} duplicate (market_id, runner_id, timestamp) row(s)"
-        )
+        reasons.append(f"{duplicate_count} duplicate (market_id, runner_id, timestamp) row(s)")
     dedup_check = {"passed": dedup_passed, "duplicate_count": duplicate_count}
 
-    passed = (
-        parse_passed
-        and null_price_passed
-        and runner_count_passed
-        and ordering_passed
-        and dedup_passed
-    )
+    passed = parse_passed and null_price_passed and runner_count_passed and ordering_passed and dedup_passed
     return {
         "passed": passed,
         "reasons": reasons,
@@ -810,12 +786,8 @@ def useful_result(
     resolution_ok = row_count >= thresholds.min_samples_per_market
 
     # --- Lifecycle-span boundaries (Req 5.2) ---
-    prematch_window_start = start_time - timedelta(
-        seconds=thresholds.prematch_window_s
-    )
-    settlement_boundary = settlement_ts + timedelta(
-        seconds=thresholds.settlement_grace_s
-    )
+    prematch_window_start = start_time - timedelta(seconds=thresholds.prematch_window_s)
+    settlement_boundary = settlement_ts + timedelta(seconds=thresholds.settlement_grace_s)
 
     # With no rows, neither lifecycle portion can be present.
     if earliest_ts is None or latest_ts is None:
@@ -849,8 +821,7 @@ def useful_result(
     reasons: list[str] = []
     if not resolution_ok:
         reasons.append(
-            f"insufficient resolution: row_count {row_count} below minimum "
-            f"{thresholds.min_samples_per_market}"
+            f"insufficient resolution: row_count {row_count} below minimum " f"{thresholds.min_samples_per_market}"
         )
 
     # Name which lifecycle portion is absent (Req 5.3).
@@ -860,9 +831,7 @@ def useful_result(
     if not settlement_present:
         missing_portions.append("settlement")
     if missing_portions:
-        reasons.append(
-            "lifecycle span incomplete: missing " + " and ".join(missing_portions)
-        )
+        reasons.append("lifecycle span incomplete: missing " + " and ".join(missing_portions))
 
     return {
         "passed": False,
@@ -913,11 +882,7 @@ def _dimension_evidence(result: dict) -> dict:
     evidence = result.get("evidence")
     if isinstance(evidence, dict):
         return evidence
-    return {
-        key: value
-        for key, value in result.items()
-        if key not in ("passed", "reason", "reasons")
-    }
+    return {key: value for key, value in result.items() if key not in ("passed", "reason", "reasons")}
 
 
 def _to_outcome(result: dict | None) -> DimensionOutcome:
@@ -1073,9 +1038,7 @@ def default_look_back_window(now: datetime) -> tuple[datetime, datetime]:
     return start, end
 
 
-def is_verifiable(
-    status: str, start_time: datetime, window: tuple[datetime, datetime]
-) -> bool:
+def is_verifiable(status: str, start_time: datetime, window: tuple[datetime, datetime]) -> bool:
     """True iff the Target is settled AND its ``start_time`` is in the window.
 
     A Target is verifiable for a Quality_Check run only when both hold:

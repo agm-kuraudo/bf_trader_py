@@ -105,9 +105,7 @@ def test_coverage_synthetic_5s_cadence_match_passes():
 
     # Pre-match rows every 300s across the 3h window (dense enough that the
     # largest pre-match gap stays under the tightest pre-match tier limit).
-    prematch_rows = _timestamps(
-        prematch_start, count=THRESHOLDS.prematch_window_s // 300 + 1, interval_s=300
-    )
+    prematch_rows = _timestamps(prematch_start, count=THRESHOLDS.prematch_window_s // 300 + 1, interval_s=300)
     # In-play rows at the intended 5s cadence across the intended in-play span.
     inplay_rows = _timestamps(
         START,
@@ -198,9 +196,7 @@ def test_coverage_inplay_empty_special_case_fails():
     special case even though the pre-match count check could pass (Req 3.6)."""
     # 63 pre-match rows densely packed just before kick-off so the count check
     # passes, but nothing at or after START -- the in-play period is empty.
-    prematch_rows = _timestamps(
-        START - timedelta(seconds=63 * 5), count=63, interval_s=5
-    )
+    prematch_rows = _timestamps(START - timedelta(seconds=63 * 5), count=63, interval_s=5)
     # A deliberately tiny expected count so the count check passes and the ONLY
     # reason to fail is the empty in-play period.
     result = coverage_result(
@@ -220,9 +216,7 @@ def test_coverage_benign_overnight_gap_outside_prematch_window_does_not_fail():
     # A cluster of rows the night before, ~98,000s (~27h) before START, then a
     # dense healthy capture through the pre-match window and in-play span.
     overnight = [START - timedelta(seconds=98_000)]
-    prematch_rows = _timestamps(
-        _prematch_start(), count=THRESHOLDS.prematch_window_s // 300 + 1, interval_s=300
-    )
+    prematch_rows = _timestamps(_prematch_start(), count=THRESHOLDS.prematch_window_s // 300 + 1, interval_s=300)
     inplay_rows = _timestamps(
         START,
         count=THRESHOLDS.inplay_duration_s // THRESHOLDS.inplay_interval_s + 1,
@@ -264,12 +258,8 @@ def _wellformed_consistency_inputs():
     odds_values = [_valid_odds() for _ in range(len(_RUNNERS) * 2)]
     runner_ids_in_rows = _RUNNERS + _RUNNERS
     declared_runner_ids = list(_RUNNERS)
-    rows_in_storage_order = [(r, _TS_A) for r in _RUNNERS] + [
-        (r, _TS_B) for r in _RUNNERS
-    ]
-    dedup_keys = [("1.99", r, _TS_A) for r in _RUNNERS] + [
-        ("1.99", r, _TS_B) for r in _RUNNERS
-    ]
+    rows_in_storage_order = [(r, _TS_A) for r in _RUNNERS] + [(r, _TS_B) for r in _RUNNERS]
+    dedup_keys = [("1.99", r, _TS_A) for r in _RUNNERS] + [("1.99", r, _TS_B) for r in _RUNNERS]
     return (
         odds_values,
         runner_ids_in_rows,
@@ -290,9 +280,7 @@ def test_consistency_unparseable_odds_fails():
     """An injected unparseable Odds_Value fails the parse sub-check (Req 4.1)."""
     odds, runners, declared, storage, dedup = _wellformed_consistency_inputs()
     odds[0] = "not-a-valid-dict-repr"
-    result = consistency_result(
-        odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio
-    )
+    result = consistency_result(odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio)
     assert result["passed"] is False
     assert result["parse"]["passed"] is False
 
@@ -301,9 +289,7 @@ def test_consistency_duplicate_key_fails():
     """A duplicate (market_id, runner_id, timestamp) fails dedup (Req 4.6)."""
     odds, runners, declared, storage, dedup = _wellformed_consistency_inputs()
     dedup[1] = dedup[0]  # force an exact duplicate key
-    result = consistency_result(
-        odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio
-    )
+    result = consistency_result(odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio)
     assert result["passed"] is False
     assert result["duplicates"]["passed"] is False
 
@@ -313,9 +299,7 @@ def test_consistency_out_of_order_timestamp_fails():
     odds, runners, declared, storage, dedup = _wellformed_consistency_inputs()
     # Make one runner's second (later-stored) row carry an earlier timestamp.
     storage[3] = (_RUNNERS[0], "2026-01-15T13:00:00+00:00")
-    result = consistency_result(
-        odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio
-    )
+    result = consistency_result(odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio)
     assert result["passed"] is False
     assert result["ordering"]["passed"] is False
 
@@ -324,9 +308,7 @@ def test_consistency_wrong_runner_count_fails():
     """A distinct-runner count that differs from declared fails (Req 4.4)."""
     odds, runners, declared, storage, dedup = _wellformed_consistency_inputs()
     declared = _RUNNERS + ["99999"]  # declare 4 runners, rows only have 3
-    result = consistency_result(
-        odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio
-    )
+    result = consistency_result(odds, runners, declared, storage, dedup, THRESHOLDS.null_price_ratio)
     assert result["passed"] is False
     assert result["runner_count"]["passed"] is False
 
@@ -334,9 +316,7 @@ def test_consistency_wrong_runner_count_fails():
 def test_consistency_absent_runner_ids_fails():
     """Absent declared runner_ids always fails Consistency (Req 4.7)."""
     odds, runners, _declared, storage, dedup = _wellformed_consistency_inputs()
-    result = consistency_result(
-        odds, runners, None, storage, dedup, THRESHOLDS.null_price_ratio
-    )
+    result = consistency_result(odds, runners, None, storage, dedup, THRESHOLDS.null_price_ratio)
     assert result["passed"] is False
     assert result["runner_count"]["passed"] is False
 

@@ -128,8 +128,7 @@ def select_run(conn, run_id=None, on_date=None, date_from=None, date_to=None):
     with conn.cursor(cursor_factory=RealDictCursor) as cursor:
         if run_id is not None:
             cursor.execute(
-                "SELECT * FROM bf.quality_run WHERE run_id = %(run_id)s "
-                "ORDER BY run_started DESC LIMIT 1",
+                "SELECT * FROM bf.quality_run WHERE run_id = %(run_id)s " "ORDER BY run_started DESC LIMIT 1",
                 {"run_id": run_id},
             )
         elif on_date is not None:
@@ -147,9 +146,7 @@ def select_run(conn, run_id=None, on_date=None, date_from=None, date_to=None):
                 {"date_from": date_from, "date_to": date_to},
             )
         else:
-            cursor.execute(
-                "SELECT * FROM bf.quality_run ORDER BY run_started DESC LIMIT 1"
-            )
+            cursor.execute("SELECT * FROM bf.quality_run ORDER BY run_started DESC LIMIT 1")
         return cursor.fetchone()
 
 
@@ -175,8 +172,7 @@ def select_match_rows(conn, run_id, failures_only=False):
             )
         else:
             cursor.execute(
-                "SELECT * FROM bf.quality_match_result "
-                "WHERE run_id = %(run_id)s ORDER BY target_id",
+                "SELECT * FROM bf.quality_match_result " "WHERE run_id = %(run_id)s ORDER BY target_id",
                 {"run_id": run_id},
             )
         return list(cursor.fetchall())
@@ -221,16 +217,12 @@ def report_quality(
         ConfigurationException: When required DB connection details are absent.
     """
     if fmt not in VALID_FORMATS:
-        raise ValueError(
-            f"Unsupported format '{fmt}'; expected one of {', '.join(VALID_FORMATS)}"
-        )
+        raise ValueError(f"Unsupported format '{fmt}'; expected one of {', '.join(VALID_FORMATS)}")
 
     config = _read_db_config(env_path)
     missing = validate_env(config, REQUIRED_DB_KEYS)
     if missing:
-        raise ConfigurationException(
-            "Missing required DB connection details in .env: " + ", ".join(missing)
-        )
+        raise ConfigurationException("Missing required DB connection details in .env: " + ", ".join(missing))
 
     conn = _connect(config)
     try:
@@ -244,9 +236,7 @@ def report_quality(
         if run_row is None:
             raise ValueError("No Quality_Check run found for the given selection")
 
-        match_rows = select_match_rows(
-            conn, run_row["run_id"], failures_only=failures_only
-        )
+        match_rows = select_match_rows(conn, run_row["run_id"], failures_only=failures_only)
     finally:
         conn.close()
 
