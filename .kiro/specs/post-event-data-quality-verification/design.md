@@ -115,10 +115,12 @@ sequenceDiagram
 
 The daily quality job (Req 8) is configured **manually in the Rundeck UI**. The `build/run_deck_job_definition/*.json` files are stale exports and are **not** maintained as source of truth — there is no repo job-definition artifact for this job, so the exact command and schedule are recorded here instead.
 
-- **Command the Rundeck step runs on the Pi** (deployed at `/usr/local/bf_trader_py`, venv at `/usr/local/bf_trader_py/.venv`):
+The check runs **inside the `bf_capture` Docker container** via `docker compose run` (the same pattern as the SP-328 freshness check), because that is how it reaches `my_postgres` on the external `my_trading_network`; it does **not** run in a host virtualenv. Because the dockerfile does `COPY . /app`, deploying new code means **rebuilding the image** (`docker compose build bf_capture`), not just pulling on the host — a stale image will not contain the new scripts.
+
+- **Command the Rundeck step runs on the Pi** (deployed at `/usr/local/bf_trader_py`):
 
   ```bash
-  cd /usr/local/bf_trader_py && source .venv/bin/activate && python scripts/check_quality.py
+  docker compose --project-directory /usr/local/bf_trader_py run --rm bf_capture python scripts/check_quality.py
   ```
 
 - **Suggested schedule:** once per calendar day at a fixed time, e.g. **06:00** — late enough to look back at the previous day's settled matches well after they close. This is distinct from the Monitor Service / freshness job's every-few-minutes cadence.
@@ -126,7 +128,7 @@ The daily quality job (Req 8) is configured **manually in the Rundeck UI**. The 
 - **On-demand report command** (run from the Pi or a workstation):
 
   ```bash
-  cd /usr/local/bf_trader_py && source .venv/bin/activate && python scripts/report_quality.py --failures-only --format markdown
+  docker compose --project-directory /usr/local/bf_trader_py run --rm bf_capture python scripts/report_quality.py --failures-only --format markdown
   ```
 
 ## Components and Interfaces
