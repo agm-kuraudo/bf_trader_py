@@ -9,13 +9,25 @@ post-event-data-quality-verification design document.
 import ast
 import os
 import sys
+from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from logic.quality_checks import parse_odds, serialize_odds
+from logic.quality_checks import (
+    DimensionOutcome,
+    MatchQualityResult,
+    QualityThresholds,
+    aggregate_match,
+    consistency_result,
+    coverage_result,
+    has_any_price,
+    parse_odds,
+    serialize_odds,
+    useful_result,
+)
 
 # --- Strategies for INVALID Odds_Value inputs --------------------------------
 #
@@ -322,10 +334,6 @@ class TestProperty1ParserRoundTrip:
 # three conditions, and the test asserts the biconditional and the documented
 # evidence keys.
 
-from datetime import datetime, timedelta
-
-from logic.quality_checks import QualityThresholds, coverage_result
-
 # A fixed reference kick-off; all generated timestamps are offsets around it.
 _P4_START = datetime(2025, 6, 1, 15, 0, 0)
 
@@ -355,7 +363,7 @@ def _p4_oracle(actual_count, expected_count, row_timestamps, start_time, thresho
     if len(in_window) >= 2:
         # Largest contiguous gap between consecutive in-window rows.
         biggest = None
-        for earlier, later in zip(in_window, in_window[1:]):
+        for earlier, later in zip(in_window, in_window[1:], strict=False):
             gap_s = (later - earlier).total_seconds()
             if biggest is None or gap_s > biggest[0]:
                 biggest = (gap_s, earlier, later)
@@ -541,8 +549,6 @@ class TestProperty4Coverage:
 # overall pass/fail from the requirement text (mirroring the "proportion over
 # parseable rows only" rule) without calling into consistency_result's helpers,
 # and the test asserts the biconditional plus per-sub-check evidence.
-
-from logic.quality_checks import consistency_result, has_any_price
 
 # A valid stored Odds_Value with at least one price (so it is NOT both-empty).
 _P5_PRICED_ODDS = str(
@@ -916,8 +922,6 @@ class TestProperty5Consistency:
 # pass/fail biconditional and the missing-portion set straight from the
 # requirement text, and the test asserts both.
 
-from logic.quality_checks import useful_result
-
 # A fixed reference kick-off and a settlement ~2h later; generated timestamps
 # are integer-second offsets around these fixed anchors.
 _P6_START = datetime(2025, 6, 1, 15, 0, 0)
@@ -1139,8 +1143,6 @@ class TestProperty6Useful:
 # recomputes the expected per-dimension outcome and the overall roll-up straight
 # from the requirement text, and the test asserts the biconditional, the
 # per-dimension mapping, and the reason/evidence carry-through.
-
-from logic.quality_checks import DimensionOutcome, MatchQualityResult, aggregate_match
 
 # The three outcome kinds a dimension can resolve to.
 _P7_PASS = "PASS"
