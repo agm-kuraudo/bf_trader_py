@@ -1,0 +1,489 @@
+{
+  "pbtResults": {
+    "4.2 Write property test for Coverage": {
+      "status": "passed",
+      "lastRunTimestamp": 1789136637346
+    },
+    "5.2 Write property test for Consistency": {
+      "status": "passed",
+      "lastRunTimestamp": 1789136775059
+    },
+    "6.2 Write property test for Useful": {
+      "status": "passed",
+      "lastRunTimestamp": 1789136913087
+    },
+    "7.2 Write property test for aggregation": {
+      "status": "passed",
+      "lastRunTimestamp": 1789137052206
+    }
+  },
+  "executionHistory": {
+    "1. Scaffold the pure quality-checks module and thresholds": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135825689
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135839524
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135950845
+      }
+    ],
+    "2.1 Implement `parse_odds`, `serialize_odds`, `back_prices`, `lay_prices`, `has_any_price`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135825820
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135958315
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136044517
+      }
+    ],
+    "2.2 Write property test for the Odds_Value parser round-trip": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135825954
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136049250
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136355176
+      }
+    ],
+    "2.3 Write property test for parser rejection with no partial result": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826043
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136050549
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136355393
+      }
+    ],
+    "3.1 Implement `present_result`, `is_verifiable`, `default_look_back_window`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826105
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136052728
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136356342
+      }
+    ],
+    "4.1 Implement `expected_sample_count` and `coverage_result`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826186
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136365561
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136519575
+      }
+    ],
+    "4.2 Write property test for Coverage": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826261
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136535652
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136658275
+      }
+    ],
+    "5.1 Implement `consistency_result`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826342
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136534946
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136659095
+      }
+    ],
+    "5.2 Write property test for Consistency": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826439
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136664887
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136793119
+      }
+    ],
+    "6.1 Implement `useful_result`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826545
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136663814
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136793746
+      }
+    ],
+    "6.2 Write property test for Useful": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826628
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136798014
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136944530
+      }
+    ],
+    "7.1 Implement `aggregate_match`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826719
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136798919
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136943585
+      }
+    ],
+    "7.2 Write property test for aggregation": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826825
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136950124
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137507580
+      }
+    ],
+    "7.3 Write unit tests for the pure quality-checks logic": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826926
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136950808
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137508349
+      }
+    ],
+    "8. Checkpoint - pure logic complete": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135826994
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137524967
+      }
+    ],
+    "9.1 Define the two results-table DDLs and the schema-readiness helper in `scripts/check_quality.py`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827073
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137534354
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137708153
+      }
+    ],
+    "9.2 Implement `check_quality` orchestration (I/O only, no quality decisions)": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827154
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137711980
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138195290
+      }
+    ],
+    "9.3 Implement `main()` one-line stdout summary and exit codes": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827224
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138200544
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138319323
+      }
+    ],
+    "10.1 Implement `logic/quality_report.py` formatters (pure, no I/O)": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827305
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138329782
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138444081
+      }
+    ],
+    "11.1 Implement `scripts/report_quality.py` (read-only I/O + `argparse`)": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827378
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138448187
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138632754
+      }
+    ],
+    "12.1 Write the integration test for `check_quality.py`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827465
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138637950
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138858337
+      }
+    ],
+    "13. Checkpoint - full check + report pipeline complete": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827588
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138878321
+      }
+    ],
+    "14. Add the Rundeck daily job definition": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827661
+      },
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138887019
+      }
+    ],
+    "15. Validate calibrated thresholds against real season data": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827753
+      }
+    ],
+    "16. Author the Confluence documentation note (Side Projects space)": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827835
+      }
+    ],
+    "17. Final checkpoint - ensure all tests pass": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789135827911
+      }
+    ],
+    "2. Implement the Odds_Value parser/serializer and price helpers": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136355498
+      }
+    ],
+    "3. Implement the Present dimension and selection helpers": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136356427
+      }
+    ],
+    "4. Implement the Coverage dimension": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136658360
+      }
+    ],
+    "5. Implement the Consistency dimension": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136793205
+      }
+    ],
+    "6. Implement the Useful dimension": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789136944625
+      }
+    ],
+    "7. Implement per-match aggregation": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789137508479
+      }
+    ],
+    "9. Implement the durable results tables and the daily check wrapper": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138319411
+      }
+    ],
+    "10. Implement the pure report formatters": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138444199
+      }
+    ],
+    "11. Implement the on-demand report command": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138632892
+      }
+    ],
+    "12. Integration test for the daily check against `my_postgres`": [
+      {
+        "executionId": "59262123-7782-4815-8b2e-ef0913a41607",
+        "chatSessionId": "sess_9a537292-70bc-4a1d-9849-db50190916ed",
+        "timestamp": 1789138858439
+      }
+    ]
+  }
+}
