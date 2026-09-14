@@ -11,7 +11,7 @@ docker rm -f $containerName_PG
 docker rm -f $containerName_Admin
 
 # Run the PostgreSQL container
-docker run --name $containerName_PG --network my_trading_network --ip 172.19.0.3 --restart unless-stopped -e POSTGRES_PASSWORD=$dbPassword -p 5432:5432 -d postgres:16.1
+docker run --name $containerName_PG --network my_trading_network --ip 172.19.0.3 --restart unless-stopped -e POSTGRES_PASSWORD=$dbPassword -p 5432:5432 -d timescale/timescaledb:latest-pg16
 
 # Check if PostgreSQL is ready
 until docker exec $containerName_PG pg_isready -U postgres; do

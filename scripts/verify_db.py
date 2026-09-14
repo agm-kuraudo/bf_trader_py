@@ -8,7 +8,7 @@ season-background-data-capture design. It:
    if any are missing it surfaces which without attempting to connect (Req 1.3).
 3. Opens a psycopg2 connection with a **10-second** timeout, treating a
    failure/timeout as the store being unreachable (Req 1.2, 1.7).
-4. Confirms the four required capture tables exist in schema ``bf`` and creates
+4. Confirms the six required tables exist in schema ``bf`` and creates
    ONLY the absent ones from the ``build/sql/create_database.sql`` DDL, leaving
    existing tables and their data unchanged (Req 1.4, 1.5).
 
@@ -42,10 +42,17 @@ CONNECT_TIMEOUT_S = 10
 CAPTURE_SCHEMA = "bf"
 
 # Bare table names (without schema) required for odds capture (Req 1.4).
-REQUIRED_TABLES = {"target", "market_table", "log_file", "betfair_object_ids"}
+REQUIRED_TABLES = {
+    "target",
+    "market_table",
+    "log_file",
+    "betfair_object_ids",
+    "quality_run",
+    "quality_match_result",
+}
 
 # Bare-table-name -> exact CREATE TABLE DDL from build/sql/create_database.sql.
-# Only the four bf.* capture tables are included; the CREATE DATABASE / \c lines
+# Only the six bf.* tables are included; the CREATE DATABASE / \c lines
 # from the SQL file are intentionally excluded because the database already
 # exists. Each statement uses CREATE TABLE IF NOT EXISTS so it is safe, but we
 # only ever execute the entries for tables reported absent by missing_tables.
@@ -100,6 +107,42 @@ TABLE_DDL = {
         )
         TABLESPACE pg_default;
         ALTER TABLE IF EXISTS bf.target
+            OWNER to postgres;
+    """,
+    "quality_run": """
+        CREATE TABLE IF NOT EXISTS bf.quality_run
+        (
+            run_id uuid NOT NULL,
+            run_started timestamp with time zone,
+            run_finished timestamp with time zone,
+            look_back_start timestamp with time zone,
+            look_back_end timestamp with time zone,
+            matches_verified integer,
+            matches_passed integer,
+            matches_failed integer,
+            overall_alert boolean,
+            status text COLLATE pg_catalog."default",
+            notes text COLLATE pg_catalog."default"
+        )
+        TABLESPACE pg_default;
+        ALTER TABLE IF EXISTS bf.quality_run
+            OWNER to postgres;
+    """,
+    "quality_match_result": """
+        CREATE TABLE IF NOT EXISTS bf.quality_match_result
+        (
+            run_id uuid NOT NULL,
+            target_id text COLLATE pg_catalog."default",
+            market_id text COLLATE pg_catalog."default",
+            present_outcome text COLLATE pg_catalog."default",
+            coverage_outcome text COLLATE pg_catalog."default",
+            consistency_outcome text COLLATE pg_catalog."default",
+            useful_outcome text COLLATE pg_catalog."default",
+            overall_outcome text COLLATE pg_catalog."default",
+            evidence jsonb
+        )
+        TABLESPACE pg_default;
+        ALTER TABLE IF EXISTS bf.quality_match_result
             OWNER to postgres;
     """,
 }
