@@ -68,3 +68,41 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS bf.target
     OWNER to postgres;
+
+CREATE TABLE IF NOT EXISTS bf.quality_run
+(
+    run_id uuid NOT NULL,
+    run_started timestamp with time zone,
+    run_finished timestamp with time zone,
+    look_back_start timestamp with time zone,
+    look_back_end timestamp with time zone,
+    matches_verified integer,
+    matches_passed integer,
+    matches_failed integer,
+    overall_alert boolean,
+    status text COLLATE pg_catalog."default",
+    notes text COLLATE pg_catalog."default"
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS bf.quality_run
+    OWNER to postgres;
+
+CREATE TABLE IF NOT EXISTS bf.quality_match_result
+(
+    run_id uuid NOT NULL,
+    target_id text COLLATE pg_catalog."default",
+    market_id text COLLATE pg_catalog."default",
+    present_outcome text COLLATE pg_catalog."default",
+    coverage_outcome text COLLATE pg_catalog."default",
+    consistency_outcome text COLLATE pg_catalog."default",
+    useful_outcome text COLLATE pg_catalog."default",
+    overall_outcome text COLLATE pg_catalog."default",
+    evidence jsonb
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS bf.quality_match_result
+    OWNER to postgres;
