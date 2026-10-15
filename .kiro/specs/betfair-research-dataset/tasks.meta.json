@@ -1,0 +1,406 @@
+{
+  "pbtResults": {
+    "2.3 Write property test for best-price correctness": {
+      "status": "passed",
+      "lastRunTimestamp": 1792072598726
+    }
+  },
+  "executionHistory": {
+    "1. Scaffold the pure Odds_Transform module and data models": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927207
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071936316
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072084003
+      }
+    ],
+    "2.1 Implement `structured_odds` and `serialize_structured`": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927386
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072087593
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072243339
+      }
+    ],
+    "2.2 Write property test for Odds_Value round-trip": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927505
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072408322
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072520814
+      }
+    ],
+    "2.3 Write property test for best-price correctness": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927605
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072523868
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072616461
+      }
+    ],
+    "3.1 Implement `parse_runner_ids`": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927692
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072088979
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072307767
+      }
+    ],
+    "3.2 Implement `assign_outcome_roles`": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927788
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072322515
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072364724
+      }
+    ],
+    "4.1 Implement `match_phase`": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927897
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072089561
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072401565
+      }
+    ],
+    "5. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071927991
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072649290
+      }
+    ],
+    "6.1 Implement `build_records` (top-level pure entry point)": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928090
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072820462
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072974233
+      }
+    ],
+    "6.2 Write property test for record determinism and ordering": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928173
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072994495
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073160550
+      }
+    ],
+    "6.3 Write property test for exclusion and unresolved accounting": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928272
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073165383
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073406601
+      }
+    ],
+    "7.1 Implement `empty_dataset` helper and DataFrame assembly": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928360
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072993631
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073159787
+      }
+    ],
+    "7.3 Author the Dataset_Schema documentation": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928454
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073412071
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073788438
+      }
+    ],
+    "8.1 Scaffold `scripts/build_research_dataset.py` and implement row reads": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928549
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072248323
+      },
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072254202
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072824395
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072975397
+      }
+    ],
+    "9.1 Implement `build_dataset` and `main`": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928647
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073166053
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073405568
+      }
+    ],
+    "9.2 Write reader tests for orchestration, persistence, and reporting": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928742
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073411389
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073787493
+      }
+    ],
+    "10. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928836
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073826389
+      }
+    ],
+    "11.1 Replace the inline parse path in `analyse_service.py`": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071928927
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073827442
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073943539
+      }
+    ],
+    "11.2 Write MarketAnalyser equivalence and empty-result tests": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071929021
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073946641
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792074088961
+      }
+    ],
+    "12. Final gate - Full suite, lint, and format clean": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792071929114
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792074093800
+      },
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792074139162
+      }
+    ],
+    "3. Implement Runner_Identity parsing and Outcome_Role assignment (Req 2)": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072364878
+      }
+    ],
+    "4. Implement Match_Phase classification (Req 8)": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072401664
+      }
+    ],
+    "2. Implement Odds_Value structuring and serialization (Req 1)": [
+      {
+        "executionId": "db7aa2ee-1180-4766-b36c-0f28bf4e9102",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072616603
+      }
+    ],
+    "8. Implement the Dataset_Reader DB layer (Req 4)": [
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792072975520
+      }
+    ],
+    "6. Implement record assembly in the Odds_Transform (Req 3)": [
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073406714
+      }
+    ],
+    "9. Implement run orchestration, persistence, and reporting (Req 4, 5)": [
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073787687
+      }
+    ],
+    "7. Implement the DataFrame schema layer and schema documentation (Req 5)": [
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792073788595
+      }
+    ],
+    "11. Refactor MarketAnalyser onto the loader (Req 6)": [
+      {
+        "executionId": "d165fa46-b26a-48f6-bc8a-2c258e340204",
+        "chatSessionId": "sess_b3f00d18-8ed3-41f8-a73f-55fd7ad0c166",
+        "timestamp": 1792074089170
+      }
+    ]
+  }
+}
