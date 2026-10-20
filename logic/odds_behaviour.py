@@ -472,10 +472,22 @@ def profile_behaviour(dataset: pd.DataFrame, volume_spike_threshold: float) -> B
     n_matches = int(dataset["market_id"].nunique(dropna=True))
     n_pre_match_rows = int((dataset["match_phase"] == "PRE_MATCH").sum())
     n_in_play_rows = int((dataset["match_phase"] == "IN_PLAY").sum())
+    n_volume_rows = int(dataset["matched_volume"].notna().sum())
 
-    # Surface coverage honesty for the writeup: capture targets pre-match, so
-    # in-play material may be thin or absent (plan draft). Flag it rather than
-    # let the volume/in-play section silently over-claim.
+    # Surface coverage honesty for the writeup rather than let a section silently
+    # over-claim or a missing chart look like a bug.
+    #
+    # Volume: capture does not persist a matched-volume figure, so matched_volume
+    # is null throughout and 0.7 analysis is price-only. This is a known, accepted
+    # gap tracked by SP-384 (deferred out of 0.7), NOT a fault of this analysis or
+    # the SP-368 loader -- the loader correctly nulls an absent field. When no
+    # volume is present the volume chart is skipped and this note explains why.
+    if n_volume_rows == 0:
+        notes.append(
+            "No matched-volume data in this dataset (matched_volume null for all rows): "
+            "capture does not persist a volume figure yet (SP-384, deferred out of 0.7). "
+            "Volume characterisation is skipped; 0.7 analysis is price-only."
+        )
     if n_in_play_rows == 0:
         notes.append("No IN_PLAY rows in this dataset; in-play characterisation is not possible.")
     if drift_summary.n_selections == 0:

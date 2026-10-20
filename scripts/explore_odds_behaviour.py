@@ -134,6 +134,33 @@ def _chart_name(market_id: str, suffix: str) -> str:
     return f"{safe_market}_{suffix}.png"
 
 
+def _plot_values(series: pd.Series):
+    """Convert a Series to a plain NumPy array matplotlib renders reliably.
+
+    The SP-368 dataset uses pandas *nullable* extension dtypes -- ``Float64`` for
+    prices/volume and ``datetime64[ns, UTC]`` for timestamps. matplotlib 3.8
+    draws a nullable ``Float64`` Series as a BLANK line (no exception, no points)
+    when it arrives via a groupby slice of a Parquet-reloaded frame, which is why
+    the first Pi run produced empty per-match charts despite valid data. Casting
+    to a plain NumPy array before plotting side-steps that: numeric columns
+    become ``float64`` (pandas NA -> ``NaN``, which matplotlib skips as a gap),
+    and datetime columns are handed over as datetime64 values matplotlib dates
+    understand.
+
+    Args:
+        series: The column to plot (nullable or otherwise).
+
+    Returns:
+        A NumPy array suitable for ``ax.plot`` / ``ax.scatter``.
+    """
+    if pd.api.types.is_datetime64_any_dtype(series):
+        # Hand matplotlib datetime64 values (tz-aware ok); it plots these as dates.
+        return series.to_numpy(dtype="datetime64[ns]")
+    # Numeric/other: coerce to float64 so NA becomes NaN (a plotted gap) and the
+    # nullable extension array is dropped.
+    return pd.to_numeric(series, errors="coerce").to_numpy(dtype="float64")
+
+
 def render_book_chart(market_id: str, book: pd.DataFrame, charts_dir: str) -> str:
     """Render the implied-probability-book overlay for one match.
 
@@ -157,10 +184,12 @@ def render_book_chart(market_id: str, book: pd.DataFrame, charts_dir: str) -> st
         return ""
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(market_book["timestamp"], market_book["prob_home"], label="Home P")
-    ax.plot(market_book["timestamp"], market_book["prob_draw"], label="Draw P")
-    ax.plot(market_book["timestamp"], market_book["prob_away"], label="Away P")
-    ax.plot(market_book["timestamp"], market_book["book"], label="Book (overround)", linewidth=2, color="black")
+    # Cast via _plot_values: a nullable Float64 Series renders blank in mpl 3.8.
+    x = _plot_values(market_book["timestamp"])
+    ax.plot(x, _plot_values(market_book["prob_home"]), label="Home P")
+    ax.plot(x, _plot_values(market_book["prob_draw"]), label="Draw P")
+    ax.plot(x, _plot_values(market_book["prob_away"]), label="Away P")
+    ax.plot(x, _plot_values(market_book["book"]), label="Book (overround)", linewidth=2, color="black")
     # The green-out boundary SP-370 scans for: book < 1.0 means the three
     # outcomes imply < 100% in total.
     ax.axhline(1.0, linestyle="--", color="red", alpha=0.6, label="book = 1.0")
@@ -208,7 +237,8 @@ def render_drift_chart(market_id: str, dataset: pd.DataFrame, charts_dir: str) -
             continue
         role = series["outcome_role"].iloc[0]
         label = f"{role} ({runner_id})" if pd.notna(role) else f"runner {runner_id}"
-        ax.plot(series["timestamp"], series["best_back"], label=label)
+        # Cast via _plot_values: a nullable Float64 Series renders blank in mpl 3.8.
+        ax.plot(_plot_values(series["timestamp"]), _plot_values(series["best_back"]), label=label)
         plotted = True
 
     if not plotted:
@@ -240,17 +270,17 @@ def render_drift_distribution(profile: BehaviourProfile, charts_dir: str) -> str
     if drift.empty:
         return ""
 
-    rel = drift["rel_drift"].astype(float)
+    rel = _plot_values(drift["rel_drift"])
     # Favourites = shortest first pre-match price within each match. The
     # histogram overlays favourite drift against the full field so "do
     # favourites behave differently?" is visible.
     favourite_idx = drift.groupby("market_id")["first_price"].idxmin()
-    favourite_rel = drift.loc[favourite_idx, "rel_drift"].astype(float)
+    favourite_rel = _plot_values(drift.loc[favourite_idx, "rel_drift"])
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.hist(rel, bins=30, alpha=0.5, label=f"All selections (n={len(rel)})")
-    if not favourite_rel.empty:
-        ax.hist(favourite_rel, bins=30, alpha=0.7, label=f"Favourites (n={len(favourite_rel)})")
+    if favourite_rel.size:
+        ax.hist(favourite_rel, bins=30, alpha=0.7, label=f"Favourites (n={favourite_rel.size})")
     ax.axvline(0.0, linestyle="--", color="black", alpha=0.6, label="no drift")
     ax.set_xlabel("Relative pre-match drift (last/first - 1)")
     ax.set_ylabel("Count")
@@ -275,13 +305,24 @@ def render_volume_chart(profile: BehaviourProfile, charts_dir: str) -> str:
     volume = profile.volume
     series = volume.dropna(subset=["volume_delta"])
     if series.empty:
+        # No usable matched-volume increments. On the current captured data this
+        # is expected -- capture does not persist a volume figure (SP-384), so
+        # matched_volume is null throughout and 0.7 analysis is price-only. The
+        # explicit note is emitted by profile_behaviour; here we just skip.
         return ""
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.scatter(series["timestamp"], series["volume_delta"], s=8, alpha=0.4, label="volume delta")
+    vx = _plot_values(series["timestamp"])
+    ax.scatter(vx, _plot_values(series["volume_delta"]), s=8, alpha=0.4, label="volume delta")
     spikes = series[series["is_spike"]]
     if not spikes.empty:
-        ax.scatter(spikes["timestamp"], spikes["volume_delta"], s=24, color="red", label="spike")
+        ax.scatter(
+            _plot_values(spikes["timestamp"]),
+            _plot_values(spikes["volume_delta"]),
+            s=24,
+            color="red",
+            label="spike",
+        )
     ax.set_xlabel("Capture time")
     ax.set_ylabel("Matched-volume increment")
     ax.set_title("Matched-volume increments over time (spikes flagged)")
