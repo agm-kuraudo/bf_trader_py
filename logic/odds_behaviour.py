@@ -36,6 +36,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+import numpy as np
 import pandas as pd
 
 __all__ = [
@@ -199,13 +200,24 @@ def implied_probability(odds: float | None) -> float | None:
 def implied_probability_book(dataset: pd.DataFrame) -> pd.DataFrame:
     """Build the per-(match, timestamp) implied-probability book across outcomes.
 
-    For each ``(market_id, timestamp)`` in the dataset, pivot the three
-    ``outcome_role`` selections' ``best_back`` prices into Home/Draw/Away implied
-    probabilities and sum them into the ``book`` (the overround): a book above
-    1.0 is the bookmaker's margin, a book below 1.0 at some instant is the
-    green-out signal SP-370 scans for. Rows whose outcome role is undetermined
-    (null, Req 2.7) are excluded, and an instant missing one of the three
-    outcomes yields a null for that outcome's probability and a null ``book``.
+    The capture pipeline writes each runner as its own row at its own poll
+    instant -- the three MATCH_ODDS outcomes are almost never captured at the
+    exact same timestamp (observed on the Pi: 2757/2757 timestamps carried a
+    single outcome, zero carried all three). A naive exact-timestamp pivot
+    therefore yields a book that is null at every instant. Instead this builds
+    the book by **as-of (forward-fill) alignment**: within each match, the three
+    outcomes' implied probabilities (``1/best_back``) are each carried forward
+    onto the match's union of capture timestamps, so every instant uses each
+    outcome's most-recent price. This is the standard way to reconstruct a book
+    from independently-timed ladder updates.
+
+    One output row is produced per ``(market_id, timestamp)``. Each ``prob_*`` is
+    the forward-filled implied probability of that outcome (null only before that
+    outcome's first observation in the match); the ``book`` is their sum (the
+    overround), null only while any outcome has not yet been observed. A book
+    above 1.0 is the bookmaker's margin; a book below 1.0 is the green-out signal
+    SP-370 scans for. Rows whose outcome role is undetermined (null, Req 2.7) are
+    excluded.
 
     The result carries exactly ``BOOK_COLUMNS`` and is ordered by
     ``(market_id, timestamp)`` so identical input yields identical output and the
@@ -220,49 +232,66 @@ def implied_probability_book(dataset: pd.DataFrame) -> pd.DataFrame:
     # Keep only rows with a determined outcome role (Req 2.7: null role rows are
     # excluded from any role-keyed derivation). A role outside HOME/DRAW/AWAY
     # (should not occur per the schema) is dropped the same way.
-    rows = dataset[dataset["outcome_role"].isin(OUTCOME_ROLES)]
+    rows = dataset[dataset["outcome_role"].isin(OUTCOME_ROLES)].copy()
     if rows.empty:
         return _empty_framed(BOOK_COLUMNS)
 
     role_to_prob = {"HOME": "prob_home", "DRAW": "prob_draw", "AWAY": "prob_away"}
 
-    records: list[dict] = []
-    # One output row per (market_id, timestamp) instant.
-    grouped = rows.groupby(["market_id", "timestamp"], sort=True, dropna=False)
-    for (market_id, timestamp), group in grouped:
-        probs: dict[str, float | None] = {"prob_home": None, "prob_draw": None, "prob_away": None}
-        # match_phase is per-(market,timestamp) constant in practice; take the
-        # first seen so the book row can be split pre-match / in-play downstream.
-        phase = group["match_phase"].iloc[0]
+    frames: list[pd.DataFrame] = []
+    for market_id, match in rows.groupby("market_id", sort=True, dropna=False):
+        # The match's union of capture timestamps (the book's time grid), sorted.
+        grid = pd.Index(sorted(match["timestamp"].unique()), name="timestamp")
+
+        # Each outcome's implied-probability series, as-of aligned onto the grid:
+        # take the latest best_back per (outcome, timestamp), convert to implied
+        # probability, reindex onto the grid, and forward-fill so every instant
+        # carries that outcome's most-recent price. A leading gap (before the
+        # outcome's first observation) stays null.
+        prob_columns: dict[str, pd.Series] = {}
         for role, column in role_to_prob.items():
-            role_rows = group[group["outcome_role"] == role]
-            if not role_rows.empty:
-                probs[column] = implied_probability(role_rows["best_back"].iloc[0])
+            role_rows = match[match["outcome_role"] == role].sort_values("timestamp")
+            if role_rows.empty:
+                # Outcome never captured in this match -> all-NaN column (use
+                # np.nan, not pd.NA, so the plain-float64 series fills cleanly).
+                prob_columns[column] = pd.Series(np.nan, index=grid, dtype="float64")
+                continue
+            # Collapse any duplicate (role, timestamp) to the last-seen price.
+            by_ts = role_rows.drop_duplicates(subset="timestamp", keep="last").set_index("timestamp")["best_back"]
+            prob = by_ts.map(implied_probability)
+            prob_columns[column] = prob.reindex(grid).ffill().astype("float64")
 
-        # The book (overround) is the sum of the three implied probabilities;
-        # null whenever any outcome's probability is missing at this instant, so
-        # a partial instant does not masquerade as a complete book.
-        if any(value is None for value in probs.values()):
-            book: float | None = None
-        else:
-            book = probs["prob_home"] + probs["prob_draw"] + probs["prob_away"]
-
-        records.append(
-            {
-                "market_id": market_id,
-                "timestamp": timestamp,
-                "match_phase": phase,
-                "prob_home": probs["prob_home"],
-                "prob_draw": probs["prob_draw"],
-                "prob_away": probs["prob_away"],
-                "book": book,
-            }
+        # match_phase forward-filled onto the grid so each book row can still be
+        # split pre-match / in-play downstream, from whatever outcome row defined
+        # that instant.
+        phase = (
+            match.drop_duplicates(subset="timestamp", keep="last")
+            .set_index("timestamp")["match_phase"]
+            .reindex(grid)
+            .ffill()
         )
 
-    frame = pd.DataFrame.from_records(records, columns=list(BOOK_COLUMNS))
+        frame = pd.DataFrame(
+            {
+                "market_id": market_id,
+                "timestamp": grid,
+                "match_phase": phase.to_numpy(),
+                "prob_home": prob_columns["prob_home"].to_numpy(),
+                "prob_draw": prob_columns["prob_draw"].to_numpy(),
+                "prob_away": prob_columns["prob_away"].to_numpy(),
+            }
+        )
+        # The book is the sum of the three forward-filled probabilities; NaN while
+        # any outcome has not yet been observed (a leading null), so a partial
+        # instant does not masquerade as a complete book.
+        frame["book"] = frame["prob_home"] + frame["prob_draw"] + frame["prob_away"]
+        frames.append(frame)
+
+    out = pd.concat(frames, ignore_index=True)
+    out = out[list(BOOK_COLUMNS)]
     # Deterministic order: identical input -> identical output, left-to-right in
     # capture order per match.
-    return frame.sort_values(["market_id", "timestamp"]).reset_index(drop=True)
+    return out.sort_values(["market_id", "timestamp"]).reset_index(drop=True)
 
 
 # --- Pre-match drift (Req: do favourites' odds drift toward kick-off?) --------

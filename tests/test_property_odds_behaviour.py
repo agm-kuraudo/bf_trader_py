@@ -135,8 +135,9 @@ class TestProperty2BookIsSumOfProbabilities:
         assert list(book.columns) == list(BOOK_COLUMNS)
         for _, row in book.iterrows():
             parts = [row["prob_home"], row["prob_draw"], row["prob_away"]]
-            # The generator always supplies all three outcomes per instant, so
-            # every book value is defined and equals their sum.
+            # The generator supplies all three outcomes at every instant, so the
+            # as-of forward-fill leaves no leading gap: every book value is
+            # defined and equals the sum of the three forward-filled probs.
             assert all(pd.notna(part) for part in parts)
             assert abs(row["book"] - sum(parts)) < 1e-9
 
@@ -296,6 +297,34 @@ class TestNullHandlingExamples:
         assert len(book) == 1
         assert pd.isna(book.iloc[0]["book"])
         assert book.iloc[0]["prob_home"] == 0.5
+
+    def test_staggered_timestamps_forward_fill_into_a_complete_book(self):
+        # The real Pi shape: the three outcomes are captured at DISTINCT
+        # timestamps, never simultaneously (observed 2757/2757 instants with a
+        # single outcome). As-of forward-fill must still produce a complete book
+        # once all three have been seen -- the exact-timestamp pivot produced an
+        # all-null book here, which is the bug this fixes.
+        t0 = _BASE_TS
+        t1 = _BASE_TS + pd.Timedelta(seconds=10)
+        t2 = _BASE_TS + pd.Timedelta(seconds=20)
+        t3 = _BASE_TS + pd.Timedelta(seconds=30)
+        rows = [
+            self._row(runner_id="h", outcome_role="HOME", timestamp=t0, best_back=2.0),  # P=0.5
+            self._row(runner_id="d", outcome_role="DRAW", timestamp=t1, best_back=4.0),  # P=0.25
+            self._row(runner_id="a", outcome_role="AWAY", timestamp=t2, best_back=4.0),  # P=0.25
+            self._row(runner_id="h", outcome_role="HOME", timestamp=t3, best_back=2.0),  # P=0.5
+        ]
+        book = implied_probability_book(self._dataset(rows))
+        # One row per distinct timestamp in the match.
+        assert len(book) == 4
+        by_ts = book.set_index("timestamp")
+        # Before all three outcomes have been seen (t0, t1) the book is still null.
+        assert pd.isna(by_ts.loc[t0, "book"])
+        assert pd.isna(by_ts.loc[t1, "book"])
+        # From t2 onward all three are known -> complete, forward-filled book.
+        assert abs(by_ts.loc[t2, "book"] - (0.5 + 0.25 + 0.25)) < 1e-9
+        # At t3 HOME updates; DRAW/AWAY carried forward -> book still complete.
+        assert abs(by_ts.loc[t3, "book"] - (0.5 + 0.25 + 0.25)) < 1e-9
 
     def test_in_play_rows_excluded_from_drift(self):
         rows = [
