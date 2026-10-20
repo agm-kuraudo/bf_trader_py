@@ -128,11 +128,11 @@ The implementation language is **Python** (matching the design and the existing 
     - _Requirements: 1.1, 1.4, 1.5, 1.6, 2.5, 6.5, 7.1, 7.4, 7.5, 8.3, 8.4, 9.2, 9.3_
 
   - [x] 9.3 Implement `main()` one-line stdout summary and exit codes
-    - Print a single readable run-summary line for the Rundeck output (surface (b)); non-zero exit on any FAIL / unreachable / zero-matches within 5s of the run row being written (7.2, 7.3, 7.5, 7.7); zero exit when all pass (7.6); set `overall_alert` accordingly
+    - Print a single readable run-summary line for the Rundeck output (surface (b)); non-zero exit on any FAIL / unreachable / timeout within 5s of the run row being written (7.2, 7.3, 7.5); zero exit when all pass (7.6) and when zero settled matches are found (7.7, revised by SP-344 — a quiet day is benign, not a failure); set `overall_alert` accordingly
     - _Requirements: 7.2, 7.3, 7.6, 7.7_
 
   - [ ]* 9.4 Write unit tests for `check_quality` orchestration
-    - Test the exit-code decisions and run-summary given synthetic per-match results (all-pass -> 0; any FAIL -> non-zero; zero-matches -> non-zero alert); test the results-table mapping (`DimensionOutcome` -> columns/`evidence`); DB-dependent assertions skip cleanly when no store is present (repo convention)
+    - Test the exit-code decisions and run-summary given synthetic per-match results (all-pass -> 0; any FAIL -> non-zero; zero-matches -> 0, no alert, per SP-344); test the results-table mapping (`DimensionOutcome` -> columns/`evidence`); DB-dependent assertions skip cleanly when no store is present (repo convention)
     - _Requirements: 7.2, 7.3, 7.6, 7.7_
 
 - [x] 10. Implement the pure report formatters
