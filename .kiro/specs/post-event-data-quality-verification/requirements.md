@@ -124,7 +124,7 @@ The feature follows the SP-328 conventions already established in `bf_trader_py`
 4. WHEN a Quality_Check run completes, THE System SHALL write the Quality_Report to a durable record locatable by the operator from a single documented location and retained for at least 30 calendar days from the time it is written.
 5. IF the System cannot query the Data_Store during a Quality_Check run after 3 connection attempts, THEN THE System SHALL raise a Quality_Alert indicating the Data_Store is unreachable, SHALL produce no Quality_Report for that run, and SHALL exit with a non-zero status.
 6. WHEN all verified Completed_Matches pass the Quality_Check, THE System SHALL record a passing Quality_Report, SHALL not raise a Quality_Alert, and SHALL exit with a zero status.
-7. IF a Quality_Check run finds zero verified Completed_Matches to evaluate, THEN THE System SHALL record a Quality_Report indicating no matches were evaluated, SHALL raise a Quality_Alert indicating no matches were found, and SHALL exit with a non-zero status.
+7. IF a Quality_Check run finds zero verified Completed_Matches to evaluate, THEN THE System SHALL record a Quality_Report indicating no matches were evaluated, SHALL NOT raise a Quality_Alert (a quiet day with no settled matches is a normal state, not deficient data — consistent with Requirement 1.4), and SHALL exit with a zero status. (Revised by SP-344; the original wording raised an alert and exited non-zero, which turned the daily Rundeck run red on every quiet day.)
 
 ### Requirement 8: Scheduling as a Distinct Daily Post-Event Job
 

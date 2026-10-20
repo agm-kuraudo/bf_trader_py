@@ -560,8 +560,9 @@ def check_quality(env_path: str = None, now=None, look_back_hours=None, threshol
             ``run_id`` (str | None): the run's uuid (``None`` when skipped or
                 never connected).
             ``matches_verified`` / ``matches_passed`` / ``matches_failed`` (int).
-            ``overall_alert`` (bool): ``True`` on any FAIL, unreachable, or zero
-                verified matches (Req 7.2, 7.5, 7.7).
+            ``overall_alert`` (bool): ``True`` on any FAIL, unreachable store,
+                or timeout. A run with zero settled matches is benign and does
+                NOT alert (Req 7.2, 7.5, 7.7).
             ``look_back_start`` / ``look_back_end`` (datetime | None).
             ``results`` (list): the per-match ``MatchQualityResult`` objects.
             ``error`` (str | None): operator-facing error, or ``None``.
@@ -642,8 +643,7 @@ def check_quality(env_path: str = None, now=None, look_back_hours=None, threshol
                     if datetime.now(UTC) > deadline:
                         timed_out = True
                         Log.log_error(
-                            f"Quality_Check run {run_id} exceeded "
-                            f"{MAX_RUN_DURATION_S}s; abandoning remaining matches."
+                            f"Quality_Check run {run_id} exceeded {MAX_RUN_DURATION_S}s; abandoning remaining matches."
                         )
                         break
                     market_id = target[1]
@@ -652,8 +652,13 @@ def check_quality(env_path: str = None, now=None, look_back_hours=None, threshol
 
                 passed = sum(1 for m in match_results if m.overall == "PASS")
                 failed = len(match_results) - passed
-                # Alert on any FAIL, zero verified matches (Req 7.7), or timeout.
-                overall_alert = failed > 0 or len(match_results) == 0 or timed_out
+                # Alert only on a genuine quality problem: one or more FAILs, or
+                # a timeout (unreachable is handled on the connect path). A run
+                # that found zero settled matches is a benign, non-alerting
+                # outcome -- a quiet day (off-season, no fixtures, or an empty
+                # window) is a normal state, not deficient data, so it exits
+                # zero and keeps the Rundeck run green (Req 7.7).
+                overall_alert = failed > 0 or timed_out
                 status = STATUS_TIMEOUT if timed_out else STATUS_COMPLETED
 
                 run_finished = datetime.now(UTC)
@@ -661,7 +666,7 @@ def check_quality(env_path: str = None, now=None, look_back_hours=None, threshol
                 if timed_out:
                     notes = f"run exceeded MAX_RUN_DURATION_S={MAX_RUN_DURATION_S}s"
                 elif len(match_results) == 0:
-                    notes = "no verifiable Completed_Matches in window"
+                    notes = "no settled matches in window"
 
                 _insert_run_row(
                     cursor,
@@ -777,19 +782,22 @@ def main() -> int:
 
     Runs :func:`check_quality`, prints a single readable run-summary line for the
     Rundeck output (surface (b)), and returns the exit code. The exit code is
-    driven by ``overall_alert`` from the result dict, which already encodes "any
-    FAIL / zero verified matches / unreachable / timeout" -- so a non-zero exit
-    is returned on any FAIL, an unreachable store, or zero verifiable matches
-    (Req 7.2, 7.3, 7.5, 7.7) and a zero exit when all verified matches pass
-    (Req 7.6). A SKIPPED run (a concurrent trigger while a prior run is still in
-    progress, Req 8.3) is not a data failure: ``check_quality`` sets its
-    ``overall_alert`` to ``False`` so the skip exits zero and does not turn the
-    Rundeck run red as though the data were deficient. The durable record lives
-    in the ``bf.quality_run`` / ``bf.quality_match_result`` tables, not stdout.
+    driven by ``overall_alert`` from the result dict, which encodes "any FAIL /
+    unreachable / timeout" -- so a non-zero exit is returned on any FAIL, an
+    unreachable store, or a timeout (Req 7.2, 7.3, 7.5) and a zero exit when all
+    verified matches pass (Req 7.6). A run that finds zero settled matches in the
+    window is a benign, non-alerting outcome -- a quiet day (off-season, no
+    fixtures, or an empty look-back window) is a normal state, not deficient
+    data -- so ``check_quality`` leaves its ``overall_alert`` ``False`` and the
+    run exits zero, keeping the Rundeck run green (Req 7.7). A SKIPPED run (a
+    concurrent trigger while a prior run is still in progress, Req 8.3) is
+    likewise not a data failure and exits zero. The durable record lives in the
+    ``bf.quality_run`` / ``bf.quality_match_result`` tables, not stdout.
 
     Returns:
-        ``0`` when the run raised no Quality_Alert (all-pass COMPLETED or a
-        SKIPPED run); ``1`` when ``overall_alert`` is set.
+        ``0`` when the run raised no Quality_Alert (all-pass COMPLETED, a
+        zero-match COMPLETED, or a SKIPPED run); ``1`` when ``overall_alert`` is
+        set.
     """
     result = check_quality()
 

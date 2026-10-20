@@ -95,9 +95,9 @@ sequenceDiagram
         W->>L: build_report(results)
         W->>R: INSERT one bf.quality_run row (this run_id)
         W->>R: INSERT one bf.quality_match_result row per match
-        alt any FAIL or zero matches
+        alt any FAIL
             W-->>RD: Quality_Alert, non-zero exit (overall_alert=true)
-        else all PASS
+        else all PASS or zero matches
             W-->>RD: zero exit (no alert)
         end
     end
@@ -267,9 +267,10 @@ def check_quality(env_path=None, now=None, look_back_hours=None,
     per match, and prune rows older than RETENTION_DAYS (Req 7.4)."""
 def main() -> int:
     """Print a one-line run summary to stdout (Rundeck output); non-zero exit on any
-    FAIL / unreachable / zero-matches (Req 7.2, 7.3, 7.5, 7.7); zero exit when all
-    pass (Req 7.6). The durable record lives in the bf.quality_run /
-    bf.quality_match_result tables, not stdout."""
+    FAIL / unreachable / timeout (Req 7.2, 7.3, 7.5); zero exit when all pass
+    (Req 7.6) and when zero settled matches are found (Req 7.7, revised by
+    SP-344 — a quiet day is benign, not a failure). The durable record lives in
+    the bf.quality_run / bf.quality_match_result tables, not stdout."""
 ```
 
 Query shape (read-only): select settled targets in the window, then their market rows:
@@ -620,7 +621,7 @@ Each run is keyed by its own `run_id` (uuid) and owns its own `bf.quality_run` r
 - **Single-run lock / concurrent trigger skip (Req 8.3).** On start, the wrapper acquires an exclusive lock via `LOCK_FILE = ".quality_run.lock"`. If the lock is already held (a prior run is still in progress), the new invocation records a "skipped due to in-progress execution" indication (a `bf.quality_run` row with `status = 'SKIPPED'` when a connection is available, otherwise a log line) and exits without touching the running instance or its rows. The lock is released on normal completion and via a cleanup handler on abnormal termination.
 - **Maximum run duration 3600s (Req 8.4).** The run is bounded by `MAX_RUN_DURATION_S = 3600`. If it fails to start or does not complete within that limit, an error indication identifying the timed-out run is recorded (a `bf.quality_run` row with `status = 'TIMEOUT'` where a connection is available), the in-flight run is abandoned without corrupting the durable record, and prior successful runs' rows are preserved — since every run's rows are keyed by a distinct `run_id`, a partial run never rewrites another run's rows.
 - **Per-match not-evaluated handling (Req 2.5, 6.5).** A failure to evaluate a single match (for example, its row-count query cannot complete) does not abort the run. That match's affected dimension is recorded as `NOT_EVALUATED` with the affected `target_id`/`market_id`, any prior result for that target is preserved without being overwritten, and `aggregate_match` sets that match's `overall = FAIL` (Property 7). Every other selected Completed_Match is still evaluated (Req 1.6 applies the same isolation when a target has no rows).
-- **Exit-code behaviour (Req 7.3, 7.6, 7.7).** `main()` returns: non-zero when any match FAILs or when the run is unreachable, within 5 seconds of the `bf.quality_run` row being written (Req 7.3); zero when all verified matches PASS (Req 7.6); and non-zero with a "no matches found" Quality_Alert when zero verifiable matches are found (Req 7.7). A run that raises a Quality_Alert records `overall_alert = true` on its `bf.quality_run` row; an all-pass run records `overall_alert = false`. The zero-verified case per Req 1.4 is distinct: it is treated as the Req 7.7 alerting path (a run that found nothing to check is surfaced), consistent with the control-flow diagram.
+- **Exit-code behaviour (Req 7.3, 7.6, 7.7; revised by SP-344).** `main()` returns: non-zero when any match FAILs, when the run is unreachable, or on a timeout, within 5 seconds of the `bf.quality_run` row being written (Req 7.3); and zero when all verified matches PASS (Req 7.6). A run that finds zero verified Completed_Matches exits **zero** and does **not** raise a Quality_Alert (Req 7.7, as revised): a quiet day with no settled matches (off-season, no fixtures, or an empty look-back window) is a normal state, not deficient data, and is now consistent with Req 1.4. It still records a durable `bf.quality_run` row (`status = COMPLETED`, `overall_alert = false`, note `"no settled matches in window"`) so the empty run remains visible in the report. A run that raises a Quality_Alert records `overall_alert = true` on its `bf.quality_run` row; an all-pass or zero-match run records `overall_alert = false`. (SP-344: the original wording treated zero-verified as the alerting path, which conflated "found nothing to check" with "found deficient data" and turned the daily Rundeck run red on every quiet day.)
 
 ## Testing Strategy
 
