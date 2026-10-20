@@ -1,0 +1,26 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: 3e356e23-837b-4408-8ff9-d1a6da7cdcdd
+  loglevel: INFO
+  name: Verify Fresh Data
+  nodeFilterEditable: false
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '11'
+      minute: '00'
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - exec: docker compose --project-directory /usr/local/bf_trader_py run --rm bf_capture
+        python scripts/check_freshness.py
+    keepgoing: false
+    strategy: node-first
+  uuid: 3e356e23-837b-4408-8ff9-d1a6da7cdcdd
