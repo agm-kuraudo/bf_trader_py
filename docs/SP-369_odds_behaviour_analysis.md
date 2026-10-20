@@ -201,7 +201,7 @@ mistaken for a bug.
 ```bash
 # On the Pi (data is there):
 cd /usr/local/bf_trader_py
-git checkout SP-369-exploratory-odds-analysis && git pull
+git checkout master && git pull
 .venv/bin/python -m pip install -r build/requirements.txt           # ensure deps
 .venv/bin/python scripts/build_research_dataset.py --out research_dataset.parquet
 .venv/bin/python scripts/explore_odds_behaviour.py --parquet research_dataset.parquet
