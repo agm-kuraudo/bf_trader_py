@@ -7,3 +7,10 @@ charts
 .venv
 .env
 .hypothesis
+
+# Research datasets are data snapshots, not code: large, perishable, and
+# rebuildable from the DB via scripts/build_research_dataset.py. Keep the data/
+# directory in the tree (.gitkeep) but never commit the artifacts.
+*.parquet
+/data/*
+!/data/.gitkeep
