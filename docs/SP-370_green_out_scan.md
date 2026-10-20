@@ -125,6 +125,37 @@ of 0.7 scope.
   (volume/size capture) first — without liquidity you cannot tell a real
   green-out from a priced mirage.
 
+## 5. Future work / revisit conditions
+
+The NOT-VIABLE verdict is correct *for the current data and capture*. Three
+follow-ups capture what would be needed to revisit it, and under what conditions
+it would be worth doing. They are in the backlog (no fixVersion, labelled
+`backlog-unplanned`), to be slotted at refinement.
+
+- **SP-396 — Capture all runners' odds in a coherent per-poll snapshot.** The
+  lynchpin. Today each outcome is captured at its own instant, so the book is an
+  as-of forward-fill; that is benign pre-match but fabricates impossible sub-1.0
+  books in-play. Fixing capture to record all runners together removes the
+  artifacts and is a hard prerequisite for any in-play assessment.
+- **SP-397 — Re-assess pre-match green-out viability with volume + coherent
+  snapshots.** Blocked by SP-396 and SP-384 (volume). More *matches* won't
+  change the economics of a single liquid exchange, but real **liquidity/size**
+  data would tell us whether the rare ~0.13% pre-match flags had any matchable
+  size behind them (most green-outs die on size), and coherent snapshots remove
+  the stale-leg noise.
+- **SP-398 — Assess in-play green-out possibilities.** Blocked by SP-396 and
+  SP-384. In-play is currently *unmeasurable* (the forward-fill drowns any real
+  signal in artifacts). The open hypothesis: greater in-play volatility may open
+  brief, genuine cross-outcome dislocations. If any survive, the critical
+  questions are how long the window stays open and whether it needs low-latency
+  execution.
+
+A recurring theme across all three: if a real but rare opportunity exists, its
+value depends on a **live, always-on scanner** that acts the moment a window
+opens — which is execution infrastructure (1.0-era), not historical analysis.
+And none of it is worth doing before **SP-384** lands: without liquidity data,
+a priced green-out cannot be told apart from a priced mirage.
+
 ### How to reproduce
 
 ```bash
