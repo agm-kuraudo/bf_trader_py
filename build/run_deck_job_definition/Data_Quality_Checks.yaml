@@ -1,0 +1,26 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: d02509b1-8b1b-4a2e-ab7c-ea293bca7503
+  loglevel: INFO
+  name: Data Quality Checks
+  nodeFilterEditable: false
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '06'
+      minute: '00'
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - exec: docker compose --project-directory /usr/local/bf_trader_py run --rm bf_capture
+        python scripts/check_quality.py
+    keepgoing: false
+    strategy: node-first
+  uuid: d02509b1-8b1b-4a2e-ab7c-ea293bca7503

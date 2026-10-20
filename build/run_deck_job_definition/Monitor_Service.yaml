@@ -1,0 +1,26 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: eb847778-dd2c-409c-a8b3-4e85b00ea315
+  loglevel: INFO
+  name: Monitor Service
+  nodeFilterEditable: false
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    dayofmonth:
+      day: '*'
+    month: '*'
+    time:
+      hour: 11-23
+      minute: 0/15
+      seconds: '0'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - exec: docker compose --project-directory /usr/local/bf_trader_py run --rm bf_capture
+        python monitor_service.py
+    keepgoing: false
+    strategy: node-first
+  uuid: eb847778-dd2c-409c-a8b3-4e85b00ea315
