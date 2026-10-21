@@ -108,17 +108,12 @@ class RequestBody:
             template_str = json.dumps(template)
             # print("Template String:", template_str)  # Debugging line
 
+            # add_quotes is retained for backward-compatible call signatures but is no
+            # longer used: json.dumps renders every value type as the correct JSON token
+            # (str -> quoted+escaped string, list -> array, int/float/bool -> bare scalar),
+            # so a string market id can never be reparsed by json.loads as a float (SP-403).
             for key, value in replace_pairs.items():
-                if isinstance(value, list):
-                    value = json.dumps(value)
-                if add_quotes:
-                    template_str = template_str.replace(
-                        f'"{key}"', json.dumps(value) if not isinstance(value, str) else f'"{value}"'
-                    )
-                else:
-                    template_str = template_str.replace(
-                        f'"{key}"', value if isinstance(value, str) else json.dumps(value)
-                    )
+                template_str = template_str.replace(f'"{key}"', json.dumps(value))
 
             # print("Final Template String:", template_str)  # Debugging line
 

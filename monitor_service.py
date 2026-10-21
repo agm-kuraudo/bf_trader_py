@@ -205,9 +205,18 @@ class MonitorService:
                     )
                     Log.log_debug(resp)
                     json_resp = resp.json()
-                    status = json_resp["result"][0]["status"]
+                    result = json_resp.get("result")
+                    if not result:
+                        # Defence-in-depth (SP-403): a genuinely empty listRunnerBook result
+                        # must skip this runner, not abort the whole run via IndexError.
+                        Log.log_warning(
+                            f"listRunnerBook returned an empty result for market {target[2]} "
+                            f"runner {individual_runner}; skipping this runner"
+                        )
+                        continue
+                    status = result[0]["status"]
                     Log.log_debug(f"Market: {target[2]}, Runner: {individual_runner}, Status: {status}")
-                    odds = json_resp["result"][0]["runners"][0]["ex"]
+                    odds = result[0]["runners"][0]["ex"]
                     Log.log_debug(f"odds back: {odds}")
                     odds_str = json.dumps(odds) if not isinstance(odds, dict) else str(odds)
                     sql_command = 'INSERT INTO bf.market_table("timestamp", market_id, runner_id, odds) VALUES (current_timestamp, %s, %s, %s);'  # noqa: E501
