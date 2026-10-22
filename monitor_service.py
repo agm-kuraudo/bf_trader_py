@@ -210,7 +210,7 @@ class MonitorService:
                         # Defence-in-depth (SP-403): a genuinely empty listRunnerBook result
                         # must skip this runner, not abort the whole run via IndexError.
                         Log.log_warning(
-                            f"listRunnerBook returned an empty result for market {target[2]} "
+                            f"listRunnerBook returned an empty result for market {target[0]} "
                             f"runner {individual_runner}; skipping this runner"
                         )
                         continue
