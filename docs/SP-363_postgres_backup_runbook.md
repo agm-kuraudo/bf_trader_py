@@ -22,7 +22,7 @@
 ## TL;DR
 
 - A native Rundeck job on the Pi runs `pg_dump -Fc` of `bf_trader` **weekly**
-  and writes a timestamped dump into `/home/mypi/bf_backups` (SD-card root, OFF
+  and writes a timestamped dump into `/srv/bf_backups` (SD-card root, OFF
   the USB disk).
 - The Pi keeps **only the 3 most recent** dumps; older ones are pruned. Pruning
   runs **only after a validated, non-empty dump** (fail-closed).
@@ -69,12 +69,20 @@ prune existing dumps.
 All dumps are written under:
 
 ```
-/home/mypi/bf_backups
+/srv/bf_backups
 ```
 
 This is the **Backup_Share** — on the Pi's **SD-card root**, deliberately **NOT**
 on the USB-mounted `/mnt/data`, so that a USB-disk failure cannot destroy the
 backups. It is exposed over Samba as `[bf_backups]` (`valid users = mypi`).
+
+> **Relocated under SP-363.** SP-338 originally created the share at
+> `/home/mypi/bf_backups`, but the native Rundeck service runs as the `rundeck`
+> user, which cannot traverse `/home/mypi` (mode `700`). The share was therefore
+> moved to `/srv/bf_backups`, owned `rundeck:mypi` (setgid, group-writable), and
+> the Samba `[bf_backups]` share re-pointed there. It is still on the SD-card
+> root (off the USB), still served to `mypi` over Samba, so the Windows pull is
+> unchanged.
 
 Each dump (a **Dump_Artifact**) is a single compressed Postgres custom-format
 (`-Fc`) archive, named:

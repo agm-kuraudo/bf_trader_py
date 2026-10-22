@@ -4,7 +4,7 @@
     backup script scripts/pi_postgres_backup.sh, which performs
     `docker exec my_postgres pg_dump -Fc bf_trader`, writes a timestamped
     bf_trader_<UTC-timestamp>.dump into the off-USB Backup_Share
-    (/home/mypi/bf_backups), validates it, and only then prunes to the newest 3.
+    (/srv/bf_backups), validates it, and only then prunes to the newest 3.
 
     Assumptions (documented here as this feature's source of truth for the job):
       * Schedule: every SUNDAY at 03:00 Pi LOCAL time (the Rundeck server's

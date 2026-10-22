@@ -7,7 +7,7 @@
 # at its deployed path /usr/local/bf_trader_py/scripts/pi_postgres_backup.sh.
 #
 # What it does, in order (fail-closed throughout):
-#   1. Pre-flight: the Backup_Share (/home/mypi/bf_backups) must exist and be
+#   1. Pre-flight: the Backup_Share (/srv/bf_backups) must exist and be
 #      writable, AND the SD-card root it lives on must have at least the
 #      configured minimum free space. If not, ABORT before writing anything and
 #      exit non-zero WITHOUT invoking retention (Req 4.1).
@@ -46,8 +46,11 @@ readonly EXIT_RETENTION_FAILED=23   # retention executor reported a problem (Req
 # Repo deployed location on the Pi (matches the SP-328 deploy + the Rundeck job).
 REPO_DIR="${REPO_DIR:-/usr/local/bf_trader_py}"
 
-# The off-USB Backup_Share on the SD-card root (SP-338). NEVER /mnt/data.
-BACKUP_SHARE="${BACKUP_SHARE:-/home/mypi/bf_backups}"
+# The off-USB Backup_Share on the SD-card root. NEVER /mnt/data.
+# Created under SP-338 at /home/mypi/bf_backups; relocated under SP-363 to
+# /srv/bf_backups (group-shared rundeck:mypi) so the Rundeck service user can
+# traverse to it (it cannot enter /home/mypi, which is mode 700).
+BACKUP_SHARE="${BACKUP_SHARE:-/srv/bf_backups}"
 
 # Minimum free space (in MiB) required on the filesystem holding the
 # Backup_Share before a dump is attempted. Pre-flight aborts below this (Req 4.1).
