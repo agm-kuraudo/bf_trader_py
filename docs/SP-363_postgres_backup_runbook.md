@@ -184,8 +184,8 @@ dev machine for local development and data-analysis work.
    (a `bf_trader_<UTC-timestamp>.dump` pulled by §4).
 4. Restore it with `pg_restore --clean --if-exists` into the local dev DB, e.g.:
    ```bash
-   pg_restore --clean --if-exists --no-owner \
-     -h localhost -U <dev-user> -d bf_trader \
+   pg_restore --clean --if-exists --no-owner --disable-triggers \
+     -U postgres -d bf_trader \
      bf_trader_<UTC-timestamp>.dump
    ```
    (`--clean --if-exists` drops existing objects before recreating them, so it
@@ -239,25 +239,63 @@ canonical place the restore-time handling is documented.
 
 ## 7. Restore rehearsal outcome
 
-> **PLACEHOLDER — to be filled in by SP-363 task 7 (the one-time restore
-> rehearsal).** Do not treat the restore path as proven until this section is
-> completed.
-
-- **Outcome:** _TBD — PASS / FAIL_ `<placeholder>`
-- **Date:** _TBD_ `<placeholder>`
-- **Dump restored:** _TBD — `bf_trader_<UTC-timestamp>.dump`_ `<placeholder>`
-- **Continuous-aggregate handling applied:** _TBD — note any extra refresh/fix
-  steps that were required (see §6)_ `<placeholder>`
-- **Notes / errors (if FAIL):** _TBD_ `<placeholder>`
+- **Outcome:** **PASS** — the dump restored end-to-end into the local dev
+  TimescaleDB and reproduced the source faithfully.
+- **Date:** 2026-10-22
+- **Dump restored:** `bf_trader_20261022T160005Z.dump` (1,239,866 bytes,
+  `PostgreSQL custom database dump - v1.15-0`), produced by the first real
+  Rundeck run on the Pi and pulled off-Pi to the Windows durable store.
+- **Restore command used:**
+  `pg_restore --clean --if-exists --no-owner --disable-triggers -U postgres -d bf_trader /tmp/restore.dump`
+  (run inside the local dev `my_postgres` container after `docker cp` of the dump).
+- **Continuous-aggregate handling applied:** the dump emitted a circular
+  foreign-key warning on the `_timescaledb_catalog` tables at dump time (the
+  Continuous_Aggregate_Caveat, §6). `--disable-triggers` was used on restore to
+  load those catalog tables without the circular-FK checks blocking the load.
+  No continuous aggregates actually exist in `bf_trader` yet (see §8), so no
+  `refresh_continuous_aggregate` step was needed — the catalog tables restored
+  clean and empty, matching the source.
+- **Notes:** the restore targeted the operator's persistent local dev
+  TimescaleDB (identical image `timescale/timescaledb:latest-pg16` to the Pi),
+  overwriting its prior (empty) `bf` tables, per explicit operator confirmation.
+  The Pi's production `my_postgres` was not touched.
 
 ---
 
 ## 8. Verification evidence
 
-> **PLACEHOLDER — to be filled in by SP-363 task 7.** Record the evidence
-> gathered in §5 step 6 here once the rehearsal has been run.
+Evidence captured from the restored local dev `bf_trader` on 2026-10-22,
+compared against the live source on the Pi.
 
-- **Per-restored-object counts:** _TBD_ `<placeholder>`
-- **Per-table row counts:** _TBD_ `<placeholder>`
-- **MAX(timestamp) per time-series table:** _TBD_ `<placeholder>`
-- **Continuous-aggregate row counts / MAX(timestamp):** _TBD_ `<placeholder>`
+- **Per-restored-object counts (restored local dev, `bf` schema):** 6 tables;
+  0 indexes; 0 constraints; 0 sequences. This matches the source Pi DB, which
+  also has no indexes/constraints/sequences on `bf` (the `bf` tables are plain
+  tables — a schema observation, not a restore defect).
+- **Per-table row counts (restored vs source Pi):**
+
+  | Table | Restored (local dev) | Source (Pi, live) |
+  |---|---|---|
+  | `market_table` | 35,287 | 35,287 |
+  | `log_file` | 4,408 | 4,414 |
+  | `target` | 54 | 54 |
+  | `betfair_object_ids` | 3 | — |
+  | `quality_run` | 38 | — |
+  | `quality_match_result` | 49 | — |
+
+  `market_table` and `target` match exactly. `log_file` differs by 6 rows
+  because the live Pi kept logging after the 16:00 dump was taken; the restored
+  copy correctly matches the dump's point-in-time, not the later live state.
+- **MAX(timestamp) per time-series table (restored local dev):**
+  - `bf.market_table.timestamp` = `2026-10-22 14:15:35.447103+00`
+  - `bf.log_file.timestamp` = `2026-10-22 15:45:02.106376+00`
+  - `bf.target.start_time` = `2026-10-24 16:30:00+00` (forward-dated scheduled targets)
+  All consistent with a dump taken at `2026-10-22T16:00:05Z`.
+- **Continuous-aggregate row counts / MAX(timestamp):** none present —
+  `timescaledb_information.hypertables` and
+  `timescaledb_information.continuous_aggregates` both return 0 rows in the
+  restored DB **and** in the source Pi DB. The TimescaleDB extension is
+  installed and its `_timescaledb_catalog` tables restored (empty), but no
+  hypertables or continuous aggregates have been created in `bf_trader` yet, so
+  there was nothing to rematerialize. The Continuous_Aggregate_Caveat handling
+  (`--disable-triggers`) is retained in the documented procedure so it is
+  already in place for when continuous aggregates are added.

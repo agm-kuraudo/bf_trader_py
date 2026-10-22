@@ -125,6 +125,16 @@
         "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
         "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
         "timestamp": 1792679057143
+      },
+      {
+        "executionId": "644e4b62-5433-49a2-8dd3-a513005e6b15",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792684861208
+      },
+      {
+        "executionId": "644e4b62-5433-49a2-8dd3-a513005e6b15",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792684864597
       }
     ],
     "6.2 Verify the Windows pull end-to-end against the live share": [
@@ -132,6 +142,16 @@
         "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
         "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
         "timestamp": 1792679057224
+      },
+      {
+        "executionId": "e5347b22-faeb-4b09-9c7a-ca5e66398460",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792687325262
+      },
+      {
+        "executionId": "e5347b22-faeb-4b09-9c7a-ca5e66398460",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792687330095
       }
     ],
     "7.1 Restore a scheduled dump into the Local_Dev_TimescaleDB and verify": [
@@ -139,6 +159,16 @@
         "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
         "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
         "timestamp": 1792679057290
+      },
+      {
+        "executionId": "e4f004a6-f0ce-4ba2-87d4-60876aa33e3f",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792687383823
+      },
+      {
+        "executionId": "6809a13a-083f-4d12-b61f-6b0636ebcd3e",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792687569458
       }
     ],
     "8.1 Run the repo's lint, format, and full test gate": [
@@ -198,6 +228,20 @@
         "executionId": "5f4051f2-0ab7-4040-aaeb-21ca49ce495c",
         "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
         "timestamp": 1792680710614
+      }
+    ],
+    "6. Deploy and verify the backup job on the Pi (Definition of Done for deployable work)": [
+      {
+        "executionId": "e5347b22-faeb-4b09-9c7a-ca5e66398460",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792687330168
+      }
+    ],
+    "7. Perform the one-time restore rehearsal and record evidence": [
+      {
+        "executionId": "6809a13a-083f-4d12-b61f-6b0636ebcd3e",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792687569608
       }
     ]
   }

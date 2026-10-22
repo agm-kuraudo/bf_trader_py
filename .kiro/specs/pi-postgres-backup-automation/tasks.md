@@ -89,8 +89,8 @@ Build order: first the pure, testable retention core and its tests, then the Pi-
     - Cite SP-338 only as the origin of the Backup_Share and the original Continuous_Aggregate_Caveat knowledge, with no other scope attributed to SP-338.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.7, 6.9, 6.10_
 
-- [ ] 6. Deploy and verify the backup job on the Pi (Definition of Done for deployable work)
-  - [~] 6.1 Deploy the backup script and Rundeck job to the Pi and verify a real run
+- [x] 6. Deploy and verify the backup job on the Pi (Definition of Done for deployable work)
+  - [x] 6.1 Deploy the backup script and Rundeck job to the Pi and verify a real run
     - Sync `scripts/pi_postgres_backup.sh` and `scripts/backup_retention.py` to the Pi and import/enable the Rundeck Backup_Job (via the project deploy mechanism / Rundeck import).
     - Trigger the job on demand and confirm: a new non-empty, correctly named `bf_trader_<UTC-timestamp>.dump` appears under `/home/mypi/bf_backups` and nothing is written to `/mnt/data`; the Rundeck run shows success with log and duration.
     - Seed the share with 4+ dummy pattern-matching dumps, run retention, and confirm exactly the newest 3 remain and only pattern-matching files were touched.
@@ -99,14 +99,14 @@ Build order: first the pure, testable retention core and its tests, then the Pi-
     - **Properties 1, 2, 3, 4** (observed end-to-end on the Pi)
     - _Requirements: 1.1, 1.3, 2.1, 3.1, 3.2, 4.1_
 
-  - [~] 6.2 Verify the Windows pull end-to-end against the live share
+  - [x] 6.2 Verify the Windows pull end-to-end against the live share
     - Run `scripts/pull_pi_backups.ps1` against the Pi share: confirm new dumps are copied, sizes match the source, and a second run copies nothing new (idempotence). Confirm no Pi-side artifact is modified.
     - Record the observed outcomes.
     - **Properties 5, 6**
     - _Requirements: 2.2, 2.3, 2.5, 2.7_
 
-- [ ] 7. Perform the one-time restore rehearsal and record evidence
-  - [~] 7.1 Restore a scheduled dump into the Local_Dev_TimescaleDB and verify
+- [x] 7. Perform the one-time restore rehearsal and record evidence
+  - [x] 7.1 Restore a scheduled dump into the Local_Dev_TimescaleDB and verify
     - Only after explicitly confirming it is acceptable to overwrite the current Local_Dev_TimescaleDB data, restore exactly one scheduled Dump_Artifact into the running Local_Dev_TimescaleDB with `pg_restore --clean --if-exists`, applying the Continuous_Aggregate_Caveat from the runbook. Do not touch the Pi's production `my_postgres`.
     - On restore error, record a did-not-complete failure outcome in the runbook; on success, record per-restored-object counts, per-table row counts, and MAX timestamp checks for time-series tables, plus the rehearsal pass/fail outcome and date, into `docs/SP-363_postgres_backup_runbook.md` (filling the task 5.1 placeholders).
     - **Property 7: Restorability**
