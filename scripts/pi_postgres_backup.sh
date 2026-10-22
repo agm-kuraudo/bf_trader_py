@@ -11,7 +11,7 @@
 #      writable, AND the SD-card root it lives on must have at least the
 #      configured minimum free space. If not, ABORT before writing anything and
 #      exit non-zero WITHOUT invoking retention (Req 4.1).
-#   2. Dump:  docker exec my_postgres pg_dump -Fc bf_trader  ->  a new
+#   2. Dump:  docker exec my_postgres pg_dump -U postgres -Fc bf_trader  ->  a new
 #      bf_trader_<UTC-timestamp>.dump under the Backup_Share. The name uses a
 #      fixed-width, lexicographically sortable UTC timestamp YYYYMMDDThhmmssZ
 #      (Req 1.1, 1.2). Dumps are NEVER written onto /mnt/data (Req 2.1).
@@ -60,6 +60,9 @@ MIN_FREE_MB="${MIN_FREE_MB:-500}"
 # `my_postgres`.
 PG_CONTAINER="${PG_CONTAINER:-my_postgres}"
 PG_DATABASE="${PG_DATABASE:-bf_trader}"
+# Postgres role to connect as. docker exec has no $PGUSER set, so pg_dump would
+# otherwise default to the exec OS user (root), which is not a Postgres role.
+PG_USER="${PG_USER:-postgres}"
 
 # Retention executor: the venv Python running scripts/backup_retention.py.
 # Prefer the project virtualenv python, fall back to python3 (mirrors deploy.sh).
@@ -148,7 +151,7 @@ run_dump() {
     # on, but we also disable -e around the redirect so we can clean up on failure).
     local dump_rc=0
     set +e
-    docker exec "${PG_CONTAINER}" pg_dump -Fc "${PG_DATABASE}" > "${DUMP_PATH}"
+    docker exec "${PG_CONTAINER}" pg_dump -U "${PG_USER}" -Fc "${PG_DATABASE}" > "${DUMP_PATH}"
     dump_rc=$?
     set -e
 
