@@ -1,0 +1,54 @@
+- defaultTab: nodes
+  description: |
+    SP-363 Pi Postgres Backup. Weekly native Rundeck job that runs the Pi-side
+    backup script scripts/pi_postgres_backup.sh, which performs
+    `docker exec my_postgres pg_dump -Fc bf_trader`, writes a timestamped
+    bf_trader_<UTC-timestamp>.dump into the off-USB Backup_Share
+    (/srv/bf_backups), validates it, and only then prunes to the newest 3.
+
+    Assumptions (documented here as this feature's source of truth for the job):
+      * Schedule: every SUNDAY at 03:00 Pi LOCAL time (the Rundeck server's
+        timezone, same as the other SP-328 jobs in this folder). Sunday 03:00
+        is a low-activity weekly window; change `schedule.weekday.day` /
+        `schedule.time` to re-point it.
+      * Deployed script path on the Pi: /usr/local/bf_trader_py/scripts/pi_postgres_backup.sh
+        (the repo is checked out at /usr/local/bf_trader_py, matching the
+        SP-328 jobs' --project-directory). The script is authored in task 2.3;
+        this job only references its deployed path.
+      * The script runs on the Pi HOST (not inside the bf_capture container) so
+        it can reach the host Docker socket (docker exec my_postgres) and the
+        host Backup_Share. It therefore does NOT use `docker compose run` like
+        the capture jobs.
+
+    Failure/visibility semantics (Req 1.3, 1.4, 1.5, 1.6, 4.5):
+      * keepgoing: false and a non-zero script exit mark the Rundeck run FAILED.
+      * Rundeck run history records outcome (success/failure), full log output,
+        and run duration for every run.
+      * A missed scheduled run (job did not fire) is identifiable as a
+        non-success result in run history (no success record for that window).
+      * The script fails closed: a non-zero pg_dump exit, a zero-byte dump, or
+        an unwritable/low-space Backup_Share aborts without pruning, so a bad
+        run is marked failed and never deletes a good dump (Req 4.4).
+  executionEnabled: true
+  id: d894d7a3-9a3a-4878-b7d2-ef1975a24bea
+  loglevel: INFO
+  name: Postgres Backup
+  nodeFilterEditable: false
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '03'
+      minute: '00'
+      seconds: '0'
+    weekday:
+      day: SUN
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - exec: /usr/local/bf_trader_py/scripts/pi_postgres_backup.sh
+    keepgoing: false
+    strategy: node-first
+  uuid: d894d7a3-9a3a-4878-b7d2-ef1975a24bea
