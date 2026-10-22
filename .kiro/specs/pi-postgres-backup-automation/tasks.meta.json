@@ -1,0 +1,204 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create the retention selection module": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679056504
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679064341
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679170401
+      }
+    ],
+    "2.1 Add the delete-executor around the retention core": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679056630
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679175536
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679383822
+      }
+    ],
+    "2.3 Create the Pi backup script invoked by Rundeck": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679056705
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679406766
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679969670
+      }
+    ],
+    "3.1 Author the Rundeck job definition": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679056828
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679176583
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679385226
+      }
+    ],
+    "4.1 Create the PowerShell pull script": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679056909
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679177515
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679387133
+      }
+    ],
+    "4.2 Create the Windows Task Scheduler registration": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679056982
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679407718
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679970638
+      }
+    ],
+    "5.1 Write `docs/SP-363_postgres_backup_runbook.md`": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679057060
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679178484
+      },
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679386206
+      }
+    ],
+    "6.1 Deploy the backup script and Rundeck job to the Pi and verify a real run": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679057143
+      }
+    ],
+    "6.2 Verify the Windows pull end-to-end against the live share": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679057224
+      }
+    ],
+    "7.1 Restore a scheduled dump into the Local_Dev_TimescaleDB and verify": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679057290
+      }
+    ],
+    "8.1 Run the repo's lint, format, and full test gate": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679057358
+      },
+      {
+        "executionId": "5f4051f2-0ab7-4040-aaeb-21ca49ce495c",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792680573674
+      },
+      {
+        "executionId": "5f4051f2-0ab7-4040-aaeb-21ca49ce495c",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792680710477
+      }
+    ],
+    "1. Implement the pure keep-last-3 retention selection core (Python, testable)": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679170492
+      }
+    ],
+    "3. Define the native Rundeck Backup_Job (weekly schedule)": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679385356
+      }
+    ],
+    "5. Author the canonical in-repo runbook": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679386296
+      }
+    ],
+    "2. Implement the Pi-side backup + retention orchestration": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679969808
+      }
+    ],
+    "4. Implement the Windows-side pull task (off-Pi retention)": [
+      {
+        "executionId": "c862e628-0a33-4716-800c-02402d3896ed",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792679970743
+      }
+    ],
+    "8. Final verification gate (single end-of-feature gate)": [
+      {
+        "executionId": "5f4051f2-0ab7-4040-aaeb-21ca49ce495c",
+        "chatSessionId": "sess_69b4008a-985b-4332-beb2-7f79d6cfc292",
+        "timestamp": 1792680710614
+      }
+    ]
+  }
+}
