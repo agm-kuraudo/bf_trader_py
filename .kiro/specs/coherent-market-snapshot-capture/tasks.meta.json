@@ -1,0 +1,270 @@
+{
+  "pbtResults": {
+    "1.2 Write property test for the blob builder (matched-volume round-trip)": {
+      "status": "passed",
+      "lastRunTimestamp": 1792851435312
+    },
+    "4.5 Write property test for per-market write atomicity": {
+      "status": "passed",
+      "lastRunTimestamp": 1792851884970
+    }
+  },
+  "executionHistory": {
+    "1.1 Implement the per-runner Odds_Blob builder helper in `monitor_service.py`": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851220513
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851230149
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851317744
+      }
+    ],
+    "1.2 Write property test for the blob builder (matched-volume round-trip)": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222028
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851324836
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851451634
+      }
+    ],
+    "2.1 Implement the per-market row-assembler helper in `monitor_service.py`": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222166
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851325684
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851452547
+      }
+    ],
+    "2.2 Write property test for the row assembler (coherent snapshot)": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222279
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851464113
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851548989
+      }
+    ],
+    "3. Checkpoint - pure helpers complete": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222477
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851560495
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851563462
+      }
+    ],
+    "4.1 Replace the per-runner loop with one `listMarketBook` call per market": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222576
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851572374
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851708634
+      }
+    ],
+    "4.2 Build the single atomic multi-row INSERT and write the snapshot": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222681
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851577494
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851710084
+      }
+    ],
+    "4.3 Preserve the `bf.target` tier-update tail": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222838
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851578900
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851710991
+      }
+    ],
+    "4.4 Add per-market error isolation and retain the outer backstop": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851222976
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851579939
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851712139
+      }
+    ],
+    "4.5 Write property test for per-market write atomicity": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851223073
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851715944
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851904827
+      }
+    ],
+    "5. Checkpoint - writer rewired": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851223171
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851909782
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851914306
+      }
+    ],
+    "6.1 Write property test: emitted blobs accepted by the unchanged loader": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851223262
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851917772
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792852006775
+      }
+    ],
+    "7. Final verification gate (local)": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851223360
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792852011360
+      },
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792852168722
+      }
+    ],
+    "8. Deploy to the Pi and verify (Definition of Done close-out)": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851223455
+      }
+    ],
+    "1. Extract the pure blob-builder helper (matched-volume mapping)": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851451772
+      }
+    ],
+    "2. Extract the pure row-assembler helper (coherent snapshot)": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851549133
+      }
+    ],
+    "4. Rewire `update_runner_odds` to the per-market snapshot model": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792851904955
+      }
+    ],
+    "6. Guard the no-loader-change contract": [
+      {
+        "executionId": "eb604e17-e520-469a-b230-dc845824f0ae",
+        "chatSessionId": "sess_2e15bc50-2da7-4065-bce5-ee6da5b92ab2",
+        "timestamp": 1792852006944
+      }
+    ]
+  }
+}
