@@ -61,6 +61,40 @@ runtime-critical files still ship. (The `charts/` dir has the same latent
 pattern for `analyse_service.py`, but that is not in the capture deploy path —
 the research scripts build their own `charts_dir`.)
 
+### Second regression fixed: `.env` must be bind-mounted, not baked in
+
+Next deploy got past `log/` but crashed with:
+
+```
+api.auth.dotenv_loader.ConfigurationException: env file not found: /app/.env
+```
+
+`api/auth/dotenv_loader.DotenvLoader` reads the `.env` **file** at `/app/.env`
+via `dotenv_values()` — it does **not** read environment variables. So the
+compose `env_file:` directive (which only sets env vars) never fed the app; the
+app had **always** needed the `.env` file physically at `/app/.env`, and the
+only reason it worked before was that the old "copy everything" build **baked
+`.env` — secrets and all — into the image**. The SP-294 `.dockerignore`
+correctly stopped shipping `.env`, which exposed this.
+
+This is a security improvement, not just a bug: secrets no longer live in image
+layers. The fix keeps `.env` out of the image and bind-mounts the host copy
+read-only at runtime, in `docker-compose.yml`:
+
+```yaml
+    volumes:
+      - ./.env:/app/.env:ro
+```
+
+Compose applies this to both the recreate (`up -d --build`) and the ephemeral
+`run --rm` capture, so the scheduled Rundeck runs get it too.
+
+**Verified on the Pi** (via a `docker-compose.override.yml` carrying the mount
+while iterating, then folded into the tracked compose): a `docker compose run
+--rm bf_capture python monitor_service.py` cycle found `/app/.env`, connected,
+authenticated and logged **"Ending run successfully"** (0 targets due — a valid
+pass per `verify_deploy.py`).
+
 ## 2. Pi Docker debris — mostly already cleared; residual pruned
 
 State when picked up (read-only `docker` checks on the Pi) vs. the ticket's

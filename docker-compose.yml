@@ -26,8 +26,19 @@ services:
     # without change during the rebuild-not-repair cut-over.
     container_name: bf_monitor_service
     # Secrets and DB connection details come from the host .env (Req 7.5).
+    #
+    # SP-294: api.auth.dotenv_loader.DotenvLoader reads the .env FILE at
+    # /app/.env (via dotenv_values), NOT environment variables — so the app
+    # needs the file present in the container, not just env vars. Previously it
+    # only worked because the old "copy everything" build baked .env (secrets)
+    # into the image; the SP-294 .dockerignore correctly stopped shipping .env.
+    # Bind-mount the host .env read-only into the container so secrets stay on
+    # the host and out of the image. env_file is kept for any tooling that reads
+    # env vars, but the bind mount is what DotenvLoader actually consumes.
     env_file:
       - .env
+    volumes:
+      - ./.env:/app/.env:ro
     # Capture is a per-schedule batch job: it runs one cycle then exits, so we
     # must NOT auto-restart it (that would loop it continuously). Rundeck is the
     # scheduler (Req 3).
