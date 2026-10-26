@@ -28,9 +28,38 @@ ship** — this was the main risk:
 - `config/strategy.yaml` — loaded by `logic/simpleStategy.py` at runtime.
 - `build/requirements.txt` — the Dockerfile's first `COPY`.
 
-…and that `.venv`, `.git`, caches, `tests/`, `docs/`, `charts/`, `log/` and
-`.env` are **excluded**. The host `.env` is deliberately excluded (secrets are
-injected at run time via compose `env_file`, not baked into the image).
+…and that `.venv`, `.git`, caches, `tests/`, `docs/`, `charts/` and `.env` are
+**excluded**. The host `.env` is deliberately excluded (secrets are injected at
+run time via compose `env_file`, not baked into the image).
+
+### Regression fixed post-merge: the `log/` directory must ship
+
+First deploy after merge failed post-deploy verification. The capture crashed on
+startup with:
+
+```
+FileNotFoundError: '/app/output/../log/runlog261026.log'
+```
+
+`output/log.py` writes `log/runlogYYMMDD.log` via `open(..., "a+")`, which does
+**not** create missing parent directories. The original `.dockerignore`
+excluded `log/` wholesale, so `/app/log/` did not exist in the image and the
+logger crashed before any Monitor cycle ran. The old "ship everything" build had
+masked this because the local `log/` directory was always copied in.
+
+Fix: ship the (empty) `log/` **directory** but not its stale local `*.log`
+files — exclude the contents and re-include a placeholder:
+
+```
+log/*
+!log/.gitkeep
+```
+
+Added `log/.gitkeep`. Verified in a rebuilt audit image that `/ctx/log/` exists
+with only `.gitkeep` (no stale logs), while `.venv`/`.git` stay excluded and the
+runtime-critical files still ship. (The `charts/` dir has the same latent
+pattern for `analyse_service.py`, but that is not in the capture deploy path —
+the research scripts build their own `charts_dir`.)
 
 ## 2. Pi Docker debris — mostly already cleared; residual pruned
 

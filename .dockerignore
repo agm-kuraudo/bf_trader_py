@@ -52,7 +52,13 @@ tests/
 docs/
 README.md
 charts/
-log/
+# The log/ DIRECTORY must exist in the image: output/log.py writes
+# log/runlogYYMMDD.log with open(..., "a+"), which does NOT create missing
+# parent dirs — a missing log/ crashes the capture service on startup. So ship
+# the (empty) directory via a kept placeholder, but exclude the stale local
+# *.log files from the build context.
+log/*
+!log/.gitkeep
 output/*.log
 data/
 build/run_deck_data/
