@@ -62,11 +62,15 @@ for comp in myComps:
 # db_connection.db_write_log("Competitions: {}".format(myComps))
 Log.log_info("##############    Step 3 Complete", force_console_log=True)
 
-# Step 4 : Extract the events matching our competition and event types
+# Step 4 : Extract the events matching our competition and event types.
+#
+# SP-446: get_events() returns the list AFTER the MIN/MAX-day window filter, so an
+# EMPTY list here is a legitimate, expected outcome (no fixtures fall inside the
+# configured window today) — NOT a failure. get_events() logs which zero case it is
+# (no raw events at all vs. all filtered out). We therefore do NOT error on an empty
+# list; the "nothing to do" decision is made once, at step 5 below. (The old
+# `== 0` guard only ever caught the legacy int sentinel and never an empty list.)
 myEvents = BF.get_events()
-if myEvents == 0:
-    db_connection.db_write_log("Failed at step 4 - no events")
-    raise BFDriverException("Failed at step 4 - no events")
 
 # db_connection.db_write_log("myEvents: {}".format(myEvents))
 Log.log_info("##############    Step 4 Complete", force_console_log=True)
@@ -77,11 +81,23 @@ for event in myEvents:
     Log.log_info(f"Event: {event.name}")
 
 # Step 5: Get the correct markets associated with these events.
-
+#
+# SP-446: zero targets is an EXPECTED, successful outcome. Date windowing is done in
+# our own code (BFDriver.filter_events), not the listEvents API, so "no targets" simply
+# means nothing falls inside the configured MIN-MAX day window right now (e.g. a morning
+# run when the week's fixtures are still just outside the window) — the filter did its
+# job. The old code raised and exited non-zero, which made Rundeck report a failure and
+# looked like the capture stack was broken when there was simply nothing to target. Log
+# it clearly and end the run SUCCESSFULLY (exit 0) instead of raising. (Config-level
+# problems still surface earlier: steps 2-3 error if the configured sport/competitions
+# return nothing from the API; get_events logs the raw-empty vs filtered-empty cases.)
 myTargets = BF.get_target_markets(myEvents)
 if len(myTargets) == 0:
-    db_connection.db_write_log("Target Service: ERROR : Ending Run : Failed at step 5 - no targets")
-    raise BFDriverException("Failed at step 5 - no targets")
+    msg = "Target Service: INFO : Ending run : 0 targets in the configured window — nothing to capture right now."
+    db_connection.db_write_log(msg)
+    Log.log_info(msg, force_console_log=True)
+    Log.log_info("##############    Step 5 Complete (0 targets)", force_console_log=True)
+    raise SystemExit(0)
 Log.log_info(f"{len(myTargets)} Targets identified")
 Log.log_debug(myTargets[0].my_market.runners)
 

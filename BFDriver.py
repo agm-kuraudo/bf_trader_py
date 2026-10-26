@@ -184,10 +184,35 @@ class BFDriver:
         )
 
         # Log.log_debug(df.info())
-        # This return statement calls the "fiter_events" method also contained in this class remove events outside the
-        # required timeline and those which already have an active position open. It also uses slicing to cut down the
-        # events to the Maximum number supplied in the strategy
-        return self.filter_events(my_event_list)[: self.__my_strategy.MAX_EVENTS]
+        # Filter to the configured timeline (MIN/MAX days to start) and drop events we
+        # already hold a position on, then cap at MAX_EVENTS.
+        #
+        # SP-446: the listEvents API filter constrains by event type / competition /
+        # market type only — NOT by date. All date windowing happens here in
+        # filter_events. So BOTH zero outcomes below are legitimate, not errors; we just
+        # log which one it is for diagnostics (a persistently-empty RAW list is the clue
+        # that COMPETITIONS/EVENTS config may be wrong, rather than proof that it is):
+        #   * raw listEvents returned nothing   -> no PL/UCL match-odds events listed at
+        #     all right now (off-season/none scheduled, OR mis-set competition names).
+        #   * raw events existed but the window excluded them all -> nothing falls inside
+        #     the MIN-MAX day window today (the common case; the filter did its job).
+        # The "nothing to do -> succeed" decision is made once, by the caller (step 5).
+        filtered = self.filter_events(my_event_list)[: self.__my_strategy.MAX_EVENTS]
+        if len(my_event_list) == 0:
+            Log.log_info(
+                "listEvents returned no events for the configured event types / competitions / "
+                "market types. Usually means none are scheduled right now; if this persists, "
+                "double-check the EVENTS/COMPETITIONS strategy config.",
+                force_console_log=True,
+            )
+        elif len(filtered) == 0:
+            Log.log_info(
+                f"{len(my_event_list)} event(s) returned but none fell within the "
+                f"{self.__my_strategy.MIN_DAYS_TILL_START}-{self.__my_strategy.MAX_DAYS_TILL_START} "
+                f"day window (or all already have a position) — nothing to target right now.",
+                force_console_log=True,
+            )
+        return filtered
 
     # filter_events method is supplied a full list of events that match the basic filter and returns a list of
     # events that are within the supplied timeline (MIN and MAX days until start) and do not already have a position
