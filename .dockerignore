@@ -1,0 +1,64 @@
+# SP-294 — trim the Docker build context.
+#
+# The compose build uses `context: .` (repo root) and the Dockerfile ends with
+# `COPY . /app`, so without this file the ENTIRE repo is shipped as build
+# context. That was ~344MB per build (SP-328), almost all of it `.venv/`
+# (~343MB) plus VCS history, Hypothesis/pytest/ruff caches and IDE folders —
+# none of which the image needs (dependencies are installed fresh from
+# build/requirements.txt).
+#
+# IMPORTANT — do NOT add `certs/` or `config/` here. They are required at
+# runtime:
+#   * certs/  — Betfair certificate login reads BF_CRT_FILE/BF_KEY_FILE, which
+#               the .env points at ./certs/client-2048.{crt,key} (see
+#               .env.example). The container needs these files on disk.
+#   * config/ — logic/simpleStategy.py loads ../config/strategy.yaml at runtime.
+# Both are .gitignored/tracked respectively but either way must stay in the
+# image, so they are deliberately absent from this ignore list.
+#
+# The host .env is NOT baked into the image — compose injects it via `env_file`
+# at run time — so it is excluded here to keep secrets out of the build context
+# and image layers.
+
+# --- Virtual environment (the overwhelming bulk of the old context) ---------
+.venv/
+
+# --- Version control --------------------------------------------------------
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# --- Python caches / compiled artifacts -------------------------------------
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+.mypy_cache/
+
+# --- Editor / IDE / tooling config ------------------------------------------
+.idea/
+.vscode/
+.kiro/
+
+# --- Secrets / local env (provided at run time via compose env_file) --------
+.env
+
+# --- Tests, docs and generated/local-only output ----------------------------
+tests/
+docs/
+README.md
+charts/
+log/
+output/*.log
+data/
+build/run_deck_data/
+build/run_deck_job_definition/
+build/sql/
+
+# --- OS cruft ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
