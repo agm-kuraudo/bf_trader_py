@@ -5,8 +5,19 @@ EVENTS:
 COMPETITIONS:
   - English Premier League
   - UEFA Champions League
+# SP-400: capture Over/Under total-goals markets alongside MATCH_ODDS. Codes
+# VALIDATED against live Betfair listMarketTypes for Soccer + EPL/UCL
+# (scripts/validate_market_types.py, 2026-10-27):
+#   OVER_UNDER_25  present on 39 markets  (runners: Under/Over 2.5 Goals) -- primary target
+#   OVER_UNDER_15  present on  5 markets  (thinner coverage; the ticket's "consider 1.5")
+# NOTE: there is NO standalone OVER_UNDER_35 market type for these competitions -- the
+# 3.5 line only appears inside the aggregate ALT_TOTAL_GOALS ("Goal Lines") market and as
+# FIRST_HALF_GOALS_35, so it is deliberately NOT listed here. (OVER_UNDER_05 also exists,
+# full coverage, but is outside this ticket's scope.)
 MARKET_TYPEs:
   - MATCH_ODDS
+  - OVER_UNDER_25
+  - OVER_UNDER_15
 MAX_EVENTS: 5
 MIN_DAYS_TILL_START: 1
 MAX_DAYS_TILL_START: 5

@@ -246,8 +246,12 @@ class BFDriver:
 
         # for each event supplied...
         for event in my_events:
-            # Create a market object based on calling the "marketCatalogue" api with just the individual event id
-            df, market = self.__market_obj.build_frame_from_json(
+            # Create market objects based on calling the "marketCatalogue" api with just the individual event id.
+            # `markets` is a list of Market objects — ONE per market the catalogue returns for this event. With a
+            # single market type (MATCH_ODDS) that was one market per event; now we filter on several market types
+            # (SP-400: + OVER_UNDER_25/15/35) a single event yields MULTIPLE markets, so we must create a Target for
+            # EVERY returned market, not just markets[0] (which previously dropped all but the first silently).
+            df, markets = self.__market_obj.build_frame_from_json(
                 self.__call_obj.call(
                     http_method=Methods.POST,
                     url=Urls.JSON_RPC_BET,
@@ -257,17 +261,20 @@ class BFDriver:
                     ),
                 )
             )
-            # add the market extracted to the list of market ids
-            markets_list.append(market[0])
-            # append a new Target object to the list with the relevant event and Market.
-            self.__targets_list.append(Target(event, market[0]))
 
-            Log.log_debug(
-                datetime.strptime(self.__market_obj.description["marketTime"], "%Y-%m-%dT%H:%M:%S.%fZ") - datetime.now()
-            )
-            # The market object contains "runners" e.g. Spurs, Draw, Arsenal, just outputting them to log here
-            for runner in self.__market_obj.runners:
-                Log.log_debug(runner)
+            # One Target per (event, market). Read marketTime / runners from EACH market's own object — not from
+            # self.__market_obj, whose instance state only reflects the LAST market built by build_frame_from_json.
+            for market in markets:
+                markets_list.append(market)
+                self.__targets_list.append(Target(event, market))
+
+                Log.log_debug(
+                    datetime.strptime(market.description["marketTime"], "%Y-%m-%dT%H:%M:%S.%fZ") - datetime.now()
+                )
+                # The market object contains "runners" — for MATCH_ODDS e.g. Spurs, Draw, Arsenal; for an
+                # Over/Under market the two runners "Over 2.5 Goals" / "Under 2.5 Goals". Log them for diagnostics.
+                for runner in market.runners:
+                    Log.log_debug(runner)
 
         # Return the complete list of Targets
         return self.__targets_list

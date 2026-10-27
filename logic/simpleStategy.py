@@ -174,6 +174,11 @@ class FromFileStrategy(DefaultStrategy):
                 Log.log_info(f"Selected Strategy: {yaml_content}")
                 DefaultStrategy.EVENTS = yaml_content["EVENTS"]
                 DefaultStrategy.COMPETITIONS = yaml_content["COMPETITIONS"]
+                # SP-400: MARKET_TYPEs is now actually read from the yaml (it was silently
+                # ignored before, so config was pinned to the class default ["MATCH_ODDS"]
+                # regardless of the file). Optional with the class default as fallback so an
+                # older strategy.yaml without the key keeps the previous MATCH_ODDS behaviour.
+                DefaultStrategy.MARKET_TYPEs = yaml_content.get("MARKET_TYPEs", DefaultStrategy.MARKET_TYPEs)
                 DefaultStrategy.MAX_EVENTS = yaml_content["MAX_EVENTS"]
                 DefaultStrategy.MIN_DAYS_TILL_START = yaml_content["MIN_DAYS_TILL_START"]
                 DefaultStrategy.MAX_DAYS_TILL_START = yaml_content["MAX_DAYS_TILL_START"]
