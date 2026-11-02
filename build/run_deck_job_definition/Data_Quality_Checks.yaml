@@ -7,11 +7,10 @@
   nodeFilterEditable: false
   notification:
     onfailure:
-      plugin:
-        type: command
-        configuration:
-          command: /usr/local/bf_trader_py/scripts/telegram_notify.sh "${job.name}"
-            "${job.execid}" "${job.url}"
+      email:
+        attachType: file
+        recipients: aiden@amainit.co.uk
+        subject: '[Betfair] ${job.name} ${notification.eventStatus}'
   notifyAvgDurationThreshold: null
   plugins:
     ExecutionLifecycle: {}

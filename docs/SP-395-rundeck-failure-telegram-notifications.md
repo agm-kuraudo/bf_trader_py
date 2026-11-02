@@ -1,163 +1,142 @@
-# SP-395 — Telegram notifications on Betfair Rundeck job failures
+# SP-395 — Email notifications on Betfair Rundeck job failures
 
 ## What this does
 
-When a scheduled **Betfair** Rundeck job fails (non-zero exit, kill, timeout, or
-dispatch error), Rundeck fires an **on-failure notification** that runs a small
-local command on the Pi. That command sends a Telegram message to a dedicated
-**"Betfair Issues"** bot so the failure lands on the phone, instead of being
-discovered by manually checking the Rundeck UI.
+When a scheduled **Betfair** Rundeck job fails, Rundeck sends an **email**
+failure notification (via SMTP2GO) so the failure lands in an inbox / on the
+phone, instead of being discovered by manually checking the Rundeck UI.
 
 Failure-only — there are no success notifications (out of scope for SP-395). The
 Trading Bot jobs are covered separately.
 
-## Why this shape (and not the alternatives)
+## Why email (and the history behind it)
 
-- **Rundeck on-failure notification, not a wrapper inside the job command.**
-  Rundeck's notification fires on the *execution* result, so it catches failures
-  a wrapper inside the command would miss: the job being killed or timed out, a
-  node/dispatch failure, or the container failing to start before our code runs.
-  It is declarative (a block in the job definition), so applying it to new jobs
-  is a copy-paste, and it is a side effect of the FAILED result — it cannot
-  change the job's own outcome.
-- **A dedicated "Betfair Issues" bot, not SP-357's report bot.** SP-357 (in the
-  *trading* project) is specifically a daily-report delivery layer with its own
-  bot. Betfair failure alerts are a different purpose and a different codebase /
-  deployment, so they get their own bot token and chat id. No cross-project
-  import.
-- **A local-command notification, not a webhook.** The sender runs fine on the
-  Pi (the Rundeck host), so there is no need for an inbound webhook receiver.
-  The token stays local in the repo `.env`; nothing is exposed.
-- **Sender runs on the host via the repo venv, not inside the container.**
-  Rundeck runs notification commands directly on the host, and the failure path
-  should not depend on the `bf_capture` container (which may be exactly what
-  just broke). The host `.venv` already has `requests` and `python-dotenv`; the
-  sender also falls back to the stdlib `urllib` if `requests` is unavailable.
+The original plan was a Telegram alert triggered by a Rundeck **on-failure
+local-command notification** that ran a small sender script on the Pi. That
+plan did not survive contact with the actual Rundeck install, and the reasons
+are worth recording so we do not repeat the dead ends:
 
-## Pieces
+- **Rundeck has no "command"/"script" notification plugin.** On this install
+  (Rundeck **5.10.0**, Community/free), the only built-in notification types are
+  **email**, **webhook**, and **HTTP** — there is no plugin that runs a local
+  command or script on failure. Both the UI and a YAML import reject it:
+  `Notification Plugin type "command" was not found or could not be loaded`
+  (confirmed in `service.log`: `Plugin command for service: Notification was
+  not found`). This is a core Rundeck limitation at every version, not a
+  version/edition gap — upgrading or going paid would not add it. Running a
+  script on a notification requires writing a custom (Groovy) notification
+  plugin.
+- **A webhook can't call the Telegram Bot API directly.** Rundeck's webhook
+  notification POSTs *its own* execution payload to a URL; it cannot shape the
+  body into Telegram's `sendMessage` form (token in the path, `chat_id`+`text`
+  in the body). Going webhook→Telegram would need a small translator service on
+  the Pi — more moving parts than the problem warrants here.
+- **Email is a built-in plugin — it just works, once SMTP authenticates.** No
+  listener, no plugin install, no daemon. It also fires on the execution result
+  (so it catches aborts/kills, not just a non-zero exit), via
+  `${notification.eventStatus}` resolving to `FAILURE`/`KILLED`/etc.
 
-| Piece | Path | Role |
-|---|---|---|
-| Python sender | `logic/telegram_notify.py` | Formats the message and posts to the Bot API `sendMessage`. Reads the bot token + chat id from `.env` via `DotenvLoader`. Pure formatter is property-tested. |
-| Launcher | `scripts/telegram_notify.sh` | What Rundeck runs. Resolves the repo root + venv python (same logic as `deploy.sh`), calls `python -m logic.telegram_notify`, **always exits 0**. |
-| Job definitions | `build/run_deck_job_definition/*.yaml` | Tracked reference copies of the Betfair Rundeck jobs, each with the `notification.onfailure` block added. |
-| `.env` keys | `.env.example` | `TELEGRAM_BETFAIR_BOT_TOKEN`, `TELEGRAM_BETFAIR_CHAT_ID`. |
-| Tests | `tests/test_telegram_notify.py` | Formatter properties + config/delivery/CLI behaviour (no network). |
+### The SMTP saga (why SMTP2GO)
 
-> **Note on the job YAMLs:** the files under `build/run_deck_job_definition/`
-> are tracked **for reference only** — editing them here does **not** change the
-> live Rundeck jobs. Rundeck stores job definitions in its own H2 DB; the live
-> jobs must be updated in the Rundeck UI/API (see "Applying to live Rundeck").
+Email needs a working SMTP account, and the first choice fought back:
 
-## Configuration
+- **Office 365 (`smtp.office365.com`) is a dead end here.** Basic SMTP AUTH
+  returns `535 5.7.3 Authentication unsuccessful` regardless of password,
+  because Microsoft disables SMTP AUTH tenant-wide when **Security Defaults** is
+  on — and the per-mailbox "Authenticated SMTP" toggle does nothing while
+  Security Defaults is enabled. Microsoft is also fully deprecating SMTP basic
+  auth (~Sept 2025), so this path is effectively closed. Enabling it would mean
+  turning off Security Defaults tenant-wide (a real security downgrade) and may
+  still not work.
+- **SMTP2GO (free tier) works.** Purpose-built transactional SMTP, allows
+  standard username/password auth, 1,000 emails/month free (ample for failure
+  alerts). A direct `smtplib` send from the Pi succeeds, which proves the path
+  independently of Rundeck.
 
-Two new secrets in the repo-root `.env` (never committed):
+## Mechanism
 
-```
-TELEGRAM_BETFAIR_ISSUES_BOT_TOKEN=...   # from BotFather, for the Betfair Issues bot
-TELEGRAM_BETFAIR_ISSUES_CHAT_ID=...     # the chat to deliver to
-```
+1. **Rundeck SMTP config** points Rundeck at SMTP2GO (see below).
+2. **Each Betfair job** has an **On Failure → Email** notification that sends to
+   a recipient address. Rundeck does the sending; there is no project code in
+   the failure path.
 
-### Creating the bot and getting the chat id
+## Rundeck SMTP configuration (on the Pi)
 
-1. In Telegram, message **@BotFather**, `/newbot`, name it e.g. *Betfair
-   Issues*, and copy the **token** it returns → `TELEGRAM_BETFAIR_BOT_TOKEN`.
-2. Start a chat with the new bot (send it any message) so it is allowed to
-   message you.
-3. Get the chat id: open
-   `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and read
-   `result[].message.chat.id`, or use a chat-id helper bot. Put it in
-   `TELEGRAM_BETFAIR_CHAT_ID`.
-4. Deploy the updated `.env` to the Pi (`/usr/local/bf_trader_py/.env`). The
-   token/chat id are read from that file at notification time.
+Added to `/etc/rundeck/rundeck-config.properties` (a backup of the original is
+at `rundeck-config.properties.bak-sp395`), then `sudo systemctl restart
+rundeckd`:
 
-## The launcher must be executable
-
-Rundeck runs the on-failure command **directly** (not via `bash ...`), so
-`scripts/telegram_notify.sh` must have the executable bit set or Rundeck cannot
-launch it (it fails with a permission error and no alert is sent). The file is
-tracked in git with mode `755`, so a normal `git pull`/`deploy.sh` on the Pi
-preserves it. If you ever see a permission error (e.g. after copying the file by
-other means, or on a filesystem that drops the bit), restore it with:
-
-```bash
-chmod +x /usr/local/bf_trader_py/scripts/telegram_notify.sh
+```properties
+# SP-395: SMTP2GO mail settings for Rundeck failure notifications
+grails.mail.host=mail-eu.smtp2go.com
+grails.mail.port=587
+grails.mail.username=amainit.co.uk
+grails.mail.password=<SMTP2GO SMTP-user password>   # from the SMTP2GO dashboard
+grails.mail.props.mail.smtp.starttls.enable=true
+grails.mail.props.mail.smtp.auth=true
+grails.mail.default.from=aiden@amainit.co.uk        # must be a VERIFIED sender in SMTP2GO
 ```
 
-Running it as `bash scripts/telegram_notify.sh ...` also works for a manual
-smoke test and sidesteps the bit, but the live Rundeck notification needs the
-executable bit because it invokes the path directly.
+Notes:
 
-## The notification block (per job)
+- `mail-eu.smtp2go.com` is the **EU-region** host shown in this account's
+  dashboard; `mail.smtp2go.com` also works. Port 587 with STARTTLS.
+- `grails.mail.username` is the **SMTP user** from SMTP2GO → *Sending → SMTP
+  Users* (not the account login). The **from** address must be verified under
+  *Sending → Verified Senders*.
+- The password is stored in plaintext in the config file (root/rundeck-readable
+  only, mode `640`). Rundeck ships the jasypt encryption plugin if you later
+  want to encrypt it.
+- **Execution links:** `grails.serverURL` is `http://localhost:4440`, so links
+  in the emails point at localhost (not useful off the Pi). The subject line
+  carries the actionable information; set `grails.serverURL` to a reachable
+  host if you want clickable links.
 
-Each Betfair job definition carries:
+## Per-job notification (applied in the Rundeck UI)
 
-```yaml
-  notification:
-    onfailure:
-      plugin:
-        type: command
-        configuration:
-          command: /usr/local/bf_trader_py/scripts/telegram_notify.sh "${job.name}"
-            "${job.execid}" "${job.url}"
+For each Betfair job (**Monitor Service**, **Target Service**, **Data Quality
+Checks**, **Verify Fresh Data**, **Postgres Backup**): Edit → **Notifications** →
+under **If execution fails** add an **Email** notification. Suggested subject:
+
+```
+[Betfair] ${job.name} ${notification.eventStatus}
 ```
 
-Rundeck expands `${job.name}`, `${job.execid}`, and `${job.url}` into the
-positional args the launcher passes to the Python sender. The message looks
-like:
+`${notification.eventStatus}` resolves to `FAILURE`, `KILLED`, etc. This can
+also be set as a global template in `rundeck-config.properties`
+(`rundeck.mail.failure.template.subject=...`) so it is consistent without
+per-job entry.
 
-```
-⚠ Betfair job FAILED: Monitor Service
-Execution: #12345
-http://localhost:4440/.../execution/show/12345
-```
-
-## Applying to new jobs
-
-Any new Betfair job adopts failure notifications by adding the same
-`notification.onfailure` block above to its definition. Nothing else is needed —
-the launcher and sender are generic (the job name comes from `${job.name}`).
-Keep the tracked copy under `build/run_deck_job_definition/` in sync.
-
-## Applying to live Rundeck
-
-The tracked YAMLs are reference only. To make it live on the Pi, for each
-Betfair job: in the Rundeck UI, open the job → **Edit** → **Notifications** →
-add an **On Failure** notification of type **"Run script/local command"** with
-the command above (or import the updated YAML via the job's **Upload
-Definition**). Rundeck is at `localhost:4440` on the Pi, projects `Betfair` and
-`VPA`.
+> Rundeck stores job definitions in its own H2 DB; the tracked YAMLs under
+> `build/run_deck_job_definition/` are **reference only** and do not drive the
+> live jobs. The email notification is configured per job in the UI.
 
 ## Verifying (Definition of Done)
 
-The DoD requires a **deliberately-failed Betfair job to produce a Telegram
-alert, verified on the Pi**. Suggested check:
+1. SMTP path proven from the Pi (done): a direct `smtplib` STARTTLS send via
+   `mail-eu.smtp2go.com` as `amainit.co.uk` returned "message accepted by
+   server" and the test email arrived.
+2. Rundeck restarted cleanly with the mail config (done): no SMTP errors on
+   startup; service responds on `localhost:4440`.
+3. **Live failure test (the DoD):** add the On Failure email notification to a
+   low-impact job (or a throwaway copy), point it at a command that exits
+   non-zero, run it, and confirm the failure email arrives **and** the job is
+   still recorded FAILED. Revert afterwards.
 
-1. Ensure `.env` on the Pi has the two new keys populated and the latest code is
-   deployed (`scripts/deploy.sh`).
-2. Smoke-test the launcher directly on the Pi (no Rundeck needed):
-   ```bash
-   /usr/local/bf_trader_py/scripts/telegram_notify.sh "Smoke Test" "0" "http://localhost:4440"
-   ```
-   A message should arrive; the script exits 0 regardless.
-3. Trigger a real failure path: temporarily point a low-impact job (e.g. a
-   throwaway test job, or a copy of **Verify Fresh Data**) at a command that
-   exits non-zero, run it, and confirm the Telegram alert arrives **and** the
-   job is still recorded FAILED (the notification did not change the outcome).
-   Revert the job afterwards.
+While complete-but-not-fully-verified, the ticket sits in **Mostly Done**; it
+moves to **Done** only after the live failure email is confirmed on the Pi.
 
-While the code is complete but not yet deployed/verified on the Pi, the ticket
-sits in **Mostly Done**; it moves to **Done** only after the live failure test
-passes on the Pi (per the deployable-work Definition of Done).
+## The retained Telegram module (future use)
 
-## Guarantees
-
-- **Never breaks the job.** `scripts/telegram_notify.sh` and
-  `logic/telegram_notify.py::main` always exit 0. A missing token/chat id, a
-  missing interpreter, or a Bot API error is logged to stderr and swallowed.
-- **No secret leakage.** The token is read via `DotenvLoader` and never logged;
-  configuration errors report the **key name**, not the value.
-- **Reusable.** The sender is a generic Betfair-side Telegram layer. The Pi disk
-  alert (`scripts/pi/disk_alert.sh`) already anticipates reusing this
-  (SP-357/SP-395 delivery layer) instead of its interim `logger`-only alert.
+`logic/telegram_notify.py` (+ `tests/test_telegram_notify.py`) is kept
+deliberately, even though email is the SP-395 mechanism. It is a small,
+generic Betfair-side Telegram sender (dedicated "Betfair Issues" bot; token +
+chat id read from `.env` via `DotenvLoader` under
+`TELEGRAM_BETFAIR_ISSUES_BOT_TOKEN` / `TELEGRAM_BETFAIR_ISSUES_CHAT_ID`), with a
+property-tested pure formatter. It is **not** wired to Rundeck (Rundeck can't
+call it on failure), but it is ready for other notification needs — e.g. the Pi
+disk alert (`scripts/pi/disk_alert.sh`) already anticipates reusing this layer
+instead of its interim `logger`-only alert. The Rundeck launcher that the
+command-notification approach needed (`scripts/telegram_notify.sh`) has been
+removed, since that trigger mechanism does not exist on this install.
 ```
