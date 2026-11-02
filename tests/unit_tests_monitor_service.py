@@ -90,10 +90,13 @@ class TestMonitorService(unittest.TestCase):
             "UPDATE bf.target SET status='OPEN' WHERE market_id='3';"
         )
 
-    def test_update_target_status_failure(self):
+    def test_update_target_status_unknown_state_is_skipped_not_fatal(self):
+        # SP-482: a non-OPEN/CLOSED market state (here "UNKNOWN", e.g. SUSPENDED
+        # in production) must NOT crash the run. The target is skipped with a
+        # warning and its stored status is left unchanged (no db_write).
         targets = [(3, "UNKNOWN", 2, [1, 2])]
-        with self.assertRaises(MonitorServiceException):
-            self.service.update_target_status(targets)
+        self.service.update_target_status(targets)  # must not raise
+        self.service.db_connection.db_write.assert_not_called()
 
     def test_get_open_targets_success(self):
         self.service.db_connection.db_read.return_value = [(1, 2, 3, "1-2|3-4", "2025-03-10 12:00:00", "OPEN", "notes")]

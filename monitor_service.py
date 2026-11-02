@@ -218,6 +218,13 @@ class MonitorService:
 
     def update_target_status(self, targets):
         try:
+            # Only OPEN/CLOSED drive a stored-status change. Any OTHER Betfair
+            # market state (SP-482) must NOT abort the run: SUSPENDED is a normal,
+            # frequent, transient state (in-play turns, price reforms, between
+            # markets), and even a genuinely unrecognised state should not take
+            # down odds capture for every other target. For any non-OPEN/CLOSED
+            # state we log a warning naming the market+state and skip the target,
+            # leaving its stored status unchanged so it is re-evaluated next cycle.
             KNOWN_MARKET_STATES = ["OPEN", "CLOSED"]
             for target in targets:
                 if target[1] in KNOWN_MARKET_STATES:
@@ -225,10 +232,17 @@ class MonitorService:
                     success = self.db_connection.db_write(sql_command)
                     Log.log_debug(f"Setting {target[0]} as {target[1]} status: {success}")
                 else:
-                    self.db_connection.db_write_log(
-                        f"Monitor Service: ERROR : Ending Run : Unknown market state: {target}"
+                    # Transient / unexpected market state: skip-and-continue
+                    # (SP-482). Leave the target's stored status untouched.
+                    Log.log_warning(
+                        f"Market {target[0]} in non-OPEN/CLOSED state '{target[1]}' - "
+                        f"leaving target status unchanged and skipping this cycle."
                     )
-                    raise MonitorServiceException(f"Unknown market state: {target}")
+                    self.db_connection.db_write_log(
+                        f"Monitor Service: WARNING : Skipping market {target[0]} in transient/unknown "
+                        f"state '{target[1]}' (status left unchanged)"
+                    )
+                    continue
         except Exception as e:
             self.db_connection.db_write_log(
                 f"Monitor Service: ERROR : Ending Run : Failed to update target status: {e}"
