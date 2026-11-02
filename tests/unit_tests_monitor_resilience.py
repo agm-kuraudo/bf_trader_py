@@ -422,3 +422,72 @@ class TestSP343LoggingPreservation:
         logged = [str(call.args[0]) for call in db.db_write_log.call_args_list if call.args]
         assert not any("Ending run successfully" in m for m in logged)
         assert not any("Ending run with failure" in m for m in logged)
+
+
+# --- SP-482: non-OPEN/CLOSED market states must not crash the run -----------
+
+
+class TestMarketStateSkipAndContinue:
+    """SP-482: a transient or unrecognised Betfair market state (e.g. SUSPENDED)
+    must not abort update_target_status. The target with the non-OPEN/CLOSED
+    state is skipped (its stored status left unchanged) and the remaining
+    targets still have their status written. Before the fix, a SUSPENDED market
+    raised MonitorServiceException and crashed the whole run.
+
+    target tuple shape (from process_targets): (market_id, status, runner_count,
+    runners, update_frequency, last_updated, start_time).
+    """
+
+    def _service(self):
+        svc = MonitorService()
+        svc.db_connection = MagicMock()
+        return svc
+
+    def test_suspended_market_does_not_raise(self):
+        """A SUSPENDED market is skipped, not fatal."""
+        svc = self._service()
+        targets = [("1.264059801", "SUSPENDED", 3, [1, 2, 3], 5, None, None)]
+        # Must NOT raise.
+        svc.update_target_status(targets)
+        # The suspended target's status was NOT written to the DB.
+        svc.db_connection.db_write.assert_not_called()
+
+    def test_suspended_market_leaves_other_targets_processed(self):
+        """A SUSPENDED target is skipped; OPEN/CLOSED targets around it still update."""
+        svc = self._service()
+        targets = [
+            ("m_open", "OPEN", 2, [1, 2], 300, None, None),
+            ("m_suspended", "SUSPENDED", 3, [3, 4, 5], 5, None, None),
+            ("m_closed", "CLOSED", 2, [6, 7], 300, None, None),
+        ]
+        svc.update_target_status(targets)
+
+        written_sql = [call.args[0] for call in svc.db_connection.db_write.call_args_list if call.args]
+        # OPEN and CLOSED were written...
+        assert any("status='OPEN'" in s and "m_open" in s for s in written_sql)
+        assert any("status='CLOSED'" in s and "m_closed" in s for s in written_sql)
+        # ...the SUSPENDED market was not.
+        assert not any("m_suspended" in s for s in written_sql)
+        assert len(written_sql) == 2
+
+    def test_unknown_state_also_skipped_not_fatal(self):
+        """A genuinely unrecognised state is also skip-and-continue, not a crash."""
+        svc = self._service()
+        targets = [
+            ("m_weird", "SOME_NEW_BETFAIR_STATE", 1, [1], 60, None, None),
+            ("m_open", "OPEN", 1, [2], 300, None, None),
+        ]
+        svc.update_target_status(targets)
+        written_sql = [call.args[0] for call in svc.db_connection.db_write.call_args_list if call.args]
+        assert any("m_open" in s for s in written_sql)
+        assert not any("m_weird" in s for s in written_sql)
+
+    def test_genuine_db_write_failure_still_raises(self):
+        """A real DB write failure on an OPEN target still surfaces as
+        MonitorServiceException (regression guard: we only softened the
+        unknown-state path, not genuine errors)."""
+        svc = self._service()
+        svc.db_connection.db_write.side_effect = Exception("db down")
+        targets = [("m_open", "OPEN", 1, [1], 300, None, None)]
+        with pytest.raises(MonitorServiceException):
+            svc.update_target_status(targets)
