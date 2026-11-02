@@ -5,6 +5,13 @@
   loglevel: INFO
   name: Monitor Service
   nodeFilterEditable: false
+  notification:
+    onfailure:
+      email:
+        attachType: file
+        recipients: aiden@amainit.co.uk
+        subject: '[Betfair] ${job.name} ${notification.eventStatus}'
+  notifyAvgDurationThreshold: null
   plugins:
     ExecutionLifecycle: {}
   schedule:
