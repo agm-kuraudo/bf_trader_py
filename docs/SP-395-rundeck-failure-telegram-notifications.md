@@ -71,6 +71,23 @@ TELEGRAM_BETFAIR_ISSUES_CHAT_ID=...     # the chat to deliver to
 4. Deploy the updated `.env` to the Pi (`/usr/local/bf_trader_py/.env`). The
    token/chat id are read from that file at notification time.
 
+## The launcher must be executable
+
+Rundeck runs the on-failure command **directly** (not via `bash ...`), so
+`scripts/telegram_notify.sh` must have the executable bit set or Rundeck cannot
+launch it (it fails with a permission error and no alert is sent). The file is
+tracked in git with mode `755`, so a normal `git pull`/`deploy.sh` on the Pi
+preserves it. If you ever see a permission error (e.g. after copying the file by
+other means, or on a filesystem that drops the bit), restore it with:
+
+```bash
+chmod +x /usr/local/bf_trader_py/scripts/telegram_notify.sh
+```
+
+Running it as `bash scripts/telegram_notify.sh ...` also works for a manual
+smoke test and sidesteps the bit, but the live Rundeck notification needs the
+executable bit because it invokes the path directly.
+
 ## The notification block (per job)
 
 Each Betfair job definition carries:
