@@ -5,6 +5,14 @@
   loglevel: INFO
   name: Target Service
   nodeFilterEditable: false
+  notification:
+    onfailure:
+      plugin:
+        type: command
+        configuration:
+          command: /usr/local/bf_trader_py/scripts/telegram_notify.sh "${job.name}"
+            "${job.execid}" "${job.url}"
+  notifyAvgDurationThreshold: null
   plugins:
     ExecutionLifecycle: {}
   schedule:
