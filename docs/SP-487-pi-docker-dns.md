@@ -7,9 +7,12 @@ running healthily for hundreds of iterations.
 
 - **Jira:** [SP-487](https://amainit.atlassian.net/browse/SP-487) (Bug)
 - **Part 1 — application retry (this repo):** done, tested.
-- **Part 2 — Pi Docker DNS hardening (host config):** **pending** — to be applied
-  on the Pi during a no-games window. Not yet applied, so the "after" numbers in
-  §2 are expectations, not measurements, until deploy day.
+- **Part 2 — Pi Docker DNS hardening (host config):** **APPLIED 2026-11-04
+  ~12:30 GMT** (no capture running at the time). Verified: Docker active,
+  `my_postgres` / `my_pgadmin` back up, container `resolv.conf` shows
+  `ExtServers: [192.168.0.1 1.1.1.1 8.8.8.8]`, and a fresh busybox container
+  resolves `api.betfair.com`. Whether it reduces blip frequency is **not yet
+  measured** — watch Rundeck failures over the next few days of in-play.
 
 ## The bug
 
@@ -72,7 +75,7 @@ retried instead of killing the run. Tests: `tests/unit_tests_call_retry.py`
 (retry-then-succeed, exhaustion raises after N, no-retry on non-transient,
 no-retry on real response, backoff growth).
 
-## 2. Pi Docker DNS hardening — PENDING (host config, apply during a no-games window)
+## 2. Pi Docker DNS hardening — APPLIED (host config)
 
 Independent safety net for the *other* failure mode: the first DNS server going
 properly unhealthy (not just a momentary blip). Adds fallback resolvers so the
@@ -174,7 +177,7 @@ sudo systemctl restart docker
 ## Definition of done (per the deployable-work DoD)
 
 - [x] Retry/backoff in `call.py` + unit tests (fast suite green).
-- [ ] Pi `daemon.json` DNS hardening applied and verified (§2) — **deploy day**.
+- [x] Pi `daemon.json` DNS hardening applied and verified (§2) — 2026-11-04.
 - [ ] `bf_trader_py` code deployed to the Pi and a monitor run observed surviving
       past the point earlier runs died (a transient blip retried, not fatal).
 - [ ] Completion comment on SP-487 noting the deploy was done and verified; then
