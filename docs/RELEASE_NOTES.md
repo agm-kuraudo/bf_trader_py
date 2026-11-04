@@ -1,3 +1,87 @@
+# Betfair Trader 0.8 — Release Notes
+
+**Reviewed:** 4 November 2026 ([SP-490](https://amainit.atlassian.net/browse/SP-490))
+**Scope:** 10 tickets — 6 planned (4 stories, 1 task, 1 spike), plus the planning task (SP-408) and 3 unplanned bugs. All Done. 20 pts (plan: 19 + 1 for the planning task).
+
+## Headline
+
+0.8 was a **foundation + investigation** release: fix the two capture limits that
+blocked every 0.7 analysis, plant the next market (Over/Under goals), and find out
+whether Betfair's historic data is a faster path to an edge. It delivered all of
+that, and the answer to the last question is **no**. The result is a clearer
+picture, not an edge: **Betfair Match Odds looks efficient at scale, and the one
+idea still standing needs data we cannot get for free.** Decision: keep the project
+open but mothballed (see below).
+
+## Themes
+
+### 1. Capture foundations
+
+- **Coherent per-poll snapshots** ([SP-396](https://amainit.atlassian.net/browse/SP-396), 5 pts) — all runners in a market are now written under one shared timestamp per poll, replacing the one-outcome-per-instant forward-fill that made in-play cross-outcome analysis unmeasurable. Verified on the Pi (3 runner rows per poll, one timestamp).
+- **Matched-volume capture** ([SP-384](https://amainit.atlassian.net/browse/SP-384), 3 pts) — the mechanism is built and deployed, **but the volume figure is zero in practice.** The capture runs on Betfair's delayed App Key, which suppresses per-runner traded data. Getting real volume needs the live key (£499 one-off), a decision deferred until a strategy needs it. Config-only fix when that happens. See `docs/SP-384_matched_volume_live_key_blocker.md`.
+- **Over/Under goals capture** ([SP-400](https://amainit.atlassian.net/browse/SP-400), 5 pts) — OVER_UNDER_25 and OVER_UNDER_15 are now captured for tracked EPL/UCL fixtures (codes validated against the live API; there is no standalone 3.5 line). Also fixed a latent bug where `MARKET_TYPEs` in `strategy.yaml` was silently ignored. As of 4 November the Pi holds 22 Over/Under 2.5 markets. See `docs/SP-400-over-under-goals-capture.md`.
+
+### 2. Historic data spike — NO-GO
+
+- **Betfair historic data** ([SP-401](https://amainit.atlassian.net/browse/SP-401), spike) — full write-up in `docs/SP-401-historic-data.md`.
+  - **Tiers (Soccer):** Basic free (last traded price only); Advanced £69/mo or £699/yr (top of book + volume); Pro £230/mo or £2,299/yr (full ladder, ~50 ms).
+  - **Shape:** one JSON stream message per line; the ladder must be rebuilt by replay. Pro and Advanced replay to a superset of our `bf.market_table` shape. Basic carries winners and settlement times, which our capture lacks.
+  - **Checks on 52,407 free Match Odds markets (Jan to Oct 2026):** flat £50 back/lay of the favourite, draw, outsider, home and away, and the "lay the favourite early, back it at the off" trade all come out at about zero before commission and negative after (still negative at 2%). Pre-match drift does not predict winners. This is consistent with the 0.7 finding, now on far more data. Prices are last-traded, so these are upper bounds.
+  - **Recommendation:** no-go on SP-402 (replay pipeline) and on any paid tier for now.
+
+### 3. Reliability bugs (unplanned)
+
+- **Target service failing daily with "no targets"** ([SP-446](https://amainit.atlassian.net/browse/SP-446)).
+- **Monitor service crash on a SUSPENDED market, aborting the whole run** ([SP-482](https://amainit.atlassian.net/browse/SP-482)).
+- **Monitor service abort on a single transient DNS failure** ([SP-487](https://amainit.atlassian.net/browse/SP-487)).
+
+All three affected capture continuity. Season data is perishable, so each gap is permanent.
+
+### 4. Admin riders
+
+- **Rundeck job failure notifications** ([SP-395](https://amainit.atlassian.net/browse/SP-395), 3 pts).
+- **Pi/Docker cleanup, log rotation and disk alert** ([SP-294](https://amainit.atlassian.net/browse/SP-294), 3 pts).
+- **Release planning** ([SP-408](https://amainit.atlassian.net/browse/SP-408), 1 pt) and this review ([SP-490](https://amainit.atlassian.net/browse/SP-490)).
+
+## Findings that matter more than the deliverables
+
+1. **Match Odds efficiency holds at scale.** 0.7 said no edge on 41 matches; 0.8 says the same across 52,407 markets. One caveat: the free files have no competition ID, so this is GB football as a whole, not league by league.
+2. **Our own capture is limited by the delayed key.** Odds are about 15 minutes behind and there is no per-runner volume. That makes the capture unfit for the idea still standing, in-play Over/Under time decay. The dataset is also small (about 114,000 rows, 123 targets since mid-September) next to the free historic set.
+3. **Pre-match questions no longer need our capture.** The free historic data is larger and has no bug risk. Our capture's unique value is narrow until the key changes.
+4. **Commission is the whole difference between "about zero" and "clearly losing".** Betfair charges it on net winnings per market (5% base rate; lower with discount). Any strategy with a gross edge under about 2% per bet will not survive.
+
+## Retrospective read
+
+**What went well**
+
+- The spike answered its question with numbers, from free data, without buying anything.
+- Cheap, repeatable checks (extract once to a cache, analyse in seconds) turned a vague "is there an edge" into a one-evening answer.
+- Capture foundations landed together, as planned.
+
+**What to improve**
+
+- SP-384 was marked Done while its value (real volume) is blocked on a commercial decision. In future, treat "mechanism built, value blocked" as Mostly Done, or split the blocker into its own ticket, so Done means the outcome exists.
+- The delayed-key limit was measured only on 24 October, late in the release. It changes which ideas the capture can serve, so check data-tier limits before planning analyses on a capture.
+- Three capture bugs surfaced inside the release again (six in 0.6, two in 0.7). Reliability work continues to cost time.
+
+## Decision: keep open, mothballed
+
+There is no current idea or edge that justifies more build work. The project stays open so inspiration can land, with these rules:
+
+- **No new feature work** and no 0.9 release is planned.
+- **The Pi capture keeps running**, with bug fixes only.
+- **Reopen when there is a written theory** that needs bid/ask or in-play detail. First step then: buy one month of Advanced (£69) and compare it with our captured fixtures. The live key (£499) only after a theory shows promise.
+- Free Basic data and the throwaway scripts in `data/historic/` (gitignored, rebuildable from SP-401) are available for further cheap checks.
+
+## Carried forward
+
+- **SP-397 / SP-398 / SP-399** (re-assessments) — expected to be obsolete: their premise was more data and volume, and SP-401 answered the question at scale. For closure or keeping at refinement.
+- **SP-402** (replay pipeline) — gated on SP-401, which said no-go. For closure or keeping at refinement.
+- **Live App Key** — deferred until a strategy needs volume or timely in-play prices.
+- **Licence terms for historic data** — not read; read them before any paid purchase.
+
+---
+
 # Betfair Trader 0.7 — Release Notes
 
 **Released:** ~20 October 2026
